@@ -19,18 +19,18 @@ const Index = () => {
             <img 
               src={logo} 
               alt="CheqIn Logo" 
-              className="w-40 md:w-48 h-auto drop-shadow-2xl"
+              className="w-56 md:w-72 h-auto drop-shadow-2xl"
             />
           </div>
           <div className="space-y-6 max-w-4xl">
             <h1 className="text-6xl md:text-8xl font-bold bg-gradient-to-r from-foreground via-foreground to-accent bg-clip-text text-transparent">
               CheqIn
             </h1>
-            <p className="text-3xl md:text-4xl font-light text-muted-foreground">
+            <p className="text-2xl md:text-3xl font-medium text-foreground italic">
               Because love deserves a daily CheqIn
             </p>
-            <p className="text-xl md:text-2xl text-foreground/80 max-w-3xl mx-auto leading-relaxed">
-              A friendly voice companion that listens, remembers, and cares—making wellness feel warm and human.
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              A wellness companion for brighter days
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-6 pt-6">
@@ -187,10 +187,13 @@ const Index = () => {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.1),transparent)]"></div>
           <div className="relative z-10 space-y-8">
             <h2 className="text-5xl md:text-6xl font-bold">
-              Ready to start your daily CheqIn?
+              Ready for your daily CheqIn?
             </h2>
-            <p className="text-2xl md:text-3xl max-w-3xl mx-auto opacity-90">
-              Join thousands who make wellness a warm, daily conversation
+            <p className="text-2xl md:text-3xl max-w-3xl mx-auto opacity-90 italic">
+              Because love deserves a daily CheqIn
+            </p>
+            <p className="text-xl md:text-2xl max-w-3xl mx-auto opacity-80">
+              Join families making wellness a warm, daily conversation
             </p>
             <Button 
               size="lg" 
@@ -210,13 +213,16 @@ const Index = () => {
           <img 
             src={logo} 
             alt="CheqIn" 
-            className="w-16 h-auto mx-auto opacity-80"
+            className="w-20 h-auto mx-auto opacity-80"
           />
           <p className="text-lg text-muted-foreground">
-            © 2025 CheqIn. A wellness companion for brighter days.
+            © 2025 CheqIn
+          </p>
+          <p className="text-base text-muted-foreground italic">
+            Because love deserves a daily CheqIn
           </p>
           <p className="text-sm text-muted-foreground/60">
-            Built with ❤️ for seniors and their families
+            A wellness companion for brighter days
           </p>
         </div>
       </footer>
