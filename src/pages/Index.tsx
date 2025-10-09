@@ -13,13 +13,13 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <header className="relative container mx-auto px-4 py-12 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-accent/10 rounded-3xl -z-10"></div>
+        <div className="absolute inset-0 rounded-3xl -z-10" style={{ background: 'var(--shine-gradient)' }}></div>
         <div className="flex flex-col items-center justify-center min-h-[85vh] text-center space-y-10">
-          <div className="animate-fade-in">
+          <div className="animate-fade-in" style={{ filter: 'drop-shadow(var(--glow-primary))' }}>
             <img 
               src={logo} 
               alt="CheqIn Logo" 
-              className="w-56 md:w-72 h-auto drop-shadow-2xl"
+              className="w-56 md:w-72 h-auto"
             />
           </div>
           <div className="space-y-6 max-w-4xl">
@@ -39,8 +39,8 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-6 pt-6">
             <Button 
               size="lg" 
-              variant="accent" 
-              className="text-xl px-12 py-7 rounded-full shadow-xl hover:scale-105 transition-transform"
+              variant="hero" 
+              className="text-xl px-12 py-7 rounded-full"
               onClick={() => navigate("/auth")}
             >
               Start Your Check-In
@@ -72,7 +72,7 @@ const Index = () => {
         
         <div className="grid lg:grid-cols-3 gap-12 max-w-7xl mx-auto">
           {/* Daily Check-In */}
-          <Card className="group overflow-hidden border-0 shadow-2xl hover:shadow-accent/20 transition-all duration-500 hover:scale-[1.02]">
+          <Card className="group overflow-hidden border-0 shadow-2xl transition-all duration-500 hover:scale-[1.02]" style={{ boxShadow: '0 20px 50px -10px hsl(190 85% 45% / 0.2), var(--glow-primary)' }}>
             <div className="aspect-video overflow-hidden">
               <img 
                 src={dailyCheckin} 
@@ -109,7 +109,7 @@ const Index = () => {
           </Card>
 
           {/* Medicine Reminder */}
-          <Card className="group overflow-hidden border-0 shadow-2xl hover:shadow-accent/20 transition-all duration-500 hover:scale-[1.02]">
+          <Card className="group overflow-hidden border-0 shadow-2xl transition-all duration-500 hover:scale-[1.02]" style={{ boxShadow: '0 20px 50px -10px hsl(25 95% 60% / 0.2), var(--glow-accent)' }}>
             <div className="aspect-video overflow-hidden">
               <img 
                 src={medicineReminder} 
@@ -146,7 +146,7 @@ const Index = () => {
           </Card>
 
           {/* Sentiment & Family Connection */}
-          <Card className="group overflow-hidden border-0 shadow-2xl hover:shadow-accent/20 transition-all duration-500 hover:scale-[1.02]">
+          <Card className="group overflow-hidden border-0 shadow-2xl transition-all duration-500 hover:scale-[1.02]" style={{ boxShadow: '0 20px 50px -10px hsl(280 65% 60% / 0.2), var(--glow-secondary)' }}>
             <div className="aspect-video overflow-hidden">
               <img 
                 src={sentimentTrends} 
@@ -200,8 +200,8 @@ const Index = () => {
             </p>
             <Button 
               size="lg" 
-              variant="outline" 
-              className="text-xl px-12 py-7 rounded-full border-2 border-accent-foreground bg-background text-foreground hover:bg-accent-foreground hover:text-accent shadow-xl hover:scale-105 transition-all"
+              variant="hero" 
+              className="text-xl px-12 py-7 rounded-full"
               onClick={() => navigate("/auth")}
             >
               Get Started Today

@@ -38,6 +38,12 @@ All colors MUST be HSL.
 
     --radius: 0.75rem;
 
+    /* Glow and shine effects */
+    --glow-primary: 0 0 40px hsl(190 85% 45% / 0.4);
+    --glow-accent: 0 0 40px hsl(25 95% 60% / 0.4);
+    --glow-secondary: 0 0 40px hsl(280 65% 60% / 0.3);
+    --shine-gradient: linear-gradient(135deg, hsl(190 85% 45% / 0.15), hsl(25 95% 60% / 0.15), hsl(280 65% 60% / 0.15));
+
     --sidebar-background: 190 40% 97%;
 
     --sidebar-foreground: 230 35% 25%;
@@ -83,6 +89,13 @@ All colors MUST be HSL.
     --border: 230 25% 25%;
     --input: 230 25% 20%;
     --ring: 190 80% 55%;
+    
+    /* Glow and shine effects - dark mode */
+    --glow-primary: 0 0 50px hsl(190 80% 55% / 0.5);
+    --glow-accent: 0 0 50px hsl(25 95% 65% / 0.5);
+    --glow-secondary: 0 0 50px hsl(280 60% 65% / 0.4);
+    --shine-gradient: linear-gradient(135deg, hsl(190 80% 55% / 0.2), hsl(25 95% 65% / 0.2), hsl(280 60% 65% / 0.2));
+    
     --sidebar-background: 230 30% 10%;
     --sidebar-foreground: 190 40% 90%;
     --sidebar-primary: 190 80% 55%;
