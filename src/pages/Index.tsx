@@ -43,7 +43,9 @@ const Index = () => {
               className="text-xl px-12 py-7 rounded-full"
               onClick={() => navigate("/auth")}
             >
-              Start Your Check-In
+              <span className="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+                Start Your Check-In
+              </span>
             </Button>
             <Button 
               size="lg" 
@@ -204,7 +206,9 @@ const Index = () => {
               className="text-xl px-12 py-7 rounded-full"
               onClick={() => navigate("/auth")}
             >
-              Get Started Today
+              <span className="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+                Get Started Today
+              </span>
             </Button>
           </div>
         </Card>
