@@ -15,11 +15,21 @@ const Index = () => {
       <header className="relative container mx-auto px-4 py-12 overflow-hidden">
         <div className="absolute inset-0 rounded-3xl -z-10" style={{ background: 'var(--shine-gradient)' }}></div>
         <div className="flex flex-col items-center justify-center min-h-[85vh] text-center space-y-10">
-          <div className="animate-fade-in" style={{ filter: 'drop-shadow(var(--glow-primary))' }}>
+          <div className="animate-fade-in group" style={{ filter: 'drop-shadow(var(--glow-primary))' }}>
             <img 
               src={logo} 
               alt="CheqIn Logo" 
-              className="w-56 md:w-72 h-auto"
+              className="w-56 md:w-72 h-auto transition-all duration-500 group-hover:scale-110 group-hover:drop-shadow-2xl cursor-pointer"
+              style={{ 
+                animation: 'none',
+                filter: 'drop-shadow(0 10px 30px hsl(190 85% 45% / 0.3))'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.animation = 'pulse 1s ease-in-out infinite';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.animation = 'none';
+              }}
             />
           </div>
           <div className="space-y-6 max-w-4xl">
