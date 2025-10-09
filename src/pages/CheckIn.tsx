@@ -293,7 +293,7 @@ const CheckIn = () => {
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-8">
+    <div className="min-h-screen p-4 md:p-8 page-container">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header with Guidance */}
         <div className="text-center space-y-6">

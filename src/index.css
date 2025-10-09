@@ -115,8 +115,10 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
     position: relative;
+    overflow-x: hidden;
   }
 
+  /* Base gradient layer */
   body::before {
     content: '';
     position: fixed;
@@ -124,56 +126,116 @@ All colors MUST be HSL.
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -2;
+    z-index: -3;
     background: 
-      radial-gradient(circle at 20% 30%, hsl(190 100% 95% / 0.8) 0%, transparent 50%),
-      radial-gradient(circle at 80% 70%, hsl(25 100% 90% / 0.7) 0%, transparent 50%),
-      radial-gradient(circle at 50% 50%, hsl(280 100% 95% / 0.6) 0%, transparent 50%),
-      linear-gradient(135deg, hsl(190 100% 98%) 0%, hsl(280 80% 97%) 25%, hsl(25 100% 96%) 50%, hsl(190 90% 97%) 75%, hsl(280 100% 98%) 100%);
+      radial-gradient(circle at 20% 30%, hsl(190 100% 92% / 0.9) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, hsl(25 100% 88% / 0.8) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, hsl(280 100% 93% / 0.7) 0%, transparent 50%),
+      linear-gradient(135deg, hsl(190 100% 98%) 0%, hsl(280 80% 96%) 25%, hsl(25 100% 95%) 50%, hsl(190 90% 97%) 75%, hsl(280 100% 98%) 100%);
   }
 
+  /* Animated gradient overlay */
   body::after {
     content: '';
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    z-index: -2;
     background: 
-      radial-gradient(ellipse at 10% 20%, hsl(190 85% 45% / 0.15) 0%, transparent 40%),
-      radial-gradient(ellipse at 90% 80%, hsl(25 95% 60% / 0.15) 0%, transparent 40%),
-      radial-gradient(ellipse at 50% 60%, hsl(280 65% 60% / 0.12) 0%, transparent 40%);
-    animation: shimmer 20s ease-in-out infinite alternate;
+      radial-gradient(circle at 30% 40%, hsl(190 85% 45% / 0.2) 0%, transparent 35%),
+      radial-gradient(circle at 70% 60%, hsl(25 95% 60% / 0.2) 0%, transparent 35%),
+      radial-gradient(circle at 50% 80%, hsl(280 65% 60% / 0.18) 0%, transparent 35%),
+      radial-gradient(circle at 85% 20%, hsl(190 85% 50% / 0.15) 0%, transparent 30%),
+      radial-gradient(circle at 15% 70%, hsl(25 90% 55% / 0.15) 0%, transparent 30%);
+    animation: float 25s ease-in-out infinite;
+    opacity: 0.6;
   }
 
-  @keyframes shimmer {
-    0% {
-      opacity: 0.3;
-      transform: translateY(0px);
+  /* Floating orbs */
+  @keyframes float {
+    0%, 100% {
+      transform: translate(0, 0) rotate(0deg);
+    }
+    25% {
+      transform: translate(5%, -5%) rotate(90deg);
     }
     50% {
-      opacity: 0.5;
-      transform: translateY(-10px);
+      transform: translate(-3%, 3%) rotate(180deg);
     }
-    100% {
-      opacity: 0.3;
-      transform: translateY(0px);
+    75% {
+      transform: translate(-5%, -3%) rotate(270deg);
     }
   }
 
+  /* Additional decorative layer */
+  .page-container {
+    position: relative;
+  }
+
+  .page-container::before {
+    content: '';
+    position: fixed;
+    top: 10%;
+    right: 5%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, hsl(190 85% 45% / 0.12) 0%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(60px);
+    animation: pulse-glow 8s ease-in-out infinite;
+    z-index: -1;
+  }
+
+  .page-container::after {
+    content: '';
+    position: fixed;
+    bottom: 10%;
+    left: 5%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, hsl(25 95% 60% / 0.12) 0%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(80px);
+    animation: pulse-glow 10s ease-in-out infinite reverse;
+    z-index: -1;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      opacity: 0.4;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.6;
+      transform: scale(1.1);
+    }
+  }
+
+  /* Dark mode backgrounds */
   .dark body::before {
     background: 
-      radial-gradient(circle at 20% 30%, hsl(190 70% 15% / 0.6) 0%, transparent 50%),
-      radial-gradient(circle at 80% 70%, hsl(25 80% 20% / 0.5) 0%, transparent 50%),
-      radial-gradient(circle at 50% 50%, hsl(280 60% 18% / 0.5) 0%, transparent 50%),
+      radial-gradient(circle at 20% 30%, hsl(190 70% 18% / 0.7) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, hsl(25 80% 22% / 0.6) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, hsl(280 60% 20% / 0.6) 0%, transparent 50%),
       linear-gradient(135deg, hsl(230 35% 8%) 0%, hsl(190 50% 10%) 25%, hsl(280 40% 9%) 50%, hsl(25 60% 12%) 75%, hsl(230 35% 8%) 100%);
   }
 
   .dark body::after {
     background: 
-      radial-gradient(ellipse at 10% 20%, hsl(190 80% 55% / 0.2) 0%, transparent 40%),
-      radial-gradient(ellipse at 90% 80%, hsl(25 95% 65% / 0.2) 0%, transparent 40%),
-      radial-gradient(ellipse at 50% 60%, hsl(280 60% 65% / 0.18) 0%, transparent 40%);
+      radial-gradient(circle at 30% 40%, hsl(190 80% 55% / 0.25) 0%, transparent 35%),
+      radial-gradient(circle at 70% 60%, hsl(25 95% 65% / 0.25) 0%, transparent 35%),
+      radial-gradient(circle at 50% 80%, hsl(280 60% 65% / 0.22) 0%, transparent 35%),
+      radial-gradient(circle at 85% 20%, hsl(190 80% 60% / 0.2) 0%, transparent 30%),
+      radial-gradient(circle at 15% 70%, hsl(25 90% 60% / 0.2) 0%, transparent 30%);
+  }
+
+  .dark .page-container::before {
+    background: radial-gradient(circle, hsl(190 80% 55% / 0.15) 0%, transparent 70%);
+  }
+
+  .dark .page-container::after {
+    background: radial-gradient(circle, hsl(25 95% 65% / 0.15) 0%, transparent 70%);
   }
 }

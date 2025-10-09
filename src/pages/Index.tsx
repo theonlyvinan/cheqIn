@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 const Index = () => {
   const navigate = useNavigate();
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background page-container">
       {/* Hero Section */}
       <header className="relative container mx-auto px-4 py-12 overflow-hidden">
         <div className="absolute inset-0 rounded-3xl -z-10" style={{ background: 'var(--shine-gradient)' }}></div>
