@@ -12,7 +12,7 @@ const Index = () => {
           <img 
             src={logo} 
             alt="CheqIn Logo" 
-            className="w-32 h-32 md:w-40 md:h-40"
+            className="w-32 md:w-40 h-auto"
           />
           <div className="space-y-4">
             <h1 className="text-5xl md:text-7xl font-bold text-foreground">
