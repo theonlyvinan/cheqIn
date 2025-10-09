@@ -4,27 +4,13 @@ import { Heart, MessageCircle, Pill, TrendingUp } from "lucide-react";
 import logo from "@/assets/cheqin-logo.png";
 import dailyCheckin from "@/assets/daily-checkin.png";
 import medicineReminder from "@/assets/medicine-reminder.png";
-import sentimentTrends from "@/assets/sentiment-trends.png";
-import elderlyFacesBg from "@/assets/elderly-faces-bg.jpg";
+import emotionalWellbeing from "@/assets/emotional-wellbeing.png";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const navigate = useNavigate();
   return (
-    <div className="min-h-screen bg-background relative">
-      {/* Background Pattern */}
-      <div 
-        className="fixed inset-0 z-0 opacity-[0.03] dark:opacity-[0.05]"
-        style={{
-          backgroundImage: `url(${elderlyFacesBg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      ></div>
-      
-      {/* Content */}
-      <div className="relative z-10">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <header className="relative container mx-auto px-4 py-12 overflow-hidden">
         <div className="absolute inset-0 rounded-3xl -z-10" style={{ background: 'var(--shine-gradient)' }}></div>
@@ -89,7 +75,7 @@ const Index = () => {
         <div className="grid lg:grid-cols-3 gap-12 max-w-7xl mx-auto">
           {/* Daily Check-In */}
           <Card className="group overflow-hidden border-0 shadow-2xl transition-all duration-500 hover:scale-[1.02]" style={{ boxShadow: '0 20px 50px -10px hsl(190 85% 45% / 0.2), var(--glow-primary)' }}>
-            <div className="aspect-video overflow-hidden">
+            <div className="aspect-[4/3] overflow-hidden">
               <img 
                 src={dailyCheckin} 
                 alt="Daily Check-In" 
@@ -126,7 +112,7 @@ const Index = () => {
 
           {/* Medicine Reminder */}
           <Card className="group overflow-hidden border-0 shadow-2xl transition-all duration-500 hover:scale-[1.02]" style={{ boxShadow: '0 20px 50px -10px hsl(25 95% 60% / 0.2), var(--glow-accent)' }}>
-            <div className="aspect-video overflow-hidden">
+            <div className="aspect-[4/3] overflow-hidden">
               <img 
                 src={medicineReminder} 
                 alt="Smart Medicine Reminders" 
@@ -161,12 +147,12 @@ const Index = () => {
             </div>
           </Card>
 
-          {/* Sentiment & Family Connection */}
+          {/* Emotional Wellbeing Trends */}
           <Card className="group overflow-hidden border-0 shadow-2xl transition-all duration-500 hover:scale-[1.02]" style={{ boxShadow: '0 20px 50px -10px hsl(280 65% 60% / 0.2), var(--glow-secondary)' }}>
-            <div className="aspect-video overflow-hidden">
+            <div className="aspect-[4/3] overflow-hidden">
               <img 
-                src={sentimentTrends} 
-                alt="Sentiment Analysis & Trends" 
+                src={emotionalWellbeing} 
+                alt="Emotional Wellbeing Trends" 
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
             </div>
@@ -175,7 +161,7 @@ const Index = () => {
                 <TrendingUp className="w-8 h-8 text-accent" strokeWidth={1.5} />
               </div>
               <div className="space-y-4">
-                <h3 className="text-3xl font-bold">Sentiment & Family Trends</h3>
+                <h3 className="text-3xl font-bold">Emotional Wellbeing Trends</h3>
                 <p className="text-lg text-muted-foreground leading-relaxed">
                   AI-powered sentiment analysis tracks emotional wellbeing over time. 
                   Families receive beautiful trend reports and instant alerts for concerning changes.
@@ -247,7 +233,6 @@ const Index = () => {
           </p>
         </div>
       </footer>
-      </div>
     </div>
   );
 };
