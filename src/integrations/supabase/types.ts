@@ -14,7 +14,194 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      check_ins: {
+        Row: {
+          audio_url: string | null
+          created_at: string | null
+          emotions: Json | null
+          id: string
+          mood_rating: number | null
+          notes: string | null
+          pain_level: number | null
+          sentiment_label: string | null
+          sentiment_score: number | null
+          sleep_quality: number | null
+          transcript: string
+          user_id: string
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string | null
+          emotions?: Json | null
+          id?: string
+          mood_rating?: number | null
+          notes?: string | null
+          pain_level?: number | null
+          sentiment_label?: string | null
+          sentiment_score?: number | null
+          sleep_quality?: number | null
+          transcript: string
+          user_id: string
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string | null
+          emotions?: Json | null
+          id?: string
+          mood_rating?: number | null
+          notes?: string | null
+          pain_level?: number | null
+          sentiment_label?: string | null
+          sentiment_score?: number | null
+          sleep_quality?: number | null
+          transcript?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      family_members: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          family_user_id: string | null
+          id: string
+          name: string
+          phone: string | null
+          receive_alerts: boolean | null
+          relationship: string | null
+          senior_user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          family_user_id?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          receive_alerts?: boolean | null
+          relationship?: string | null
+          senior_user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          family_user_id?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          receive_alerts?: boolean | null
+          relationship?: string | null
+          senior_user_id?: string
+        }
+        Relationships: []
+      }
+      medication_logs: {
+        Row: {
+          id: string
+          medication_id: string | null
+          notes: string | null
+          taken_at: string | null
+          user_id: string
+          was_taken: boolean
+        }
+        Insert: {
+          id?: string
+          medication_id?: string | null
+          notes?: string | null
+          taken_at?: string | null
+          user_id: string
+          was_taken: boolean
+        }
+        Update: {
+          id?: string
+          medication_id?: string | null
+          notes?: string | null
+          taken_at?: string | null
+          user_id?: string
+          was_taken?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medication_logs_medication_id_fkey"
+            columns: ["medication_id"]
+            isOneToOne: false
+            referencedRelation: "medications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medications: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          dosage: string | null
+          frequency: string | null
+          id: string
+          image_url: string | null
+          instructions: string | null
+          name: string
+          time_of_day: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          dosage?: string | null
+          frequency?: string | null
+          id?: string
+          image_url?: string | null
+          instructions?: string | null
+          name: string
+          time_of_day?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          dosage?: string | null
+          frequency?: string | null
+          id?: string
+          image_url?: string | null
+          instructions?: string | null
+          name?: string
+          time_of_day?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

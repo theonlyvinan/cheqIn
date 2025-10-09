@@ -5,8 +5,10 @@ import logo from "@/assets/cheqin-logo.png";
 import dailyCheckin from "@/assets/daily-checkin.png";
 import medicineReminder from "@/assets/medicine-reminder.png";
 import sentimentTrends from "@/assets/sentiment-trends.png";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -32,10 +34,22 @@ const Index = () => {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-6 pt-6">
-            <Button size="lg" variant="accent" className="text-xl px-12 py-7 rounded-full shadow-xl hover:scale-105 transition-transform">
+            <Button 
+              size="lg" 
+              variant="accent" 
+              className="text-xl px-12 py-7 rounded-full shadow-xl hover:scale-105 transition-transform"
+              onClick={() => navigate("/auth")}
+            >
               Start Your Check-In
             </Button>
-            <Button size="lg" variant="outline" className="text-xl px-12 py-7 rounded-full hover:scale-105 transition-transform">
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="text-xl px-12 py-7 rounded-full hover:scale-105 transition-transform"
+              onClick={() => {
+                document.querySelector('#features')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
               Learn More
             </Button>
           </div>
@@ -43,7 +57,7 @@ const Index = () => {
       </header>
 
       {/* Features Section */}
-      <section className="container mx-auto px-4 py-24">
+      <section id="features" className="container mx-auto px-4 py-24">
         <div className="text-center mb-20 space-y-4">
           <h2 className="text-5xl md:text-6xl font-bold text-foreground">
             Care That Understands
@@ -182,6 +196,7 @@ const Index = () => {
               size="lg" 
               variant="outline" 
               className="text-xl px-12 py-7 rounded-full border-2 border-accent-foreground bg-background text-foreground hover:bg-accent-foreground hover:text-accent shadow-xl hover:scale-105 transition-all"
+              onClick={() => navigate("/auth")}
             >
               Get Started Today
             </Button>
