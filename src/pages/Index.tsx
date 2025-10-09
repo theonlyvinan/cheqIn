@@ -33,7 +33,7 @@ const Index = () => {
               A wellness companion for brighter days
             </p>
             <p className="text-lg md:text-xl text-muted-foreground/80 max-w-2xl mx-auto leading-relaxed">
-              Stay connected to the mental and physical health of your elderly loved ones through daily voice check-ins, smart medication reminders, and real-time wellness insights that keep families close, even from afar
+              A daily companion for seniors who talks, listens, and reminds. A peace of mind for families who can always stay connected and be there when it matters most
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-6 pt-6">
