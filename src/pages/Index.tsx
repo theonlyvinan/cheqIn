@@ -1,35 +1,41 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Heart, MessageCircle, Pill, Users } from "lucide-react";
+import { Heart, MessageCircle, Pill, TrendingUp } from "lucide-react";
 import logo from "@/assets/cheqin-logo.png";
+import dailyCheckin from "@/assets/daily-checkin.png";
+import medicineReminder from "@/assets/medicine-reminder.png";
+import sentimentTrends from "@/assets/sentiment-trends.png";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <header className="container mx-auto px-4 py-8">
-        <div className="flex flex-col items-center justify-center min-h-[80vh] text-center space-y-8">
-          <img 
-            src={logo} 
-            alt="CheqIn Logo" 
-            className="w-32 md:w-40 h-auto"
-          />
-          <div className="space-y-4">
-            <h1 className="text-5xl md:text-7xl font-bold text-foreground">
+      <header className="relative container mx-auto px-4 py-12 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-accent/10 rounded-3xl -z-10"></div>
+        <div className="flex flex-col items-center justify-center min-h-[85vh] text-center space-y-10">
+          <div className="animate-fade-in">
+            <img 
+              src={logo} 
+              alt="CheqIn Logo" 
+              className="w-40 md:w-48 h-auto drop-shadow-2xl"
+            />
+          </div>
+          <div className="space-y-6 max-w-4xl">
+            <h1 className="text-6xl md:text-8xl font-bold bg-gradient-to-r from-foreground via-foreground to-accent bg-clip-text text-transparent">
               CheqIn
             </h1>
-            <p className="text-2xl md:text-3xl text-muted-foreground">
+            <p className="text-3xl md:text-4xl font-light text-muted-foreground">
               Because love deserves a daily CheqIn
             </p>
+            <p className="text-xl md:text-2xl text-foreground/80 max-w-3xl mx-auto leading-relaxed">
+              A friendly voice companion that listens, remembers, and cares—making wellness feel warm and human.
+            </p>
           </div>
-          <p className="text-xl md:text-2xl max-w-2xl text-foreground">
-            A friendly voice companion for brighter days
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 pt-4">
-            <Button size="lg" variant="accent" className="text-lg px-8 py-6">
-              Start Check-In
+          <div className="flex flex-col sm:flex-row gap-6 pt-6">
+            <Button size="lg" variant="accent" className="text-xl px-12 py-7 rounded-full shadow-xl hover:scale-105 transition-transform">
+              Start Your Check-In
             </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8 py-6">
+            <Button size="lg" variant="outline" className="text-xl px-12 py-7 rounded-full hover:scale-105 transition-transform">
               Learn More
             </Button>
           </div>
@@ -37,95 +43,124 @@ const Index = () => {
       </header>
 
       {/* Features Section */}
-      <section className="container mx-auto px-4 py-20">
-        <h2 className="text-4xl md:text-5xl font-bold text-center mb-4 text-foreground">
-          Care That Understands
-        </h2>
-        <p className="text-xl text-center text-muted-foreground mb-16 max-w-2xl mx-auto">
-          Advanced wellness monitoring that feels human
-        </p>
+      <section className="container mx-auto px-4 py-24">
+        <div className="text-center mb-20 space-y-4">
+          <h2 className="text-5xl md:text-6xl font-bold text-foreground">
+            Care That Understands
+          </h2>
+          <p className="text-2xl text-muted-foreground max-w-3xl mx-auto">
+            Advanced AI wellness monitoring that feels warm, personal, and deeply human
+          </p>
+        </div>
         
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid lg:grid-cols-3 gap-12 max-w-7xl mx-auto">
           {/* Daily Check-In */}
-          <Card className="p-8 space-y-6 border-2 hover:shadow-xl transition-all duration-300 hover:scale-105">
-            <div className="bg-accent/10 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto">
-              <MessageCircle className="w-10 h-10 text-accent" strokeWidth={1.5} />
+          <Card className="group overflow-hidden border-0 shadow-2xl hover:shadow-accent/20 transition-all duration-500 hover:scale-[1.02]">
+            <div className="aspect-video overflow-hidden">
+              <img 
+                src={dailyCheckin} 
+                alt="Daily Check-In" 
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
             </div>
-            <div className="space-y-3">
-              <h3 className="text-2xl font-bold text-center">Daily Check-In</h3>
-              <p className="text-lg text-muted-foreground text-center">
-                Natural voice conversations that track mood, sleep quality, and daily activities. 
-                Our AI listens with empathy and asks thoughtful follow-up questions.
-              </p>
-            </div>
-            <div className="pt-4 space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-accent rounded-full"></div>
-                <span>Voice-first interaction</span>
+            <div className="p-8 space-y-6">
+              <div className="bg-accent/10 w-16 h-16 rounded-2xl flex items-center justify-center">
+                <MessageCircle className="w-8 h-8 text-accent" strokeWidth={1.5} />
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-accent rounded-full"></div>
-                <span>Mood & tone detection</span>
+              <div className="space-y-4">
+                <h3 className="text-3xl font-bold">Daily Check-In</h3>
+                <p className="text-lg text-muted-foreground leading-relaxed">
+                  Natural voice conversations that track mood, sleep quality, and daily activities. 
+                  Our AI listens with empathy and asks thoughtful follow-up questions.
+                </p>
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-accent rounded-full"></div>
-                <span>Emergency awareness</span>
+              <div className="pt-4 space-y-3">
+                <div className="flex items-center gap-3 text-base">
+                  <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+                  <span>Voice-first interaction</span>
+                </div>
+                <div className="flex items-center gap-3 text-base">
+                  <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+                  <span>Mood & tone detection</span>
+                </div>
+                <div className="flex items-center gap-3 text-base">
+                  <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+                  <span>Emergency awareness</span>
+                </div>
               </div>
             </div>
           </Card>
 
           {/* Medicine Reminder */}
-          <Card className="p-8 space-y-6 border-2 hover:shadow-xl transition-all duration-300 hover:scale-105">
-            <div className="bg-accent/10 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto">
-              <Pill className="w-10 h-10 text-accent" strokeWidth={1.5} />
+          <Card className="group overflow-hidden border-0 shadow-2xl hover:shadow-accent/20 transition-all duration-500 hover:scale-[1.02]">
+            <div className="aspect-video overflow-hidden">
+              <img 
+                src={medicineReminder} 
+                alt="Smart Medicine Reminders" 
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
             </div>
-            <div className="space-y-3">
-              <h3 className="text-2xl font-bold text-center">Smart Medicine Reminders</h3>
-              <p className="text-lg text-muted-foreground text-center">
-                Scan pill bottles with your camera for instant recognition. 
-                Get gentle, conversational reminders about when and how to take each medication.
-              </p>
-            </div>
-            <div className="pt-4 space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-accent rounded-full"></div>
-                <span>Visual pill recognition</span>
+            <div className="p-8 space-y-6">
+              <div className="bg-accent/10 w-16 h-16 rounded-2xl flex items-center justify-center">
+                <Pill className="w-8 h-8 text-accent" strokeWidth={1.5} />
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-accent rounded-full"></div>
-                <span>Personalized schedules</span>
+              <div className="space-y-4">
+                <h3 className="text-3xl font-bold">Smart Medicine Reminders</h3>
+                <p className="text-lg text-muted-foreground leading-relaxed">
+                  Scan pill bottles with your camera for instant recognition. 
+                  Get gentle, conversational reminders about when and how to take each medication.
+                </p>
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-accent rounded-full"></div>
-                <span>Adherence tracking</span>
+              <div className="pt-4 space-y-3">
+                <div className="flex items-center gap-3 text-base">
+                  <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+                  <span>Visual pill recognition</span>
+                </div>
+                <div className="flex items-center gap-3 text-base">
+                  <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+                  <span>Personalized schedules</span>
+                </div>
+                <div className="flex items-center gap-3 text-base">
+                  <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+                  <span>Adherence tracking</span>
+                </div>
               </div>
             </div>
           </Card>
 
           {/* Sentiment & Family Connection */}
-          <Card className="p-8 space-y-6 border-2 hover:shadow-xl transition-all duration-300 hover:scale-105">
-            <div className="bg-accent/10 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto">
-              <Heart className="w-10 h-10 text-accent" strokeWidth={1.5} />
+          <Card className="group overflow-hidden border-0 shadow-2xl hover:shadow-accent/20 transition-all duration-500 hover:scale-[1.02]">
+            <div className="aspect-video overflow-hidden">
+              <img 
+                src={sentimentTrends} 
+                alt="Sentiment Analysis & Trends" 
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
             </div>
-            <div className="space-y-3">
-              <h3 className="text-2xl font-bold text-center">Family Connection</h3>
-              <p className="text-lg text-muted-foreground text-center">
-                AI-powered sentiment analysis tracks emotional wellbeing over time. 
-                Families receive beautiful trend reports and instant alerts for concerning changes.
-              </p>
-            </div>
-            <div className="pt-4 space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-accent rounded-full"></div>
-                <span>Emotion trend charts</span>
+            <div className="p-8 space-y-6">
+              <div className="bg-accent/10 w-16 h-16 rounded-2xl flex items-center justify-center">
+                <TrendingUp className="w-8 h-8 text-accent" strokeWidth={1.5} />
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-accent rounded-full"></div>
-                <span>Weekly wellness summaries</span>
+              <div className="space-y-4">
+                <h3 className="text-3xl font-bold">Sentiment & Family Trends</h3>
+                <p className="text-lg text-muted-foreground leading-relaxed">
+                  AI-powered sentiment analysis tracks emotional wellbeing over time. 
+                  Families receive beautiful trend reports and instant alerts for concerning changes.
+                </p>
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-accent rounded-full"></div>
-                <span>Automatic family updates</span>
+              <div className="pt-4 space-y-3">
+                <div className="flex items-center gap-3 text-base">
+                  <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+                  <span>Emotion trend charts</span>
+                </div>
+                <div className="flex items-center gap-3 text-base">
+                  <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+                  <span>Weekly wellness summaries</span>
+                </div>
+                <div className="flex items-center gap-3 text-base">
+                  <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+                  <span>Automatic family updates</span>
+                </div>
               </div>
             </div>
           </Card>
@@ -133,25 +168,40 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="container mx-auto px-4 py-16">
-        <Card className="p-12 text-center space-y-6 bg-accent text-accent-foreground border-0">
-          <h2 className="text-4xl md:text-5xl font-bold">
-            Ready to start your daily CheqIn?
-          </h2>
-          <p className="text-xl md:text-2xl max-w-2xl mx-auto">
-            Join thousands who make wellness a daily habit
-          </p>
-          <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-accent-foreground hover:bg-accent-foreground hover:text-accent">
-            Get Started Today
-          </Button>
+      <section className="container mx-auto px-4 py-20">
+        <Card className="relative overflow-hidden p-16 text-center space-y-8 bg-gradient-to-br from-accent via-accent to-accent/80 text-accent-foreground border-0 shadow-2xl">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.1),transparent)]"></div>
+          <div className="relative z-10 space-y-8">
+            <h2 className="text-5xl md:text-6xl font-bold">
+              Ready to start your daily CheqIn?
+            </h2>
+            <p className="text-2xl md:text-3xl max-w-3xl mx-auto opacity-90">
+              Join thousands who make wellness a warm, daily conversation
+            </p>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="text-xl px-12 py-7 rounded-full border-2 border-accent-foreground bg-background text-foreground hover:bg-accent-foreground hover:text-accent shadow-xl hover:scale-105 transition-all"
+            >
+              Get Started Today
+            </Button>
+          </div>
         </Card>
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-8 mt-16">
-        <div className="container mx-auto px-4 text-center">
+      <footer className="border-t py-12 mt-20 bg-muted/30">
+        <div className="container mx-auto px-4 text-center space-y-4">
+          <img 
+            src={logo} 
+            alt="CheqIn" 
+            className="w-16 h-auto mx-auto opacity-80"
+          />
           <p className="text-lg text-muted-foreground">
             © 2025 CheqIn. A wellness companion for brighter days.
+          </p>
+          <p className="text-sm text-muted-foreground/60">
+            Built with ❤️ for seniors and their families
           </p>
         </div>
       </footer>
