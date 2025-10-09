@@ -33,9 +33,25 @@ const Index = () => {
             />
           </div>
           <div className="space-y-6 max-w-4xl">
-            <h1 className="text-6xl md:text-8xl font-bold bg-gradient-to-r from-foreground via-foreground to-accent bg-clip-text text-transparent">
-              CheqIn
-            </h1>
+            <div className="group relative inline-block">
+              <h1 className="text-6xl md:text-8xl font-bold bg-gradient-to-r from-foreground via-foreground to-accent bg-clip-text text-transparent">
+                CheqIn
+              </h1>
+              <Heart 
+                className="absolute -top-8 -right-8 md:-top-12 md:-right-12 w-12 h-12 md:w-16 md:h-16 text-accent fill-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300" 
+                style={{
+                  animation: 'none'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.animation = 'pulse 0.6s ease-in-out infinite';
+                }}
+              />
+            </div>
+            <style dangerouslySetInnerHTML={{ __html: `
+              .group:hover .absolute {
+                animation: pulse 0.6s ease-in-out infinite !important;
+              }
+            `}} />
             <p className="text-2xl md:text-3xl font-medium text-foreground italic">
               Because love deserves a daily CheqIn
             </p>
