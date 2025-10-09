@@ -37,49 +37,97 @@ const Index = () => {
       </header>
 
       {/* Features Section */}
-      <section className="container mx-auto px-4 py-16">
-        <h2 className="text-4xl md:text-5xl font-bold text-center mb-12 text-foreground">
-          Simple. Caring. Always There.
+      <section className="container mx-auto px-4 py-20">
+        <h2 className="text-4xl md:text-5xl font-bold text-center mb-4 text-foreground">
+          Care That Understands
         </h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="p-8 text-center space-y-4 border-2">
-            <div className="flex justify-center">
-              <MessageCircle className="w-16 h-16" strokeWidth={1.5} />
+        <p className="text-xl text-center text-muted-foreground mb-16 max-w-2xl mx-auto">
+          Advanced wellness monitoring that feels human
+        </p>
+        
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {/* Daily Check-In */}
+          <Card className="p-8 space-y-6 border-2 hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <div className="bg-accent/10 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto">
+              <MessageCircle className="w-10 h-10 text-accent" strokeWidth={1.5} />
             </div>
-            <h3 className="text-2xl font-semibold">Daily Voice Log</h3>
-            <p className="text-lg text-muted-foreground">
-              Simply speak about your day. No screens, no typing.
-            </p>
+            <div className="space-y-3">
+              <h3 className="text-2xl font-bold text-center">Daily Check-In</h3>
+              <p className="text-lg text-muted-foreground text-center">
+                Natural voice conversations that track mood, sleep quality, and daily activities. 
+                Our AI listens with empathy and asks thoughtful follow-up questions.
+              </p>
+            </div>
+            <div className="pt-4 space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-2 h-2 bg-accent rounded-full"></div>
+                <span>Voice-first interaction</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-2 h-2 bg-accent rounded-full"></div>
+                <span>Mood & tone detection</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-2 h-2 bg-accent rounded-full"></div>
+                <span>Emergency awareness</span>
+              </div>
+            </div>
           </Card>
 
-          <Card className="p-8 text-center space-y-4 border-2">
-            <div className="flex justify-center">
-              <Heart className="w-16 h-16" strokeWidth={1.5} />
+          {/* Medicine Reminder */}
+          <Card className="p-8 space-y-6 border-2 hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <div className="bg-accent/10 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto">
+              <Pill className="w-10 h-10 text-accent" strokeWidth={1.5} />
             </div>
-            <h3 className="text-2xl font-semibold">Friendly Chat</h3>
-            <p className="text-lg text-muted-foreground">
-              Natural conversations that feel like talking to a friend.
-            </p>
+            <div className="space-y-3">
+              <h3 className="text-2xl font-bold text-center">Smart Medicine Reminders</h3>
+              <p className="text-lg text-muted-foreground text-center">
+                Scan pill bottles with your camera for instant recognition. 
+                Get gentle, conversational reminders about when and how to take each medication.
+              </p>
+            </div>
+            <div className="pt-4 space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-2 h-2 bg-accent rounded-full"></div>
+                <span>Visual pill recognition</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-2 h-2 bg-accent rounded-full"></div>
+                <span>Personalized schedules</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-2 h-2 bg-accent rounded-full"></div>
+                <span>Adherence tracking</span>
+              </div>
+            </div>
           </Card>
 
-          <Card className="p-8 text-center space-y-4 border-2">
-            <div className="flex justify-center">
-              <Pill className="w-16 h-16" strokeWidth={1.5} />
+          {/* Sentiment & Family Connection */}
+          <Card className="p-8 space-y-6 border-2 hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <div className="bg-accent/10 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto">
+              <Heart className="w-10 h-10 text-accent" strokeWidth={1.5} />
             </div>
-            <h3 className="text-2xl font-semibold">Medicine Helper</h3>
-            <p className="text-lg text-muted-foreground">
-              Gentle reminders and guidance for your medications.
-            </p>
-          </Card>
-
-          <Card className="p-8 text-center space-y-4 border-2">
-            <div className="flex justify-center">
-              <Users className="w-16 h-16" strokeWidth={1.5} />
+            <div className="space-y-3">
+              <h3 className="text-2xl font-bold text-center">Family Connection</h3>
+              <p className="text-lg text-muted-foreground text-center">
+                AI-powered sentiment analysis tracks emotional wellbeing over time. 
+                Families receive beautiful trend reports and instant alerts for concerning changes.
+              </p>
             </div>
-            <h3 className="text-2xl font-semibold">Family Updates</h3>
-            <p className="text-lg text-muted-foreground">
-              Keep loved ones informed with daily wellness summaries.
-            </p>
+            <div className="pt-4 space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-2 h-2 bg-accent rounded-full"></div>
+                <span>Emotion trend charts</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-2 h-2 bg-accent rounded-full"></div>
+                <span>Weekly wellness summaries</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-2 h-2 bg-accent rounded-full"></div>
+                <span>Automatic family updates</span>
+              </div>
+            </div>
           </Card>
         </div>
       </section>
