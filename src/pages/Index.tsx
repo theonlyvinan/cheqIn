@@ -32,6 +32,9 @@ const Index = () => {
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               A wellness companion for brighter days
             </p>
+            <p className="text-lg md:text-xl text-muted-foreground/80 max-w-2xl mx-auto leading-relaxed">
+              Track daily wellness through voice conversations, receive smart medication reminders, and keep family connected with meaningful health insights
+            </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-6 pt-6">
             <Button 
