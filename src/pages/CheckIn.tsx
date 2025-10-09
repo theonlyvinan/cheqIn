@@ -295,113 +295,54 @@ const CheckIn = () => {
   return (
     <div className="min-h-screen p-4 md:p-8 page-container">
       <div className="max-w-6xl mx-auto space-y-8">
-        {/* Header with Guidance */}
-        <div className="text-center space-y-6">
-          <div className="inline-block px-6 py-2 bg-primary/10 border-2 border-primary/30 rounded-full">
-            <span className="text-sm font-semibold text-primary">Daily Wellness Check-In</span>
-          </div>
-          <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
-            How Are You Feeling Today?
+        {/* Header */}
+        <div className="text-center space-y-4">
+          <h1 className="text-4xl md:text-5xl font-bold">
+            How Are You Feeling?
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-            {isRecording 
-              ? "🎤 I'm listening... Take your time and share what's on your mind" 
-              : "Tap the microphone below and tell me about your day, how you're feeling, and anything that's on your mind"
-            }
+          <p className="text-lg text-muted-foreground">
+            {isRecording ? "Listening..." : "Tap to start your check-in"}
           </p>
-          {!isRecording && !transcript && (
-            <div className="flex flex-col items-center gap-4 max-w-xl mx-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                <div className="flex items-start gap-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                  <div className="w-2 h-2 bg-primary rounded-full mt-1.5"></div>
-                  <span className="text-left">Share how you're feeling physically</span>
-                </div>
-                <div className="flex items-start gap-2 p-3 bg-accent/5 rounded-lg border border-accent/20">
-                  <div className="w-2 h-2 bg-accent rounded-full mt-1.5"></div>
-                  <span className="text-left">Talk about your mood and emotions</span>
-                </div>
-                <div className="flex items-start gap-2 p-3 bg-secondary/5 rounded-lg border border-secondary/20">
-                  <div className="w-2 h-2 bg-secondary rounded-full mt-1.5"></div>
-                  <span className="text-left">Mention any pain or discomfort</span>
-                </div>
-                <div className="flex items-start gap-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                  <div className="w-2 h-2 bg-primary rounded-full mt-1.5"></div>
-                  <span className="text-left">Share activities from your day</span>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Recording Section */}
-          <Card className="p-8 space-y-8 shadow-2xl border-0 backdrop-blur-sm bg-card/95" style={{ boxShadow: 'var(--glow-primary)' }}>
-            <div className="flex flex-col items-center gap-6">
-              {!isRecording && !transcript && (
-                <div className="text-center space-y-2">
-                  <h2 className="text-2xl font-bold">Ready to Start?</h2>
-                  <p className="text-muted-foreground">Press the button when you're ready to speak</p>
-                </div>
-              )}
-              
-              <div className={`relative ${isRecording ? 'animate-pulse' : ''}`}>
-                <div className={`absolute inset-0 rounded-full blur-2xl opacity-50 ${isRecording ? 'bg-gradient-to-r from-accent via-primary to-secondary' : ''}`}></div>
-                <Button
-                  size="lg"
-                  variant={isRecording ? "destructive" : "hero"}
-                  className="relative w-40 h-40 rounded-full text-2xl shadow-2xl"
-                  onClick={isRecording ? stopRecording : startRecording}
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? (
-                    <Loader2 className="w-20 h-20 animate-spin" />
-                  ) : isRecording ? (
-                    <>
-                      <MicOff className="w-20 h-20" />
-                    </>
-                  ) : (
-                    <span className="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
-                      <Mic className="w-20 h-20" />
-                    </span>
-                  )}
-                </Button>
-              </div>
-              
-              {isRecording && (
-                <p className="text-lg font-medium text-accent animate-pulse">Recording... Tap again to stop</p>
-              )}
+        {/* Recording Section */}
+        <div className="max-w-2xl mx-auto">
+          <Card className="p-8 space-y-6">
+            <div className="flex flex-col items-center gap-4">
+              <Button
+                size="lg"
+                variant={isRecording ? "destructive" : "default"}
+                className="w-32 h-32 rounded-full"
+                onClick={isRecording ? stopRecording : startRecording}
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <Loader2 className="w-16 h-16 animate-spin" />
+                ) : isRecording ? (
+                  <MicOff className="w-16 h-16" />
+                ) : (
+                  <Mic className="w-16 h-16" />
+                )}
+              </Button>
               
               {isProcessing && (
-                <p className="text-lg font-medium text-primary">Analyzing your check-in...</p>
+                <p className="text-sm text-muted-foreground">Analyzing...</p>
               )}
             </div>
 
             {transcript && (
               <div className="space-y-4">
-                <div className="p-6 bg-gradient-to-r from-primary/10 to-accent/10 rounded-2xl border-2 border-primary/20">
-                  <h3 className="font-bold mb-3 text-lg flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-primary" />
-                    Your Message
-                  </h3>
-                  <p className="text-foreground leading-relaxed">{transcript}</p>
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="text-sm">{transcript}</p>
                 </div>
 
                 {sentiment && (
-                  <div className={`p-6 bg-gradient-to-r ${getSentimentColor(sentiment.sentiment_label)} bg-opacity-10 rounded-2xl border-2 border-white/20`}>
-                    <h3 className="font-bold mb-3 text-lg text-white flex items-center gap-2">
+                  <div className="flex items-center justify-between p-4 bg-primary/10 rounded-lg">
+                    <div className="flex items-center gap-2">
                       {getSentimentIcon(sentiment.sentiment_label)}
-                      Mood Detected
-                    </h3>
-                    <div className="flex gap-6 flex-wrap text-white">
-                      <div className="bg-white/20 px-4 py-2 rounded-lg">
-                        <span className="font-medium">Status: </span>
-                        <span className="capitalize font-bold">{sentiment.sentiment_label.replace('_', ' ')}</span>
-                      </div>
-                      <div className="bg-white/20 px-4 py-2 rounded-lg">
-                        <span className="font-medium">Mood: </span>
-                        <span className="font-bold">{sentiment.mood_rating}/10</span>
-                      </div>
+                      <span className="text-sm capitalize">{sentiment.sentiment_label.replace('_', ' ')}</span>
                     </div>
+                    <span className="text-sm font-medium">Mood: {sentiment.mood_rating}/10</span>
                   </div>
                 )}
               </div>
@@ -410,114 +351,49 @@ const CheckIn = () => {
             <Button 
               variant="outline" 
               onClick={() => navigate("/")}
-              className="w-full text-lg py-6"
+              className="w-full"
             >
               Back to Home
             </Button>
           </Card>
+        </div>
 
-          {/* Session History */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-3xl font-bold flex items-center gap-3">
-                <Clock className="w-8 h-8 text-primary" />
-                Recent Check-Ins
-              </h2>
-              <Badge variant="outline" className="text-sm">
-                {sessions.filter(s => s.status === 'completed').length} sessions
-              </Badge>
-            </div>
+        {/* Recent Check-Ins - Compact */}
+        {sessions.filter(s => s.status === 'completed').length > 0 && (
+          <div className="max-w-2xl mx-auto space-y-3">
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <Clock className="w-5 h-5" />
+              Recent Check-Ins
+            </h2>
             
-            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-              {sessions.map((session) => (
+            <div className="space-y-2">
+              {sessions.filter(s => s.status === 'completed').slice(0, 3).map((session) => (
                 <Card
                   key={session.id}
-                  className={`p-6 cursor-pointer transition-all duration-300 border-0 backdrop-blur-sm ${
-                    session.status === 'processing' 
-                      ? 'bg-gradient-to-r from-secondary/20 to-primary/20 animate-pulse' 
-                      : 'bg-card/95 hover:scale-102 shadow-xl'
-                  }`}
-                  style={session.status === 'completed' ? {
-                    boxShadow: session.sentiment.label.includes('positive') 
-                      ? 'var(--glow-primary)' 
-                      : session.sentiment.label.includes('negative')
-                      ? 'var(--glow-accent)'
-                      : 'var(--glow-secondary)'
-                  } : undefined}
-                  onClick={() => session.status === 'completed' && setSelectedSession(session)}
+                  className="p-4 cursor-pointer hover:bg-accent/5 transition-colors"
+                  onClick={() => setSelectedSession(session)}
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 space-y-3">
-                      <div className="flex items-center gap-3">
-                        {session.status === 'processing' ? (
-                          <>
-                            <Loader2 className="w-6 h-6 animate-spin text-secondary" />
-                            <Badge className="bg-secondary text-secondary-foreground">
-                              Processing...
-                            </Badge>
-                          </>
-                        ) : (
-                          <>
-                            <div className={`p-2 rounded-full bg-gradient-to-r ${getSentimentColor(session.sentiment.label)}`}>
-                              {getSentimentIcon(session.sentiment.label)}
-                            </div>
-                            <Badge className={`bg-gradient-to-r ${getSentimentColor(session.sentiment.label)} text-white border-0`}>
-                              {session.sentiment.label.replace('_', ' ')}
-                            </Badge>
-                          </>
-                        )}
-                        <span className="text-sm text-muted-foreground">
-                          {formatTimestamp(session.timestamp)}
-                        </span>
-                      </div>
-                      
-                      {session.status === 'completed' && (
-                        <>
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {session.transcript}
-                          </p>
-                          
-                          {session.sentiment.highlights && session.sentiment.highlights.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                              {session.sentiment.highlights.slice(0, 2).map((highlight, idx) => (
-                                <Badge key={idx} variant="outline" className="text-xs">
-                                  {highlight}
-                                </Badge>
-                              ))}
-                              {session.sentiment.highlights.length > 2 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{session.sentiment.highlights.length - 2} more
-                                </Badge>
-                              )}
-                            </div>
-                          )}
-                        </>
-                      )}
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="text-xs text-muted-foreground">{formatTimestamp(session.timestamp)}</div>
+                      <div className="text-sm font-medium mt-1 line-clamp-1">{session.transcript}</div>
                     </div>
-                    
-                    {session.status === 'completed' && (
-                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                    )}
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
                   </div>
                 </Card>
               ))}
             </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Session Details Dialog */}
+      {/* Session Detail Dialog */}
       <Dialog open={!!selectedSession} onOpenChange={() => setSelectedSession(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           {selectedSession && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-3xl flex items-center gap-3">
-                  <div className={`p-3 rounded-full bg-gradient-to-r ${getSentimentColor(selectedSession.sentiment.label)}`}>
-                    {getSentimentIcon(selectedSession.sentiment.label)}
-                  </div>
-                  Session Details
-                </DialogTitle>
+                <DialogTitle className="text-2xl">Check-In Details</DialogTitle>
                 <DialogDescription className="text-base">
                   {formatTimestamp(selectedSession.timestamp)}
                 </DialogDescription>
@@ -539,21 +415,21 @@ const CheckIn = () => {
                 <div className="space-y-2">
                   <h3 className="font-bold text-lg">Emotional Analysis</h3>
                   <div className="grid grid-cols-3 gap-4">
-                    <Card className="p-4 text-center border-2 border-primary/20">
+                    <Card className="p-4 text-center">
                       <div className="text-sm text-muted-foreground mb-1">Mood</div>
-                      <div className="text-2xl font-bold text-primary">
+                      <div className="text-2xl font-bold">
                         {selectedSession.sentiment.mood_rating}/10
                       </div>
                     </Card>
-                    <Card className="p-4 text-center border-2 border-accent/20">
+                    <Card className="p-4 text-center">
                       <div className="text-sm text-muted-foreground mb-1">Status</div>
-                      <div className="text-lg font-bold text-accent capitalize">
+                      <div className="text-lg font-bold capitalize">
                         {selectedSession.sentiment.label.replace('_', ' ')}
                       </div>
                     </Card>
-                    <Card className="p-4 text-center border-2 border-secondary/20">
+                    <Card className="p-4 text-center">
                       <div className="text-sm text-muted-foreground mb-1">Score</div>
-                      <div className="text-2xl font-bold text-secondary">
+                      <div className="text-2xl font-bold">
                         {(selectedSession.sentiment.score * 100).toFixed(0)}%
                       </div>
                     </Card>
@@ -564,13 +440,13 @@ const CheckIn = () => {
                 {selectedSession.sentiment.highlights && selectedSession.sentiment.highlights.length > 0 && (
                   <div className="space-y-2">
                     <h3 className="font-bold text-lg flex items-center gap-2">
-                      <Smile className="w-5 h-5 text-green-500" />
+                      <Smile className="w-5 h-5" />
                       Key Highlights
                     </h3>
                     <div className="space-y-2">
                       {selectedSession.sentiment.highlights.map((highlight, idx) => (
-                        <div key={idx} className="flex items-center gap-3 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <div key={idx} className="flex items-center gap-3 p-3 bg-primary/10 rounded-lg">
+                          <div className="w-2 h-2 bg-primary rounded-full"></div>
                           <span>{highlight}</span>
                         </div>
                       ))}
@@ -582,13 +458,13 @@ const CheckIn = () => {
                 {selectedSession.sentiment.concerns && selectedSession.sentiment.concerns.length > 0 && (
                   <div className="space-y-2">
                     <h3 className="font-bold text-lg flex items-center gap-2">
-                      <AlertCircle className="w-5 h-5 text-orange-500" />
+                      <AlertCircle className="w-5 h-5" />
                       Areas of Concern
                     </h3>
                     <div className="space-y-2">
                       {selectedSession.sentiment.concerns.map((concern, idx) => (
-                        <div key={idx} className="flex items-center gap-3 p-3 bg-orange-500/10 rounded-lg border border-orange-500/20">
-                          <AlertCircle className="w-4 h-4 text-orange-500" />
+                        <div key={idx} className="flex items-center gap-3 p-3 bg-destructive/10 rounded-lg">
+                          <AlertCircle className="w-4 h-4" />
                           <span>{concern}</span>
                         </div>
                       ))}
