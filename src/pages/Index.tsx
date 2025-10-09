@@ -5,12 +5,26 @@ import logo from "@/assets/cheqin-logo.png";
 import dailyCheckin from "@/assets/daily-checkin.png";
 import medicineReminder from "@/assets/medicine-reminder.png";
 import sentimentTrends from "@/assets/sentiment-trends.png";
+import elderlyFacesBg from "@/assets/elderly-faces-bg.jpg";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const navigate = useNavigate();
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      {/* Background Pattern */}
+      <div 
+        className="fixed inset-0 z-0 opacity-[0.03] dark:opacity-[0.05]"
+        style={{
+          backgroundImage: `url(${elderlyFacesBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      ></div>
+      
+      {/* Content */}
+      <div className="relative z-10">
       {/* Hero Section */}
       <header className="relative container mx-auto px-4 py-12 overflow-hidden">
         <div className="absolute inset-0 rounded-3xl -z-10" style={{ background: 'var(--shine-gradient)' }}></div>
@@ -233,6 +247,7 @@ const Index = () => {
           </p>
         </div>
       </footer>
+      </div>
     </div>
   );
 };
