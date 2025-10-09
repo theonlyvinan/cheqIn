@@ -293,35 +293,72 @@ const CheckIn = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-accent/10 p-4 md:p-8">
+    <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-4">
-          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
-            Daily Check-In
+        {/* Header with Guidance */}
+        <div className="text-center space-y-6">
+          <div className="inline-block px-6 py-2 bg-primary/10 border-2 border-primary/30 rounded-full">
+            <span className="text-sm font-semibold text-primary">Daily Wellness Check-In</span>
+          </div>
+          <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+            How Are You Feeling Today?
           </h1>
-          <p className="text-2xl text-muted-foreground">
-            {isRecording ? "🎤 Listening to you..." : "Tell me about your day"}
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
+            {isRecording 
+              ? "🎤 I'm listening... Take your time and share what's on your mind" 
+              : "Tap the microphone below and tell me about your day, how you're feeling, and anything that's on your mind"
+            }
           </p>
+          {!isRecording && !transcript && (
+            <div className="flex flex-col items-center gap-4 max-w-xl mx-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div className="flex items-start gap-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                  <div className="w-2 h-2 bg-primary rounded-full mt-1.5"></div>
+                  <span className="text-left">Share how you're feeling physically</span>
+                </div>
+                <div className="flex items-start gap-2 p-3 bg-accent/5 rounded-lg border border-accent/20">
+                  <div className="w-2 h-2 bg-accent rounded-full mt-1.5"></div>
+                  <span className="text-left">Talk about your mood and emotions</span>
+                </div>
+                <div className="flex items-start gap-2 p-3 bg-secondary/5 rounded-lg border border-secondary/20">
+                  <div className="w-2 h-2 bg-secondary rounded-full mt-1.5"></div>
+                  <span className="text-left">Mention any pain or discomfort</span>
+                </div>
+                <div className="flex items-start gap-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                  <div className="w-2 h-2 bg-primary rounded-full mt-1.5"></div>
+                  <span className="text-left">Share activities from your day</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Recording Section */}
-          <Card className="p-8 space-y-8 shadow-2xl border-0" style={{ boxShadow: 'var(--glow-primary)' }}>
-            <div className="flex justify-center">
+          <Card className="p-8 space-y-8 shadow-2xl border-0 backdrop-blur-sm bg-card/95" style={{ boxShadow: 'var(--glow-primary)' }}>
+            <div className="flex flex-col items-center gap-6">
+              {!isRecording && !transcript && (
+                <div className="text-center space-y-2">
+                  <h2 className="text-2xl font-bold">Ready to Start?</h2>
+                  <p className="text-muted-foreground">Press the button when you're ready to speak</p>
+                </div>
+              )}
+              
               <div className={`relative ${isRecording ? 'animate-pulse' : ''}`}>
                 <div className={`absolute inset-0 rounded-full blur-2xl opacity-50 ${isRecording ? 'bg-gradient-to-r from-accent via-primary to-secondary' : ''}`}></div>
                 <Button
                   size="lg"
                   variant={isRecording ? "destructive" : "hero"}
-                  className="relative w-40 h-40 rounded-full text-2xl"
+                  className="relative w-40 h-40 rounded-full text-2xl shadow-2xl"
                   onClick={isRecording ? stopRecording : startRecording}
                   disabled={isProcessing}
                 >
                   {isProcessing ? (
                     <Loader2 className="w-20 h-20 animate-spin" />
                   ) : isRecording ? (
-                    <MicOff className="w-20 h-20" />
+                    <>
+                      <MicOff className="w-20 h-20" />
+                    </>
                   ) : (
                     <span className="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
                       <Mic className="w-20 h-20" />
@@ -329,6 +366,14 @@ const CheckIn = () => {
                   )}
                 </Button>
               </div>
+              
+              {isRecording && (
+                <p className="text-lg font-medium text-accent animate-pulse">Recording... Tap again to stop</p>
+              )}
+              
+              {isProcessing && (
+                <p className="text-lg font-medium text-primary">Analyzing your check-in...</p>
+              )}
             </div>
 
             {transcript && (
@@ -373,19 +418,24 @@ const CheckIn = () => {
 
           {/* Session History */}
           <div className="space-y-4">
-            <h2 className="text-3xl font-bold flex items-center gap-3">
-              <Clock className="w-8 h-8 text-primary" />
-              Session History
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-3xl font-bold flex items-center gap-3">
+                <Clock className="w-8 h-8 text-primary" />
+                Recent Check-Ins
+              </h2>
+              <Badge variant="outline" className="text-sm">
+                {sessions.filter(s => s.status === 'completed').length} sessions
+              </Badge>
+            </div>
             
             <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
               {sessions.map((session) => (
                 <Card
                   key={session.id}
-                  className={`p-6 cursor-pointer transition-all duration-300 border-0 ${
+                  className={`p-6 cursor-pointer transition-all duration-300 border-0 backdrop-blur-sm ${
                     session.status === 'processing' 
                       ? 'bg-gradient-to-r from-secondary/20 to-primary/20 animate-pulse' 
-                      : 'hover:scale-102 shadow-xl'
+                      : 'bg-card/95 hover:scale-102 shadow-xl'
                   }`}
                   style={session.status === 'completed' ? {
                     boxShadow: session.sentiment.label.includes('positive') 
