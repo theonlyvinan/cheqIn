@@ -114,12 +114,66 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    background: linear-gradient(135deg, hsl(190 100% 98%) 0%, hsl(25 100% 95%) 50%, hsl(280 100% 98%) 100%);
-    background-attachment: fixed;
+    position: relative;
   }
 
-  .dark body {
-    background: linear-gradient(135deg, hsl(230 35% 8%) 0%, hsl(190 50% 12%) 30%, hsl(280 40% 10%) 70%, hsl(230 35% 8%) 100%);
-    background-attachment: fixed;
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    background: 
+      radial-gradient(circle at 20% 30%, hsl(190 100% 95% / 0.8) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, hsl(25 100% 90% / 0.7) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, hsl(280 100% 95% / 0.6) 0%, transparent 50%),
+      linear-gradient(135deg, hsl(190 100% 98%) 0%, hsl(280 80% 97%) 25%, hsl(25 100% 96%) 50%, hsl(190 90% 97%) 75%, hsl(280 100% 98%) 100%);
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: 
+      radial-gradient(ellipse at 10% 20%, hsl(190 85% 45% / 0.15) 0%, transparent 40%),
+      radial-gradient(ellipse at 90% 80%, hsl(25 95% 60% / 0.15) 0%, transparent 40%),
+      radial-gradient(ellipse at 50% 60%, hsl(280 65% 60% / 0.12) 0%, transparent 40%);
+    animation: shimmer 20s ease-in-out infinite alternate;
+  }
+
+  @keyframes shimmer {
+    0% {
+      opacity: 0.3;
+      transform: translateY(0px);
+    }
+    50% {
+      opacity: 0.5;
+      transform: translateY(-10px);
+    }
+    100% {
+      opacity: 0.3;
+      transform: translateY(0px);
+    }
+  }
+
+  .dark body::before {
+    background: 
+      radial-gradient(circle at 20% 30%, hsl(190 70% 15% / 0.6) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, hsl(25 80% 20% / 0.5) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, hsl(280 60% 18% / 0.5) 0%, transparent 50%),
+      linear-gradient(135deg, hsl(230 35% 8%) 0%, hsl(190 50% 10%) 25%, hsl(280 40% 9%) 50%, hsl(25 60% 12%) 75%, hsl(230 35% 8%) 100%);
+  }
+
+  .dark body::after {
+    background: 
+      radial-gradient(ellipse at 10% 20%, hsl(190 80% 55% / 0.2) 0%, transparent 40%),
+      radial-gradient(ellipse at 90% 80%, hsl(25 95% 65% / 0.2) 0%, transparent 40%),
+      radial-gradient(ellipse at 50% 60%, hsl(280 60% 65% / 0.18) 0%, transparent 40%);
   }
 }
