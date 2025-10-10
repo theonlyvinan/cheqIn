@@ -55,6 +55,15 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
     );
   };
 
+  const getCategoryFromScore = (score?: number | null): number | null => {
+    if (score == null) return null;
+    if (score >= 4.5) return 5;
+    if (score >= 3.5) return 4;
+    if (score >= 2.5) return 3;
+    if (score >= 1.5) return 2;
+    return 1;
+  };
+
   const getViewConfig = (mode: ViewMode) => {
     switch (mode) {
       case 'mental':
@@ -81,35 +90,28 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
     }
   };
 
-  // Generate last 7 days of data
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const date = subDays(new Date(), 6 - i);
+  // Generate last 5 days of data (from 4 days ago to today)
+  const last5Days = Array.from({ length: 5 }, (_, i) => {
+    const date = subDays(new Date(), 4 - i);
     return format(date, 'MMM dd');
   });
 
-  // Map sessions to days
-  const chartData = last7Days.map(day => {
-    const daysSessions = sessions.filter(session => {
-      const sessionDate = format(new Date(session.timestamp), 'MMM dd');
-      console.log('Chart debug - Day:', day, 'Session date:', sessionDate, 'Match:', sessionDate === day, 'Overall score:', session.sentiment.overall_score);
-      return sessionDate === day;
-    });
+  // Map sessions to the most recent entry per day and normalize to 1-5 categories
+  const chartData = last5Days.map((day) => {
+    const daysSessions = sessions
+      .filter((session) => format(new Date(session.timestamp), 'MMM dd') === day)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
     if (daysSessions.length === 0) {
       return { day, mental: null, physical: null, overall: null };
     }
 
-    const avgMental = daysSessions.reduce((sum, s) => sum + (s.sentiment.mental_health_score || 0), 0) / daysSessions.length;
-    const avgPhysical = daysSessions.reduce((sum, s) => sum + (s.sentiment.physical_health_score || 0), 0) / daysSessions.length;
-    const avgOverall = daysSessions.reduce((sum, s) => sum + (s.sentiment.overall_score || 0), 0) / daysSessions.length;
-
-    console.log('Chart data for', day, '- Overall:', avgOverall, 'Mental:', avgMental, 'Physical:', avgPhysical);
-
+    const latest = daysSessions[0];
     return {
       day,
-      mental: avgMental || null,
-      physical: avgPhysical || null,
-      overall: avgOverall || null
+      mental: getCategoryFromScore(latest.sentiment.mental_health_score),
+      physical: getCategoryFromScore(latest.sentiment.physical_health_score),
+      overall: getCategoryFromScore(latest.sentiment.overall_score),
     };
   });
 
