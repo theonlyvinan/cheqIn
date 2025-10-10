@@ -307,21 +307,21 @@ const CheckIn = () => {
 
         {/* Recording Section */}
         <div className="max-w-2xl mx-auto">
-          <Card className="p-8 space-y-6">
+          <div className="space-y-6">
             <div className="flex flex-col items-center gap-4">
               <Button
                 size="lg"
                 variant={isRecording ? "destructive" : "default"}
-                className="w-32 h-32 rounded-full"
+                className="w-40 h-40 rounded-full bg-black hover:bg-black/90 text-white"
                 onClick={isRecording ? stopRecording : startRecording}
                 disabled={isProcessing}
               >
                 {isProcessing ? (
-                  <Loader2 className="w-16 h-16 animate-spin" />
+                  <Loader2 className="w-24 h-24 animate-spin" />
                 ) : isRecording ? (
-                  <MicOff className="w-16 h-16" />
+                  <MicOff className="w-24 h-24" />
                 ) : (
-                  <Mic className="w-16 h-16" />
+                  <Mic className="w-24 h-24" />
                 )}
               </Button>
               
@@ -331,7 +331,7 @@ const CheckIn = () => {
             </div>
 
             {transcript && (
-              <div className="space-y-4">
+              <Card className="p-6 space-y-4">
                 <div className="p-4 bg-muted rounded-lg">
                   <p className="text-sm">{transcript}</p>
                 </div>
@@ -345,41 +345,91 @@ const CheckIn = () => {
                     <span className="text-sm font-medium">Mood: {sentiment.mood_rating}/10</span>
                   </div>
                 )}
-              </div>
+
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate("/")}
+                  className="w-full"
+                >
+                  Back to Home
+                </Button>
+              </Card>
             )}
 
-            <Button 
-              variant="outline" 
-              onClick={() => navigate("/")}
-              className="w-full"
-            >
-              Back to Home
-            </Button>
-          </Card>
+            {!transcript && (
+              <div className="flex justify-center">
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate("/")}
+                >
+                  Back to Home
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Recent Check-Ins - Compact */}
-        {sessions.filter(s => s.status === 'completed').length > 0 && (
+        {sessions.length > 0 && (
           <div className="max-w-2xl mx-auto space-y-3">
             <h2 className="text-xl font-semibold flex items-center gap-2">
               <Clock className="w-5 h-5" />
               Recent Check-Ins
             </h2>
             
-            <div className="space-y-2">
-              {sessions.filter(s => s.status === 'completed').slice(0, 3).map((session) => (
+            <div className="space-y-3">
+              {sessions.slice(0, 3).map((session) => (
                 <Card
                   key={session.id}
-                  className="p-4 cursor-pointer hover:bg-accent/5 transition-colors"
-                  onClick={() => setSelectedSession(session)}
+                  className={`p-4 ${session.status === 'completed' ? 'cursor-pointer hover:bg-accent/5' : ''} transition-colors`}
+                  onClick={() => session.status === 'completed' && setSelectedSession(session)}
                 >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="text-xs text-muted-foreground">{formatTimestamp(session.timestamp)}</div>
-                      <div className="text-sm font-medium mt-1 line-clamp-1">{session.transcript}</div>
+                  {session.status === 'processing' ? (
+                    <div className="flex items-center gap-3">
+                      <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                      <div className="flex-1">
+                        <div className="text-xs text-muted-foreground">{formatTimestamp(session.timestamp)}</div>
+                        <div className="text-sm font-medium mt-1">Processing your check-in...</div>
+                      </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                  </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="text-xs text-muted-foreground">{formatTimestamp(session.timestamp)}</div>
+                          <div className="text-sm font-medium mt-1 line-clamp-2">{session.transcript}</div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      </div>
+                      
+                      {/* Emotion Analysis Summary */}
+                      <div className="flex items-center gap-4 pt-2 border-t">
+                        <div className="flex items-center gap-2">
+                          {getSentimentIcon(session.sentiment.label)}
+                          <span className="text-xs capitalize">{session.sentiment.label.replace('_', ' ')}</span>
+                        </div>
+                        <Badge variant="secondary" className="text-xs">
+                          Mood: {session.sentiment.mood_rating}/10
+                        </Badge>
+                      </div>
+                      
+                      {/* Key Findings */}
+                      {(session.sentiment.highlights?.length > 0 || session.sentiment.concerns?.length > 0) && (
+                        <div className="flex flex-wrap gap-2">
+                          {session.sentiment.highlights?.slice(0, 2).map((highlight, idx) => (
+                            <Badge key={`h-${idx}`} variant="outline" className="text-xs bg-primary/5">
+                              {highlight}
+                            </Badge>
+                          ))}
+                          {session.sentiment.concerns?.slice(0, 2).map((concern, idx) => (
+                            <Badge key={`c-${idx}`} variant="outline" className="text-xs bg-destructive/5 text-destructive">
+                              {concern}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </Card>
               ))}
             </div>
