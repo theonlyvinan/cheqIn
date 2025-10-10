@@ -35,11 +35,12 @@ const CheckIn = () => {
   const [transcript, setTranscript] = useState("");
   const [sentiment, setSentiment] = useState<any>(null);
   const [conversationMode, setConversationMode] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState<Array<{role: string, content: string}>>([]);
+  const [conversationHistory, setConversationHistory] = useState<Array<{role: string, content: string, answer?: string}>>([]);
   const [currentQuestion, setCurrentQuestion] = useState("");
-  const [turnCount, setTurnCount] = useState(0);
+  const [questionNumber, setQuestionNumber] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [questionTopics, setQuestionTopics] = useState<Set<string>>(new Set());
+  const [waitingForAnswer, setWaitingForAnswer] = useState(false);
+  const [currentAnswer, setCurrentAnswer] = useState("");
   const [sessions, setSessions] = useState<CheckInSession[]>([
     // Today - Happy session
     {
@@ -201,45 +202,57 @@ const CheckIn = () => {
     }
   };
 
+  const startCheckIn = async () => {
+    setConversationMode(true);
+    setQuestionNumber(1);
+    setConversationHistory([]);
+    
+    const greeting = "Hi, I'm Mira from CheqIn. Let me ask you a few questions about how you're doing today.";
+    setCurrentQuestion(greeting);
+    await speakResponse(greeting);
+    
+    // Ask first question after greeting
+    setTimeout(() => {
+      askNextQuestion([]);
+    }, 500);
+    
+    toast({
+      title: "Check-in started",
+      description: "Answer each question at your own pace",
+    });
+  };
+
+  const askNextQuestion = async (history: Array<{role: string, content: string, answer?: string}>) => {
+    const nextQ = await generateNextQuestion(history);
+    setCurrentQuestion(nextQ);
+    setWaitingForAnswer(true);
+    setCurrentAnswer("");
+    await speakResponse(nextQ);
+  };
+
   const startRecording = async () => {
+    if (!waitingForAnswer) return;
+    
     try {
-      // Start conversation mode with greeting
-      setConversationMode(true);
-      setTurnCount(0);
-      setConversationHistory([]);
-      setQuestionTopics(new Set());
-      
-      const greeting = "Hi, it's Mira from CheqIn. How are you feeling today?";
-      setCurrentQuestion(greeting);
-      await speakResponse(greeting);
-      
-      // Start listening after greeting finishes
-      setTimeout(async () => {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const mediaRecorder = new MediaRecorder(stream);
-        mediaRecorderRef.current = mediaRecorder;
-        audioChunksRef.current = [];
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
 
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            audioChunksRef.current.push(event.data);
-          }
-        };
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
 
-        mediaRecorder.onstop = async () => {
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-          await processConversationalAudio(audioBlob);
-          stream.getTracks().forEach(track => track.stop());
-        };
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        await processAnswer(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
 
-        mediaRecorder.start();
-        setIsRecording(true);
-      }, 2000); // Wait for greeting to finish
-
-      toast({
-        title: "Conversation started",
-        description: "Take your time, I'm listening...",
-      });
+      mediaRecorder.start();
+      setIsRecording(true);
     } catch (error) {
       console.error('Error starting recording:', error);
       toast({
@@ -257,8 +270,9 @@ const CheckIn = () => {
     }
   };
 
-  const processConversationalAudio = async (audioBlob: Blob) => {
+  const processAnswer = async (audioBlob: Blob) => {
     setIsProcessing(true);
+    setWaitingForAnswer(false);
 
     try {
       const reader = new FileReader();
@@ -267,150 +281,103 @@ const CheckIn = () => {
       reader.onloadend = async () => {
         const base64Audio = reader.result?.toString().split(',')[1];
         
-        // Transcribe audio in background
-        const transcriptionPromise = supabase.functions.invoke(
+        const { data: transcriptData, error: transcriptError } = await supabase.functions.invoke(
           'voice-to-text',
           { body: { audio: base64Audio } }
         );
 
-        // Generate and speak next question while transcription is processing
-        const { data: transcriptData, error: transcriptError } = await transcriptionPromise;
-
         if (transcriptError) throw transcriptError;
         
-        const userResponse = transcriptData.text;
+        const answer = transcriptData.text;
+        setCurrentAnswer(answer);
         
         // Add to conversation history
         const newHistory = [
           ...conversationHistory,
-          { role: 'assistant', content: currentQuestion },
-          { role: 'user', content: userResponse }
+          { role: 'assistant', content: currentQuestion, answer }
         ];
         setConversationHistory(newHistory);
-        setTurnCount(prev => prev + 1);
+        setQuestionNumber(prev => prev + 1);
 
-        // Check if we should conclude (after 5-6 turns or if user seems done)
-        if (turnCount >= 5 || userResponse.toLowerCase().includes('that\'s all') || userResponse.toLowerCase().includes('i\'m done') || userResponse.toLowerCase().includes('nothing else')) {
+        // Check if we should conclude
+        if (questionNumber >= 6 || answer.toLowerCase().includes('that\'s all') || answer.toLowerCase().includes('nothing else')) {
           await concludeConversation(newHistory);
           return;
         }
 
-        // Generate next question while processing in background
-        const nextQuestion = await generateNextQuestion(newHistory, userResponse);
-        setCurrentQuestion(nextQuestion);
-        
-        // Start speaking next question immediately
-        const speakPromise = speakResponse(nextQuestion);
-        
-        // Continue recording for next response after question starts
-        setTimeout(async () => {
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const mediaRecorder = new MediaRecorder(stream);
-            mediaRecorderRef.current = mediaRecorder;
-            audioChunksRef.current = [];
-
-            mediaRecorder.ondataavailable = (event) => {
-              if (event.data.size > 0) {
-                audioChunksRef.current.push(event.data);
-              }
-            };
-
-            mediaRecorder.onstop = async () => {
-              const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-              await processConversationalAudio(audioBlob);
-              stream.getTracks().forEach(track => track.stop());
-            };
-
-            // Wait for question to finish speaking
-            await speakPromise;
-            
-            mediaRecorder.start();
-            setIsRecording(true);
-          } catch (error) {
-            console.error('Error continuing recording:', error);
-          }
-        }, 500);
+        // Ask next question
+        setTimeout(() => {
+          askNextQuestion(newHistory);
+        }, 1000);
       };
     } catch (error) {
-      console.error('Error processing conversational audio:', error);
+      console.error('Error processing answer:', error);
       toast({
         title: "Error",
-        description: "Could not process your response",
+        description: "Could not process your response. Please try again.",
         variant: "destructive",
       });
+      setWaitingForAnswer(true);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const generateNextQuestion = async (history: Array<{role: string, content: string}>, lastResponse: string) => {
-    // Track which topics we've covered
-    const askedTopics = new Set(questionTopics);
+  const generateNextQuestion = async (history: Array<{role: string, content: string, answer?: string}>) => {
+    const allAnswers = history.map(h => h.answer || '').join(' ').toLowerCase();
+    const lastAnswer = history.length > 0 ? (history[history.length - 1].answer || '').toLowerCase() : '';
+    const qNum = questionNumber;
     
-    // Priority questions about wellbeing, medications, and loneliness
-    const responseText = lastResponse.toLowerCase();
-    
-    // Physical health follow-ups
-    if ((responseText.includes('pain') || responseText.includes('hurt') || responseText.includes('ache')) && !askedTopics.has('pain_scale')) {
-      askedTopics.add('pain_scale');
-      setQuestionTopics(askedTopics);
-      return "I'm sorry to hear that. On a scale from one to ten, how bad is the discomfort today?";
+    // Question 1: General wellbeing
+    if (qNum === 1) {
+      return "How are you feeling today, both physically and emotionally?";
     }
     
-    if ((responseText.includes('tired') || responseText.includes('sleep') || responseText.includes('rest')) && !askedTopics.has('sleep_quality')) {
-      askedTopics.add('sleep_quality');
-      setQuestionTopics(askedTopics);
-      return "Was something keeping you up, or just one of those restless nights?";
+    // Question 2: Medications
+    if (qNum === 2) {
+      return "Have you taken your medications today? I want to make sure you're keeping up with them.";
     }
     
-    // Medication check - Ask early in conversation
-    if (turnCount === 1 && !askedTopics.has('medications')) {
-      askedTopics.add('medications');
-      setQuestionTopics(askedTopics);
-      return "Have you taken your medications today? Just want to make sure you're keeping up with them.";
+    // Question 3: Physical health follow-up
+    if (qNum === 3) {
+      if (allAnswers.includes('pain') || allAnswers.includes('hurt') || allAnswers.includes('ache')) {
+        return "I'm sorry to hear about the discomfort. On a scale from one to ten, how would you rate it?";
+      }
+      return "How has your energy been? Have you been able to move around and stay active?";
     }
     
-    // Social connection check
-    if ((responseText.includes('alone') || responseText.includes('lonely') || (turnCount === 2 && !askedTopics.has('social'))) && !askedTopics.has('social')) {
-      askedTopics.add('social');
-      setQuestionTopics(askedTopics);
+    // Question 4: Social connections
+    if (qNum === 4) {
+      if (lastAnswer.includes('tired') || lastAnswer.includes('low energy')) {
+        return "Was something keeping you up at night, or just one of those restless nights?";
+      }
       return "Have you been able to connect with family or friends recently? It's important to stay in touch.";
     }
     
-    // Physical activity
-    if (turnCount === 3 && !askedTopics.has('activity')) {
-      askedTopics.add('activity');
-      setQuestionTopics(askedTopics);
-      return "How has your energy been today? Have you been able to move around and stay active?";
+    // Question 5: Activities and mood
+    if (qNum === 5) {
+      if (lastAnswer.includes('alone') || lastAnswer.includes('lonely')) {
+        return "I understand. Is there someone you'd like to reach out to today?";
+      }
+      if (lastAnswer.includes('family') || lastAnswer.includes('friend')) {
+        return "That sounds lovely! How did spending time with them make you feel?";
+      }
+      return "Did you do anything enjoyable or fun today?";
     }
     
-    // Emotional check-in
-    if ((responseText.includes('family') || responseText.includes('friend')) && !askedTopics.has('emotional_impact')) {
-      askedTopics.add('emotional_impact');
-      setQuestionTopics(askedTopics);
-      return "That sounds lovely! How did that make you feel?";
-    }
-    
-    // General wellness
-    if (turnCount === 4 && !askedTopics.has('general_wellness')) {
-      askedTopics.add('general_wellness');
-      setQuestionTopics(askedTopics);
-      return "Is there anything else you'd like to share about how you're feeling today, physically or emotionally?";
-    }
-    
-    // Default follow-up
-    return "Thank you for sharing. Is there anything else on your mind today?";
+    // Question 6: Final check
+    return "Is there anything else you'd like to share about how you're feeling today?";
   };
 
-  const concludeConversation = async (history: Array<{role: string, content: string}>) => {
+  const concludeConversation = async (history: Array<{role: string, content: string, answer?: string}>) => {
     setConversationMode(false);
     setIsRecording(false);
+    setWaitingForAnswer(false);
     
-    // Compile full conversation transcript
+    // Compile full conversation transcript from answers
     const fullTranscript = history
-      .filter(h => h.role === 'user')
-      .map(h => h.content)
+      .map(h => h.answer || '')
+      .filter(a => a)
       .join(' ');
     
     setTranscript(fullTranscript);
@@ -600,24 +567,48 @@ const CheckIn = () => {
             How Are You Feeling?
           </h1>
           {conversationMode && (
-            <Card className="p-6 bg-primary/5 border-primary/20 max-w-2xl mx-auto">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                  {isSpeaking ? (
-                    <Loader2 className="w-5 h-5 text-white animate-spin" />
-                  ) : (
-                    <Heart className="w-5 h-5 text-white" />
+            <Card className="p-6 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 max-w-2xl mx-auto">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-primary">Question {questionNumber} of 6</p>
+                  {currentAnswer && (
+                    <Badge variant="secondary" className="text-xs">
+                      Answered ✓
+                    </Badge>
                   )}
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground mb-1">Mira asks:</p>
-                  <p className="text-lg font-medium">{currentQuestion}</p>
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+                    {isSpeaking ? (
+                      <Loader2 className="w-5 h-5 text-white animate-spin" />
+                    ) : (
+                      <Heart className="w-5 h-5 text-white" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-muted-foreground mb-1">Mira asks:</p>
+                    <p className="text-lg font-medium">{currentQuestion}</p>
+                  </div>
                 </div>
+                {currentAnswer && (
+                  <div className="mt-4 p-3 bg-background/60 rounded-lg border border-primary/10">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Your answer:</p>
+                    <p className="text-sm">{currentAnswer}</p>
+                  </div>
+                )}
               </div>
             </Card>
           )}
           <p className="text-lg text-muted-foreground">
-            {isRecording ? "I'm listening... take your time" : conversationMode ? "Tap when ready to answer" : "Tap to start your check-in"}
+            {isRecording 
+              ? "🎤 Listening... Tap to stop when done" 
+              : isProcessing 
+              ? "⏳ Processing your answer..." 
+              : isSpeaking 
+              ? "💬 Mira is asking a question..." 
+              : waitingForAnswer 
+              ? "🎙️ Tap the button to record your answer" 
+              : "Tap to begin your daily check-in"}
           </p>
         </div>
 
@@ -627,21 +618,31 @@ const CheckIn = () => {
             <div className="flex flex-col items-center gap-4">
               <Button
                 size="lg"
-                variant={isRecording ? "default" : "default"}
+                variant="default"
                 className={`w-40 h-40 rounded-full shadow-[0_0_30px_rgba(0,0,0,0.4)] transition-all ${
                   isRecording 
                     ? 'bg-green-500 hover:bg-green-600 text-white animate-pulse' 
                     : isSpeaking 
                     ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                    : waitingForAnswer
+                    ? 'bg-primary hover:bg-primary/90 text-white'
                     : 'bg-black hover:bg-black/90 text-white'
                 }`}
-                onClick={isRecording ? stopRecording : startRecording}
+                onClick={() => {
+                  if (isRecording) {
+                    stopRecording();
+                  } else if (waitingForAnswer) {
+                    startRecording();
+                  } else if (!conversationMode) {
+                    startCheckIn();
+                  }
+                }}
                 disabled={isProcessing || isSpeaking}
               >
                 {isProcessing ? (
                   <Loader2 className="w-24 h-24 animate-spin" />
                 ) : isRecording ? (
-                  <Mic className="w-24 h-24" />
+                  <MicOff className="w-24 h-24" />
                 ) : isSpeaking ? (
                   <Loader2 className="w-24 h-24 animate-spin" />
                 ) : (
@@ -650,13 +651,16 @@ const CheckIn = () => {
               </Button>
               
               {isRecording && (
-                <p className="text-sm font-medium text-green-600 animate-pulse">🎤 Listening...</p>
+                <p className="text-sm font-medium text-green-600 animate-pulse">Recording your answer...</p>
               )}
               {isSpeaking && (
-                <p className="text-sm font-medium text-blue-600">💬 Mira is speaking...</p>
+                <p className="text-sm font-medium text-blue-600">Mira is asking you a question...</p>
               )}
               {isProcessing && (
-                <p className="text-sm text-muted-foreground">Analyzing...</p>
+                <p className="text-sm text-muted-foreground">Processing your answer...</p>
+              )}
+              {waitingForAnswer && !isRecording && !isProcessing && !isSpeaking && (
+                <p className="text-sm font-medium text-primary">Ready when you are! Tap to answer.</p>
               )}
             </div>
 
