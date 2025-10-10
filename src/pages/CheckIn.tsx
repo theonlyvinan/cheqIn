@@ -405,7 +405,7 @@ const CheckIn = () => {
             src={logo}
             alt="Cheq-In Logo" 
             id="checkin-logo"
-            className="w-20 md:w-24 h-auto transition-all duration-500 cursor-pointer animate-pulse -mr-3"
+            className="w-20 md:w-24 h-auto transition-all duration-500 cursor-pointer animate-pulse -mr-5"
             style={{ 
               filter: 'drop-shadow(0 5px 15px hsl(190 85% 45% / 0.3))',
               transform: 'rotateY(0deg) rotateX(0deg)',
