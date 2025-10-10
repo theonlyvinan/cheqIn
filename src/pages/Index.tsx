@@ -89,7 +89,7 @@ const Index = () => {
               onClick={() => navigate("/auth")}
             >
               <span className="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
-                Start Your Check-In
+                Start Your Cheq-In
               </span>
             </Button>
             <Button 
