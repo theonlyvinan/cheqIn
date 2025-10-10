@@ -16,12 +16,12 @@ const Index = () => {
         <div className="absolute inset-0 rounded-3xl -z-10" style={{ background: 'var(--shine-gradient)' }}></div>
         <div className="flex flex-col items-center justify-center min-h-[85vh] text-center space-y-10">
           {/* Logo + Text Combined with 3D Effect */}
-          <div className="animate-fade-in flex items-center gap-1 group perspective-1000">
+          <div className="animate-fade-in flex items-end gap-0 group perspective-1000">
             <img 
               src={logo} 
               alt="CheqIn Logo" 
               id="hero-logo"
-              className="w-52 md:w-64 h-auto transition-all duration-500 cursor-pointer"
+              className="w-52 md:w-64 h-auto transition-all duration-500 cursor-pointer animate-pulse -mr-2"
               style={{ 
                 filter: 'drop-shadow(0 10px 30px hsl(190 85% 45% / 0.3))',
                 transform: 'rotateY(0deg) rotateX(0deg)',
