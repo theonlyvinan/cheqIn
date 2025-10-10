@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import SentimentChart from "@/components/SentimentChart";
 
 type SessionStatus = 'processing' | 'completed';
 
@@ -30,6 +31,10 @@ const CheckIn = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [sentiment, setSentiment] = useState<any>(null);
+  const [conversationMode, setConversationMode] = useState(false);
+  const [conversationHistory, setConversationHistory] = useState<Array<{role: string, content: string}>>([]);
+  const [currentQuestion, setCurrentQuestion] = useState("");
+  const [turnCount, setTurnCount] = useState(0);
   const [sessions, setSessions] = useState<CheckInSession[]>([
     // Example: Happy session
     {
@@ -94,6 +99,16 @@ const CheckIn = () => {
 
   const startRecording = async () => {
     try {
+      // Start conversation mode with greeting
+      setConversationMode(true);
+      setTurnCount(0);
+      setConversationHistory([]);
+      
+      const greeting = "Hi, it's Mira from CheqIn. How are you feeling today?";
+      setCurrentQuestion(greeting);
+      await speakResponse(greeting);
+      
+      // Start listening after greeting
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -107,7 +122,7 @@ const CheckIn = () => {
 
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        await processAudio(audioBlob);
+        await processConversationalAudio(audioBlob);
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -115,8 +130,8 @@ const CheckIn = () => {
       setIsRecording(true);
 
       toast({
-        title: "Recording started",
-        description: "Speak naturally about your day...",
+        title: "Conversation started",
+        description: "Take your time, I'm listening...",
       });
     } catch (error) {
       console.error('Error starting recording:', error);
@@ -135,11 +150,10 @@ const CheckIn = () => {
     }
   };
 
-  const processAudio = async (audioBlob: Blob) => {
+  const processConversationalAudio = async (audioBlob: Blob) => {
     setIsProcessing(true);
 
     try {
-      // Convert to base64
       const reader = new FileReader();
       reader.readAsDataURL(audioBlob);
       
@@ -154,73 +168,149 @@ const CheckIn = () => {
 
         if (transcriptError) throw transcriptError;
         
-        const transcribedText = transcriptData.text;
-        setTranscript(transcribedText);
-
-        // Analyze sentiment
-        const { data: sentimentData, error: sentimentError } = await supabase.functions.invoke(
-          'analyze-sentiment',
-          { body: { text: transcribedText } }
-        );
-
-        if (sentimentError) throw sentimentError;
+        const userResponse = transcriptData.text;
         
-        setSentiment(sentimentData);
+        // Add to conversation history
+        const newHistory = [
+          ...conversationHistory,
+          { role: 'assistant', content: currentQuestion },
+          { role: 'user', content: userResponse }
+        ];
+        setConversationHistory(newHistory);
+        setTurnCount(prev => prev + 1);
 
-        // Create new session
-        const newSession: CheckInSession = {
-          id: Date.now().toString(),
-          timestamp: new Date().toISOString(),
-          transcript: transcribedText,
-          sentiment: {
-            label: sentimentData.sentiment_label,
-            score: sentimentData.sentiment_score,
-            mood_rating: sentimentData.mood_rating,
-            emotions: sentimentData.emotions,
-            highlights: sentimentData.highlights || [],
-            concerns: sentimentData.concerns || []
-          },
-          status: 'completed'
+        // Check if we should conclude (after 4-5 turns or if user seems done)
+        if (turnCount >= 4 || userResponse.toLowerCase().includes('that\'s all') || userResponse.toLowerCase().includes('i\'m done')) {
+          // Conclude conversation
+          await concludeConversation(newHistory);
+          return;
+        }
+
+        // Generate next question based on conversation
+        const nextQuestion = await generateNextQuestion(newHistory, userResponse);
+        setCurrentQuestion(nextQuestion);
+        await speakResponse(nextQuestion);
+
+        // Continue recording for next response
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
         };
 
-        // Add to sessions (remove the processing one and add the new completed one)
-        setSessions(prev => [newSession, ...prev.filter(s => s.status !== 'processing')]);
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          await processConversationalAudio(audioBlob);
+          stream.getTracks().forEach(track => track.stop());
+        };
 
-        // Save check-in to database
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        const { error: insertError } = await supabase
-          .from('check_ins')
-          .insert({
-            user_id: user!.id,
-            transcript: transcribedText,
-            sentiment_score: sentimentData.sentiment_score,
-            sentiment_label: sentimentData.sentiment_label,
-            emotions: sentimentData.emotions,
-            mood_rating: sentimentData.mood_rating,
-          });
-
-        if (insertError) throw insertError;
-
-        toast({
-          title: "Check-in saved!",
-          description: "Your wellness data has been recorded.",
-        });
-
-        // Speak response
-        const response = generateResponse(sentimentData);
-        await speakResponse(response);
+        mediaRecorder.start();
+        setIsRecording(true);
       };
     } catch (error) {
-      console.error('Error processing audio:', error);
+      console.error('Error processing conversational audio:', error);
       toast({
         title: "Error",
-        description: "Could not process your check-in",
+        description: "Could not process your response",
         variant: "destructive",
       });
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const generateNextQuestion = async (history: Array<{role: string, content: string}>, lastResponse: string) => {
+    // Use analyze-sentiment to understand the response and generate contextual follow-up
+    const { data } = await supabase.functions.invoke('analyze-sentiment', {
+      body: { 
+        text: lastResponse,
+        conversationHistory: history 
+      }
+    });
+
+    // Generate contextual follow-up questions
+    if (lastResponse.toLowerCase().includes('pain') || lastResponse.toLowerCase().includes('hurt')) {
+      return "I'm sorry to hear that. On a scale from one to ten, how bad is it today?";
+    } else if (lastResponse.toLowerCase().includes('tired') || lastResponse.toLowerCase().includes('sleep')) {
+      return "Was something keeping you up, or just one of those restless nights?";
+    } else if (lastResponse.toLowerCase().includes('family') || lastResponse.toLowerCase().includes('friend')) {
+      return "That sounds lovely! How did that make you feel?";
+    } else if (data?.sentiment_label === 'concerned') {
+      return "I hear you. Is there anything specific that's been on your mind about that?";
+    } else if (data?.sentiment_label === 'very_positive') {
+      return "That's wonderful! Tell me more about what made today special?";
+    } else {
+      return "Thank you for sharing that. How has your day been otherwise?";
+    }
+  };
+
+  const concludeConversation = async (history: Array<{role: string, content: string}>) => {
+    setConversationMode(false);
+    setIsRecording(false);
+    
+    // Compile full conversation transcript
+    const fullTranscript = history
+      .filter(h => h.role === 'user')
+      .map(h => h.content)
+      .join(' ');
+    
+    setTranscript(fullTranscript);
+
+    // Analyze overall sentiment
+    const { data: sentimentData, error: sentimentError } = await supabase.functions.invoke(
+      'analyze-sentiment',
+      { body: { text: fullTranscript } }
+    );
+
+    if (sentimentError) throw sentimentError;
+    
+    setSentiment(sentimentData);
+
+    // Create new session
+    const newSession: CheckInSession = {
+      id: Date.now().toString(),
+      timestamp: new Date().toISOString(),
+      transcript: fullTranscript,
+      sentiment: {
+        label: sentimentData.sentiment_label,
+        score: sentimentData.sentiment_score,
+        mood_rating: sentimentData.mood_rating,
+        emotions: sentimentData.emotions,
+        highlights: sentimentData.highlights || [],
+        concerns: sentimentData.concerns || []
+      },
+      status: 'completed'
+    };
+
+    setSessions(prev => [newSession, ...prev.filter(s => s.status !== 'processing')]);
+
+    // Save to database
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    await supabase
+      .from('check_ins')
+      .insert({
+        user_id: user!.id,
+        transcript: fullTranscript,
+        sentiment_score: sentimentData.sentiment_score,
+        sentiment_label: sentimentData.sentiment_label,
+        emotions: sentimentData.emotions,
+        mood_rating: sentimentData.mood_rating,
+      });
+
+    toast({
+      title: "Check-in complete!",
+      description: "Thank you for sharing with me today.",
+    });
+
+    // Final message
+    const farewell = "Thank you for chatting with me today. I'll check in with you later. Take care!";
+    await speakResponse(farewell);
   };
 
   const generateResponse = (sentimentData: any) => {
@@ -312,7 +402,7 @@ const CheckIn = () => {
             How Are You Feeling?
           </h1>
           <p className="text-lg text-muted-foreground">
-            {isRecording ? "Listening..." : "Tap to start your check-in"}
+            {isRecording ? "I'm listening..." : conversationMode ? currentQuestion : "Tap to start your check-in"}
           </p>
         </div>
 
@@ -379,6 +469,13 @@ const CheckIn = () => {
             )}
           </div>
         </div>
+
+        {/* Sentiment Chart */}
+        {sessions.filter(s => s.status === 'completed').length > 0 && (
+          <div className="max-w-2xl mx-auto">
+            <SentimentChart sessions={sessions.filter(s => s.status === 'completed')} />
+          </div>
+        )}
 
         {/* Recent Check-Ins - Compact */}
         {sessions.length > 0 && (
