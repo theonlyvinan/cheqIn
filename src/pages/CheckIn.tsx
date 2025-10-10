@@ -2,12 +2,13 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Mic, MicOff, Loader2, Smile, AlertCircle, Clock, ChevronRight, Heart, Activity } from "lucide-react";
+import { Loader2, Smile, AlertCircle, Clock, ChevronRight, Heart, Activity, Phone, PhoneOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import SentimentChart from "@/components/SentimentChart";
+import { RealtimeChat } from "@/utils/RealtimeAudio";
 
 type SessionStatus = 'processing' | 'completed';
 
@@ -30,19 +31,14 @@ interface CheckInSession {
 }
 
 const CheckIn = () => {
-  const [isRecording, setIsRecording] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [sentiment, setSentiment] = useState<any>(null);
-  const [conversationMode, setConversationMode] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState<Array<{role: string, content: string, answer?: string}>>([]);
-  const [currentQuestion, setCurrentQuestion] = useState("");
-  const [questionNumber, setQuestionNumber] = useState(0);
+  const [conversationTranscript, setConversationTranscript] = useState<string[]>([]);
+  const [currentText, setCurrentText] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [waitingForAnswer, setWaitingForAnswer] = useState(false);
-  const [currentAnswer, setCurrentAnswer] = useState("");
   const [sessions, setSessions] = useState<CheckInSession[]>([
-    // Today - Happy session
     {
       id: '1',
       timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
@@ -60,7 +56,6 @@ const CheckIn = () => {
       },
       status: 'completed'
     },
-    // Yesterday - Concerned session
     {
       id: '2',
       timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
@@ -78,7 +73,6 @@ const CheckIn = () => {
       },
       status: 'completed'
     },
-    // 2 days ago - Neutral
     {
       id: '4',
       timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
@@ -96,7 +90,6 @@ const CheckIn = () => {
       },
       status: 'completed'
     },
-    // 3 days ago - Good day
     {
       id: '5',
       timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
@@ -114,7 +107,6 @@ const CheckIn = () => {
       },
       status: 'completed'
     },
-    // 4 days ago - Slightly tired
     {
       id: '6',
       timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
@@ -132,7 +124,6 @@ const CheckIn = () => {
       },
       status: 'completed'
     },
-    // 5 days ago - Great day
     {
       id: '7',
       timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
@@ -150,7 +141,6 @@ const CheckIn = () => {
       },
       status: 'completed'
     },
-    // 6 days ago - Decent day
     {
       id: '8',
       timestamp: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
@@ -168,26 +158,9 @@ const CheckIn = () => {
       },
       status: 'completed'
     },
-    // Processing session
-    {
-      id: '3',
-      timestamp: new Date().toISOString(),
-      transcript: 'Today I spent time with my grandchildren and we baked cookies together. The recipe was a bit tricky but we managed to make it work.',
-      sentiment: {
-        label: '',
-        score: 0,
-        mood_rating: 0,
-        mental_health_score: 0,
-        physical_health_score: 0,
-        overall_score: 0,
-        emotions: {}
-      },
-      status: 'processing'
-    }
   ]);
   const [selectedSession, setSelectedSession] = useState<CheckInSession | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const chatRef = useRef<RealtimeChat | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -202,598 +175,383 @@ const CheckIn = () => {
     }
   };
 
-  const startCheckIn = async () => {
-    setConversationMode(true);
-    setQuestionNumber(1);
-    setConversationHistory([]);
+  const handleRealtimeMessage = (event: any) => {
+    console.log('Received event:', event.type);
     
-    const greeting = "Hi, I'm Mira from CheqIn. Let me ask you a few questions about how you're doing today.";
-    setCurrentQuestion(greeting);
-    await speakResponse(greeting);
-    
-    // Ask first question after greeting
-    setTimeout(() => {
-      askNextQuestion([]);
-    }, 500);
-    
-    toast({
-      title: "Check-in started",
-      description: "Answer each question at your own pace",
-    });
-  };
-
-  const askNextQuestion = async (history: Array<{role: string, content: string, answer?: string}>) => {
-    const nextQ = await generateNextQuestion(history);
-    setCurrentQuestion(nextQ);
-    setWaitingForAnswer(true);
-    setCurrentAnswer("");
-    await speakResponse(nextQ);
-  };
-
-  const startRecording = async () => {
-    if (!waitingForAnswer) return;
-    
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
+    switch (event.type) {
+      case 'session.created':
+        console.log('Session created');
+        setIsInitializing(false);
+        setIsConnected(true);
+        toast({
+          title: "Connected to Mira",
+          description: "Natural conversation started. Just speak naturally!",
+        });
+        break;
+        
+      case 'conversation.item.input_audio_transcription.completed':
+        // User's speech transcribed
+        const userText = event.transcript;
+        console.log('User said:', userText);
+        setConversationTranscript(prev => [...prev, `User: ${userText}`]);
+        break;
+        
+      case 'response.audio_transcript.delta':
+        // AI speaking (partial transcript)
+        setCurrentText(prev => prev + event.delta);
+        setIsSpeaking(true);
+        break;
+        
+      case 'response.audio_transcript.done':
+        // AI finished speaking
+        const aiText = event.transcript;
+        console.log('AI said:', aiText);
+        setConversationTranscript(prev => [...prev, `Mira: ${aiText}`]);
+        setCurrentText("");
+        break;
+        
+      case 'response.audio.delta':
+        // AI is generating audio
+        setIsSpeaking(true);
+        break;
+        
+      case 'response.audio.done':
+        // AI finished generating audio
+        setIsSpeaking(false);
+        break;
+        
+      case 'response.done':
+        // Check if conversation should end (usually after 5-7 exchanges)
+        const userMessages = conversationTranscript.filter(t => t.startsWith('User:')).length;
+        if (userMessages >= 6) {
+          setTimeout(() => {
+            endConversation();
+          }, 2000);
         }
-      };
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        await processAnswer(audioBlob);
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (error) {
-      console.error('Error starting recording:', error);
-      toast({
-        title: "Error",
-        description: "Could not access microphone",
-        variant: "destructive",
-      });
+        break;
+        
+      case 'error':
+        console.error('Realtime error:', event.error);
+        toast({
+          title: "Connection Error",
+          description: event.error.message || "Something went wrong",
+          variant: "destructive",
+        });
+        break;
     }
   };
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
-
-  const processAnswer = async (audioBlob: Blob) => {
-    setIsProcessing(true);
-    setWaitingForAnswer(false);
-
+  const startConversation = async () => {
     try {
-      const reader = new FileReader();
-      reader.readAsDataURL(audioBlob);
+      setIsInitializing(true);
       
-      reader.onloadend = async () => {
-        const base64Audio = reader.result?.toString().split(',')[1];
-        
-        const { data: transcriptData, error: transcriptError } = await supabase.functions.invoke(
-          'voice-to-text',
-          { body: { audio: base64Audio } }
-        );
-
-        if (transcriptError) throw transcriptError;
-        
-        const answer = transcriptData.text;
-        setCurrentAnswer(answer);
-        
-        // Add to conversation history
-        const newHistory = [
-          ...conversationHistory,
-          { role: 'assistant', content: currentQuestion, answer }
-        ];
-        setConversationHistory(newHistory);
-        setQuestionNumber(prev => prev + 1);
-
-        // Check if we should conclude
-        if (questionNumber >= 6 || answer.toLowerCase().includes('that\'s all') || answer.toLowerCase().includes('nothing else')) {
-          await concludeConversation(newHistory);
-          return;
-        }
-
-        // Ask next question
-        setTimeout(() => {
-          askNextQuestion(newHistory);
-        }, 1000);
-      };
+      // Request microphone permission first
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      chatRef.current = new RealtimeChat(handleRealtimeMessage);
+      await chatRef.current.init();
+      
     } catch (error) {
-      console.error('Error processing answer:', error);
+      console.error('Error starting conversation:', error);
+      setIsInitializing(false);
       toast({
         title: "Error",
-        description: "Could not process your response. Please try again.",
+        description: error instanceof Error ? error.message : 'Failed to start conversation',
         variant: "destructive",
       });
-      setWaitingForAnswer(true);
-    } finally {
-      setIsProcessing(false);
     }
   };
 
-  const generateNextQuestion = async (history: Array<{role: string, content: string, answer?: string}>) => {
-    const allAnswers = history.map(h => h.answer || '').join(' ').toLowerCase();
-    const lastAnswer = history.length > 0 ? (history[history.length - 1].answer || '').toLowerCase() : '';
-    const qNum = questionNumber;
+  const endConversation = async () => {
+    if (!chatRef.current) return;
     
-    // Question 1: General wellbeing
-    if (qNum === 1) {
-      return "How are you feeling today, both physically and emotionally?";
-    }
+    chatRef.current.disconnect();
+    setIsConnected(false);
+    setIsSpeaking(false);
     
-    // Question 2: Medications
-    if (qNum === 2) {
-      return "Have you taken your medications today? I want to make sure you're keeping up with them.";
-    }
-    
-    // Question 3: Physical health follow-up
-    if (qNum === 3) {
-      if (allAnswers.includes('pain') || allAnswers.includes('hurt') || allAnswers.includes('ache')) {
-        return "I'm sorry to hear about the discomfort. On a scale from one to ten, how would you rate it?";
-      }
-      return "How has your energy been? Have you been able to move around and stay active?";
-    }
-    
-    // Question 4: Social connections
-    if (qNum === 4) {
-      if (lastAnswer.includes('tired') || lastAnswer.includes('low energy')) {
-        return "Was something keeping you up at night, or just one of those restless nights?";
-      }
-      return "Have you been able to connect with family or friends recently? It's important to stay in touch.";
-    }
-    
-    // Question 5: Activities and mood
-    if (qNum === 5) {
-      if (lastAnswer.includes('alone') || lastAnswer.includes('lonely')) {
-        return "I understand. Is there someone you'd like to reach out to today?";
-      }
-      if (lastAnswer.includes('family') || lastAnswer.includes('friend')) {
-        return "That sounds lovely! How did spending time with them make you feel?";
-      }
-      return "Did you do anything enjoyable or fun today?";
-    }
-    
-    // Question 6: Final check
-    return "Is there anything else you'd like to share about how you're feeling today?";
-  };
-
-  const concludeConversation = async (history: Array<{role: string, content: string, answer?: string}>) => {
-    setConversationMode(false);
-    setIsRecording(false);
-    setWaitingForAnswer(false);
-    
-    // Compile full conversation transcript from answers
-    const fullTranscript = history
-      .map(h => h.answer || '')
-      .filter(a => a)
+    // Compile full transcript
+    const fullTranscript = conversationTranscript
+      .filter(t => t.startsWith('User:'))
+      .map(t => t.replace('User: ', ''))
       .join(' ');
+    
+    if (!fullTranscript.trim()) {
+      toast({
+        title: "No conversation recorded",
+        description: "Please try again",
+        variant: "destructive",
+      });
+      setConversationTranscript([]);
+      return;
+    }
     
     setTranscript(fullTranscript);
 
-    // Analyze overall sentiment
-    const { data: sentimentData, error: sentimentError } = await supabase.functions.invoke(
-      'analyze-sentiment',
-      { body: { text: fullTranscript } }
-    );
+    // Analyze sentiment
+    try {
+      const { data: sentimentData, error: sentimentError } = await supabase.functions.invoke(
+        'analyze-sentiment',
+        { body: { text: fullTranscript } }
+      );
 
-    if (sentimentError) throw sentimentError;
-    
-    setSentiment(sentimentData);
+      if (sentimentError) throw sentimentError;
+      
+      setSentiment(sentimentData);
 
-    // Create new session
-    const newSession: CheckInSession = {
-      id: Date.now().toString(),
-      timestamp: new Date().toISOString(),
-      transcript: fullTranscript,
-      sentiment: {
-        label: sentimentData.sentiment_label,
-        score: sentimentData.sentiment_score,
-        mood_rating: sentimentData.mood_rating,
-        mental_health_score: sentimentData.mental_health_score,
-        physical_health_score: sentimentData.physical_health_score,
-        overall_score: sentimentData.overall_score,
-        emotions: sentimentData.emotions,
-        highlights: sentimentData.highlights || [],
-        concerns: sentimentData.concerns || []
-      },
-      status: 'completed'
-    };
-
-    setSessions(prev => [newSession, ...prev.filter(s => s.status !== 'processing')]);
-
-    // Save to database
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    await supabase
-      .from('check_ins')
-      .insert({
-        user_id: user!.id,
+      // Create new session
+      const newSession: CheckInSession = {
+        id: Date.now().toString(),
+        timestamp: new Date().toISOString(),
         transcript: fullTranscript,
-        sentiment_score: sentimentData.sentiment_score,
-        sentiment_label: sentimentData.sentiment_label,
-        emotions: sentimentData.emotions,
-        mood_rating: sentimentData.mood_rating,
-        mental_health_score: sentimentData.mental_health_score,
-        physical_health_score: sentimentData.physical_health_score,
-        overall_score: sentimentData.overall_score,
-        mental_indicators: sentimentData.mental_indicators || [],
-        physical_indicators: sentimentData.physical_indicators || [],
+        sentiment: {
+          label: sentimentData.sentiment_label,
+          score: sentimentData.sentiment_score,
+          mood_rating: sentimentData.mood_rating,
+          mental_health_score: sentimentData.mental_health_score,
+          physical_health_score: sentimentData.physical_health_score,
+          overall_score: sentimentData.overall_score,
+          emotions: sentimentData.emotions,
+          highlights: sentimentData.highlights || [],
+          concerns: sentimentData.concerns || []
+        },
+        status: 'completed'
+      };
+
+      setSessions(prev => [newSession, ...prev]);
+
+      // Save to database
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      await supabase
+        .from('check_ins')
+        .insert({
+          user_id: user!.id,
+          transcript: fullTranscript,
+          sentiment_score: sentimentData.sentiment_score,
+          sentiment_label: sentimentData.sentiment_label,
+          emotions: sentimentData.emotions,
+          mood_rating: sentimentData.mood_rating,
+          mental_health_score: sentimentData.mental_health_score,
+          physical_health_score: sentimentData.physical_health_score,
+          overall_score: sentimentData.overall_score,
+          mental_indicators: sentimentData.mental_indicators || [],
+          physical_indicators: sentimentData.physical_indicators || [],
+        });
+
+      toast({
+        title: "Check-in complete!",
+        description: "Thank you for sharing with me today.",
       });
-
-    toast({
-      title: "Check-in complete!",
-      description: "Thank you for sharing with me today.",
-    });
-
-    // Final message
-    const farewell = "Thank you for chatting with me today. I'll check in with you later. Take care!";
-    await speakResponse(farewell);
-  };
-
-  const generateResponse = (sentimentData: any) => {
-    const mood = sentimentData.sentiment_label;
-    const concerns = sentimentData.concerns || [];
-
-    if (mood === 'very_positive') {
-      return "You sound wonderful today! It's lovely to hear such positive energy. Keep up the great spirit!";
-    } else if (mood === 'neutral') {
-      return "Thanks for sharing. How about we make today a little brighter? Is there something nice you're looking forward to?";
-    } else if (concerns.length > 0) {
-      return `I noticed you mentioned ${concerns[0]}. Would you like to talk more about that? Remember, I'm here to listen.`;
-    } else {
-      return "I'm here for you. It's okay to have these days. Want to tell me what's been on your mind?";
-    }
-  };
-
-  const speakResponse = async (text: string): Promise<void> => {
-    return new Promise(async (resolve) => {
-      try {
-        setIsSpeaking(true);
-        
-        // Use ElevenLabs for natural, human-like speech
-        const { data: ttsData, error: ttsError } = await supabase.functions.invoke(
-          'text-to-speech-eleven',
-          { body: { text } }
-        );
-
-        if (ttsError) {
-          console.error('ElevenLabs TTS error:', ttsError);
-          setIsSpeaking(false);
-          resolve();
-          return;
-        }
-
-        // Convert base64 to audio and play
-        const audioData = atob(ttsData.audioContent);
-        const arrayBuffer = new ArrayBuffer(audioData.length);
-        const uint8Array = new Uint8Array(arrayBuffer);
-        
-        for (let i = 0; i < audioData.length; i++) {
-          uint8Array[i] = audioData.charCodeAt(i);
-        }
-
-        const audioBlob = new Blob([uint8Array], { type: 'audio/mpeg' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-        
-        audio.onended = () => {
-          URL.revokeObjectURL(audioUrl);
-          setIsSpeaking(false);
-          resolve();
-        };
-        
-        audio.onerror = (error) => {
-          console.error('Audio playback error:', error);
-          URL.revokeObjectURL(audioUrl);
-          setIsSpeaking(false);
-          resolve();
-        };
-        
-        await audio.play();
-      } catch (error) {
-        console.error('Error playing audio response:', error);
-        setIsSpeaking(false);
-        resolve();
-      }
-    });
-  };
-
-  const getSentimentColor = (label: string) => {
-    switch (label) {
-      case 'very_positive':
-        return 'bg-blue-500/10 border-blue-500/20';
-      case 'neutral':
-        return 'bg-gray-300/10 border-gray-300/20';
-      case 'concerned':
-        return 'bg-red-300/10 border-red-300/20';
-      default:
-        return 'bg-gray-500/10 border-gray-500/20';
+      
+      setConversationTranscript([]);
+    } catch (error) {
+      console.error('Error processing conversation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process conversation",
+        variant: "destructive",
+      });
     }
   };
 
   const getSentimentIcon = (label: string) => {
     switch (label) {
       case 'very_positive':
-        return <Smile className="w-5 h-5" />;
-      case 'concerned':
-        return <AlertCircle className="w-5 h-5" />;
+        return <Smile className="w-5 h-5 text-green-600" />;
       case 'neutral':
-        return <Heart className="w-5 h-5" />;
+        return <Activity className="w-5 h-5 text-yellow-600" />;
+      case 'concerned':
+        return <AlertCircle className="w-5 h-5 text-orange-600" />;
       default:
-        return <Heart className="w-5 h-5" />;
+        return <Activity className="w-5 h-5 text-gray-600" />;
     }
   };
 
-  const getMoodColor = (label: string) => {
+  const getSentimentColor = (label: string) => {
     switch (label) {
       case 'very_positive':
-        return 'bg-green-400 text-black';
-      case 'concerned':
-        return 'bg-red-300 text-black';
+        return 'border-green-200 bg-green-50';
       case 'neutral':
-        return 'bg-gray-300 text-black';
+        return 'border-yellow-200 bg-yellow-50';
+      case 'concerned':
+        return 'border-orange-200 bg-orange-50';
       default:
-        return 'bg-gray-300 text-black';
+        return 'border-gray-200 bg-gray-50';
     }
   };
 
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    
-    if (diffHours < 1) return 'Just now';
-    if (diffHours < 24) return `${diffHours} hours ago`;
-    return date.toLocaleDateString();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+
+    if (diffInHours < 24) {
+      return `${Math.floor(diffInHours)} hours ago`;
+    } else if (diffInHours < 48) {
+      return 'Yesterday';
+    } else {
+      return `${Math.floor(diffInHours / 24)} days ago`;
+    }
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-8 page-container">
-      <div className="max-w-6xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-4">
+    <div className="min-h-screen bg-gradient-to-b from-background to-accent/20 p-4 md:p-8 space-y-8">
+      {/* Header */}
+      <div className="max-w-4xl mx-auto text-center space-y-4">
+        <div className="flex items-center justify-center gap-3">
+          <Heart className="w-12 h-12 text-primary" />
           <h1 className="text-4xl md:text-5xl font-bold">
-            How Are You Feeling?
+            Daily Check-In with Mira
           </h1>
-          {conversationMode && (
-            <Card className="p-6 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 max-w-2xl mx-auto">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-primary">Question {questionNumber} of 6</p>
-                  {currentAnswer && (
-                    <Badge variant="secondary" className="text-xs">
-                      Answered ✓
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                    {isSpeaking ? (
-                      <Loader2 className="w-5 h-5 text-white animate-spin" />
-                    ) : (
-                      <Heart className="w-5 h-5 text-white" />
+        </div>
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          Have a natural conversation with Mira. Just speak naturally - no buttons to press!
+        </p>
+      </div>
+
+      {/* Connection Status */}
+      {isConnected && (
+        <Card className="max-w-2xl mx-auto p-6 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={`w-3 h-3 rounded-full ${isSpeaking ? 'bg-blue-500 animate-pulse' : 'bg-green-500'}`} />
+                <p className="text-sm font-medium">
+                  {isSpeaking ? "Mira is speaking..." : "Listening..."}
+                </p>
+              </div>
+            </div>
+            {currentText && (
+              <div className="p-3 bg-background/60 rounded-lg">
+                <p className="text-sm">{currentText}</p>
+              </div>
+            )}
+            {conversationTranscript.length > 0 && (
+              <div className="mt-4 max-h-40 overflow-y-auto space-y-2">
+                {conversationTranscript.slice(-4).map((text, idx) => (
+                  <p key={idx} className="text-xs text-muted-foreground">
+                    {text}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {/* Main Button */}
+      <div className="max-w-2xl mx-auto flex justify-center">
+        <Button
+          size="lg"
+          onClick={isConnected ? endConversation : startConversation}
+          disabled={isInitializing}
+          className={`w-40 h-40 rounded-full shadow-[0_0_30px_rgba(0,0,0,0.4)] transition-all ${
+            isConnected 
+              ? 'bg-red-500 hover:bg-red-600 text-white' 
+              : isInitializing
+              ? 'bg-gray-500'
+              : 'bg-primary hover:bg-primary/90 text-white'
+          }`}
+        >
+          {isInitializing ? (
+            <Loader2 className="w-24 h-24 animate-spin" />
+          ) : isConnected ? (
+            <PhoneOff className="w-24 h-24" />
+          ) : (
+            <Phone className="w-24 h-24" />
+          )}
+        </Button>
+      </div>
+
+      <div className="text-center">
+        <p className="text-sm text-muted-foreground">
+          {isInitializing 
+            ? "Connecting to Mira..." 
+            : isConnected 
+            ? "Tap to end conversation" 
+            : "Tap to start your daily check-in"}
+        </p>
+      </div>
+
+      {/* Results */}
+      {transcript && sentiment && (
+        <Card className="max-w-2xl mx-auto p-6 space-y-4">
+          <div className="p-4 bg-muted rounded-lg">
+            <p className="text-sm">{transcript}</p>
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-primary/10 rounded-lg">
+            <div className="flex items-center gap-2">
+              {getSentimentIcon(sentiment.sentiment_label)}
+              <span className="text-sm capitalize">{sentiment.sentiment_label.replace('_', ' ')}</span>
+            </div>
+            <span className="text-sm font-medium">Mood: {sentiment.mood_rating}/10</span>
+          </div>
+
+          <Button 
+            variant="outline" 
+            onClick={() => navigate("/")}
+            className="w-full"
+          >
+            Back to Home
+          </Button>
+        </Card>
+      )}
+
+      {!transcript && (
+        <div className="flex justify-center">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate("/")}
+          >
+            Back to Home
+          </Button>
+        </div>
+      )}
+
+      {/* Sentiment Chart */}
+      {sessions.filter(s => s.status === 'completed').length > 0 && (
+        <div className="max-w-2xl mx-auto">
+          <SentimentChart sessions={sessions.filter(s => s.status === 'completed')} />
+        </div>
+      )}
+
+      {/* Recent Check-Ins */}
+      {sessions.length > 0 && (
+        <div className="max-w-2xl mx-auto space-y-3">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <Clock className="w-5 h-5" />
+            Recent Check-Ins
+          </h2>
+          
+          <div className="space-y-3">
+            {sessions.slice(0, 3).map((session) => (
+              <Card
+                key={session.id}
+                className={`p-4 ${session.status === 'completed' ? `cursor-pointer hover:bg-accent/5 border ${getSentimentColor(session.sentiment.label)}` : 'bg-gray-100 border'} transition-colors`}
+                onClick={() => session.status === 'completed' && setSelectedSession(session)}
+              >
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="text-xs text-muted-foreground">{formatTimestamp(session.timestamp)}</div>
+                      </div>
+                      <p className="text-sm line-clamp-2">{session.transcript}</p>
+                    </div>
+                    {session.status === 'completed' && (
+                      <div className="flex items-center gap-2">
+                        {getSentimentIcon(session.sentiment.label)}
+                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                      </div>
                     )}
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Mira asks:</p>
-                    <p className="text-lg font-medium">{currentQuestion}</p>
-                  </div>
                 </div>
-                {currentAnswer && (
-                  <div className="mt-4 p-3 bg-background/60 rounded-lg border border-primary/10">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">Your answer:</p>
-                    <p className="text-sm">{currentAnswer}</p>
-                  </div>
-                )}
-              </div>
-            </Card>
-          )}
-          <p className="text-lg text-muted-foreground">
-            {isRecording 
-              ? "🎤 Listening... Tap to stop when done" 
-              : isProcessing 
-              ? "⏳ Processing your answer..." 
-              : isSpeaking 
-              ? "💬 Mira is asking a question..." 
-              : waitingForAnswer 
-              ? "🎙️ Tap the button to record your answer" 
-              : "Tap to begin your daily check-in"}
-          </p>
-        </div>
-
-        {/* Recording Section */}
-        <div className="max-w-2xl mx-auto">
-          <div className="space-y-6">
-            <div className="flex flex-col items-center gap-4">
-              <Button
-                size="lg"
-                variant="default"
-                className={`w-40 h-40 rounded-full shadow-[0_0_30px_rgba(0,0,0,0.4)] transition-all ${
-                  isRecording 
-                    ? 'bg-green-500 hover:bg-green-600 text-white animate-pulse' 
-                    : isSpeaking 
-                    ? 'bg-blue-500 hover:bg-blue-600 text-white' 
-                    : waitingForAnswer
-                    ? 'bg-primary hover:bg-primary/90 text-white'
-                    : 'bg-black hover:bg-black/90 text-white'
-                }`}
-                onClick={() => {
-                  if (isRecording) {
-                    stopRecording();
-                  } else if (waitingForAnswer) {
-                    startRecording();
-                  } else if (!conversationMode) {
-                    startCheckIn();
-                  }
-                }}
-                disabled={isProcessing || isSpeaking}
-              >
-                {isProcessing ? (
-                  <Loader2 className="w-24 h-24 animate-spin" />
-                ) : isRecording ? (
-                  <MicOff className="w-24 h-24" />
-                ) : isSpeaking ? (
-                  <Loader2 className="w-24 h-24 animate-spin" />
-                ) : (
-                  <Mic className="w-24 h-24" />
-                )}
-              </Button>
-              
-              {isRecording && (
-                <p className="text-sm font-medium text-green-600 animate-pulse">Recording your answer...</p>
-              )}
-              {isSpeaking && (
-                <p className="text-sm font-medium text-blue-600">Mira is asking you a question...</p>
-              )}
-              {isProcessing && (
-                <p className="text-sm text-muted-foreground">Processing your answer...</p>
-              )}
-              {waitingForAnswer && !isRecording && !isProcessing && !isSpeaking && (
-                <p className="text-sm font-medium text-primary">Ready when you are! Tap to answer.</p>
-              )}
-            </div>
-
-            {transcript && (
-              <Card className="p-6 space-y-4">
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm">{transcript}</p>
-                </div>
-
-                {sentiment && (
-                  <div className="flex items-center justify-between p-4 bg-primary/10 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      {getSentimentIcon(sentiment.sentiment_label)}
-                      <span className="text-sm capitalize">{sentiment.sentiment_label.replace('_', ' ')}</span>
-                    </div>
-                    <span className="text-sm font-medium">Mood: {sentiment.mood_rating}/10</span>
-                  </div>
-                )}
-
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate("/")}
-                  className="w-full"
-                >
-                  Back to Home
-                </Button>
               </Card>
-            )}
-
-            {!transcript && (
-              <div className="flex justify-center">
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate("/")}
-                >
-                  Back to Home
-                </Button>
-              </div>
-            )}
+            ))}
           </div>
         </div>
-
-        {/* Sentiment Chart */}
-        {sessions.filter(s => s.status === 'completed').length > 0 && (
-          <div className="max-w-2xl mx-auto">
-            <SentimentChart sessions={sessions.filter(s => s.status === 'completed')} />
-          </div>
-        )}
-
-        {/* Recent Check-Ins - Compact */}
-        {sessions.length > 0 && (
-          <div className="max-w-2xl mx-auto space-y-3">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              Recent Check-Ins
-            </h2>
-            
-            <div className="space-y-3">
-              {sessions.slice(0, 3).map((session) => (
-                <Card
-                  key={session.id}
-                  className={`p-4 ${session.status === 'completed' ? `cursor-pointer hover:bg-accent/5 border ${getSentimentColor(session.sentiment.label)}` : 'bg-gray-100 border'} transition-colors`}
-                  onClick={() => session.status === 'completed' && setSelectedSession(session)}
-                >
-                  {session.status === 'processing' ? (
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="text-xs text-muted-foreground">{formatTimestamp(session.timestamp)}</div>
-                            <Badge className="bg-black text-white text-xs">
-                              <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                              Processing
-                            </Badge>
-                          </div>
-                          <div className="text-sm mt-1 line-clamp-2">{session.transcript}</div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="text-xs text-muted-foreground">{formatTimestamp(session.timestamp)}</div>
-                          <div className="text-sm font-medium mt-1 line-clamp-2">{session.transcript}</div>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                      </div>
-                      
-                      {/* Emotion Analysis Summary - Three Scores */}
-                      <div className="flex items-center gap-3 pt-2 border-t text-xs">
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-2 h-2 rounded-full bg-yellow-500" />
-                          <span className="text-muted-foreground">Balance:</span>
-                          <span className="font-semibold">{session.sentiment.overall_score || 0}/5</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-2 h-2 rounded-full bg-blue-500" />
-                          <span className="text-muted-foreground">Mind:</span>
-                          <span className="font-semibold">{session.sentiment.mental_health_score || 0}/5</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-2 h-2 rounded-full bg-orange-500" />
-                          <span className="text-muted-foreground">Body:</span>
-                          <span className="font-semibold">{session.sentiment.physical_health_score || 0}/5</span>
-                        </div>
-                      </div>
-                      
-                      {/* Key Findings */}
-                      {(session.sentiment.highlights?.length > 0 || session.sentiment.concerns?.length > 0) && (
-                        <div className="flex flex-wrap gap-2">
-                          {session.sentiment.highlights?.slice(0, 2).map((highlight, idx) => (
-                            <Badge key={`h-${idx}`} variant="outline" className="text-xs bg-primary/5">
-                              {highlight}
-                            </Badge>
-                          ))}
-                          {session.sentiment.concerns?.slice(0, 2).map((concern, idx) => (
-                            <Badge key={`c-${idx}`} variant="outline" className="text-xs bg-destructive/5 text-destructive">
-                              {concern}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Session Detail Dialog */}
       <Dialog open={!!selectedSession} onOpenChange={() => setSelectedSession(null)}>
@@ -801,80 +559,63 @@ const CheckIn = () => {
           {selectedSession && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-2xl">Check-In Details</DialogTitle>
-                <DialogDescription className="text-base">
-                  {formatTimestamp(selectedSession.timestamp)}
+                <DialogTitle className="flex items-center gap-2">
+                  {getSentimentIcon(selectedSession.sentiment.label)}
+                  Check-in from {formatTimestamp(selectedSession.timestamp)}
+                </DialogTitle>
+                <DialogDescription>
+                  {new Date(selectedSession.timestamp).toLocaleString()}
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-6 mt-4">
-                {/* Transcript */}
-                <div className="space-y-2">
-                  <h3 className="font-bold text-lg flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-primary" />
-                    What You Shared
-                  </h3>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-2">Transcript</h3>
                   <div className="p-4 bg-muted rounded-lg">
-                    <p className="leading-relaxed">{selectedSession.transcript}</p>
+                    <p className="text-sm">{selectedSession.transcript}</p>
                   </div>
                 </div>
 
-                {/* Sentiment Overview */}
-                <div className="space-y-2">
-                  <h3 className="font-bold text-lg">Emotional Analysis</h3>
-                  <div className="grid grid-cols-3 gap-4">
-                    <Card className="p-4 text-center">
-                      <div className="text-sm text-muted-foreground mb-1">Mood</div>
-                      <div className="text-2xl font-bold">
-                        {selectedSession.sentiment.mood_rating}/10
-                      </div>
-                    </Card>
-                    <Card className="p-4 text-center">
-                      <div className="text-sm text-muted-foreground mb-1">Status</div>
-                      <div className="text-lg font-bold capitalize">
-                        {selectedSession.sentiment.label.replace('_', ' ')}
-                      </div>
-                    </Card>
-                    <Card className="p-4 text-center">
-                      <div className="text-sm text-muted-foreground mb-1">Score</div>
-                      <div className="text-2xl font-bold">
-                        {(selectedSession.sentiment.score * 100).toFixed(0)}%
-                      </div>
-                    </Card>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-primary/10 rounded-lg">
+                    <p className="text-xs text-muted-foreground">Mood Rating</p>
+                    <p className="text-2xl font-bold">{selectedSession.sentiment.mood_rating}/10</p>
+                  </div>
+                  <div className="p-4 bg-primary/10 rounded-lg">
+                    <p className="text-xs text-muted-foreground">Overall Score</p>
+                    <p className="text-2xl font-bold">{selectedSession.sentiment.overall_score?.toFixed(1)}/5</p>
+                  </div>
+                  <div className="p-4 bg-primary/10 rounded-lg">
+                    <p className="text-xs text-muted-foreground">Mental Health</p>
+                    <p className="text-2xl font-bold">{selectedSession.sentiment.mental_health_score}/5</p>
+                  </div>
+                  <div className="p-4 bg-primary/10 rounded-lg">
+                    <p className="text-xs text-muted-foreground">Physical Health</p>
+                    <p className="text-2xl font-bold">{selectedSession.sentiment.physical_health_score}/5</p>
                   </div>
                 </div>
 
-                {/* Highlights */}
                 {selectedSession.sentiment.highlights && selectedSession.sentiment.highlights.length > 0 && (
-                  <div className="space-y-2">
-                    <h3 className="font-bold text-lg flex items-center gap-2">
-                      <Smile className="w-5 h-5" />
-                      Key Highlights
-                    </h3>
-                    <div className="space-y-2">
+                  <div>
+                    <h3 className="font-semibold mb-2">Highlights</h3>
+                    <div className="flex flex-wrap gap-2">
                       {selectedSession.sentiment.highlights.map((highlight, idx) => (
-                        <div key={idx} className="flex items-center gap-3 p-3 bg-primary/10 rounded-lg">
-                          <div className="w-2 h-2 bg-primary rounded-full"></div>
-                          <span>{highlight}</span>
-                        </div>
+                        <Badge key={idx} variant="secondary" className="text-xs">
+                          {highlight}
+                        </Badge>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Concerns */}
                 {selectedSession.sentiment.concerns && selectedSession.sentiment.concerns.length > 0 && (
-                  <div className="space-y-2">
-                    <h3 className="font-bold text-lg flex items-center gap-2">
-                      <AlertCircle className="w-5 h-5" />
-                      Areas of Concern
-                    </h3>
-                    <div className="space-y-2">
+                  <div>
+                    <h3 className="font-semibold mb-2">Concerns</h3>
+                    <div className="flex flex-wrap gap-2">
                       {selectedSession.sentiment.concerns.map((concern, idx) => (
-                        <div key={idx} className="flex items-center gap-3 p-3 bg-destructive/10 rounded-lg">
-                          <AlertCircle className="w-4 h-4" />
-                          <span>{concern}</span>
-                        </div>
+                        <Badge key={idx} variant="destructive" className="text-xs">
+                          {concern}
+                        </Badge>
                       ))}
                     </div>
                   </div>

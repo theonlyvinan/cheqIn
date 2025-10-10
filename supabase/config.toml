@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.text-to-speech-eleven]
 verify_jwt = true
+
+[functions.realtime-token]
+verify_jwt = true
