@@ -21,9 +21,9 @@ const Index = () => {
               src={logo} 
               alt="Cheq-In Logo" 
               id="hero-logo"
-              className="w-52 md:w-64 h-auto transition-all duration-500 cursor-pointer animate-pulse -mr-10"
+              className="w-64 md:w-80 h-auto transition-all duration-500 cursor-pointer animate-pulse -mr-10 -mt-8"
               style={{ 
-                filter: 'drop-shadow(0 10px 30px hsl(190 85% 45% / 0.3))',
+                filter: 'drop-shadow(0 0 40px hsl(190 85% 45% / 0.8)) drop-shadow(0 0 80px hsl(190 85% 45% / 0.5))',
                 transform: 'rotateY(0deg) rotateX(0deg)',
                 transformStyle: 'preserve-3d',
                 transition: 'transform 0.5s ease-out'
