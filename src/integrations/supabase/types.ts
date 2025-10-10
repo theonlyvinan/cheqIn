@@ -20,9 +20,14 @@ export type Database = {
           created_at: string | null
           emotions: Json | null
           id: string
+          mental_health_score: number | null
+          mental_indicators: Json | null
           mood_rating: number | null
           notes: string | null
+          overall_score: number | null
           pain_level: number | null
+          physical_health_score: number | null
+          physical_indicators: Json | null
           sentiment_label: string | null
           sentiment_score: number | null
           sleep_quality: number | null
@@ -34,9 +39,14 @@ export type Database = {
           created_at?: string | null
           emotions?: Json | null
           id?: string
+          mental_health_score?: number | null
+          mental_indicators?: Json | null
           mood_rating?: number | null
           notes?: string | null
+          overall_score?: number | null
           pain_level?: number | null
+          physical_health_score?: number | null
+          physical_indicators?: Json | null
           sentiment_label?: string | null
           sentiment_score?: number | null
           sleep_quality?: number | null
@@ -48,9 +58,14 @@ export type Database = {
           created_at?: string | null
           emotions?: Json | null
           id?: string
+          mental_health_score?: number | null
+          mental_indicators?: Json | null
           mood_rating?: number | null
           notes?: string | null
+          overall_score?: number | null
           pain_level?: number | null
+          physical_health_score?: number | null
+          physical_indicators?: Json | null
           sentiment_label?: string | null
           sentiment_score?: number | null
           sleep_quality?: number | null

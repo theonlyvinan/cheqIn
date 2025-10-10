@@ -19,6 +19,9 @@ interface CheckInSession {
     label: string;
     score: number;
     mood_rating: number;
+    mental_health_score?: number;
+    physical_health_score?: number;
+    overall_score?: number;
     emotions: any;
     highlights?: string[];
     concerns?: string[];
@@ -45,6 +48,9 @@ const CheckIn = () => {
         label: 'very_positive',
         score: 0.92,
         mood_rating: 9,
+        mental_health_score: 5,
+        physical_health_score: 4,
+        overall_score: 4.5,
         emotions: { joy: 0.85, contentment: 0.78 },
         highlights: ['Park walk', 'Coffee with friend', 'Beautiful weather', 'Feeling energized'],
         concerns: []
@@ -60,6 +66,9 @@ const CheckIn = () => {
         label: 'concerned',
         score: -0.65,
         mood_rating: 4,
+        mental_health_score: 2,
+        physical_health_score: 3,
+        overall_score: 2.5,
         emotions: { sadness: 0.68, worry: 0.58, upset: 0.45 },
         highlights: ['Fight with friend', 'Feeling upset'],
         concerns: ['Unresolved conflict', 'Bothered by disagreement']
@@ -75,6 +84,9 @@ const CheckIn = () => {
         label: 'neutral',
         score: 0.1,
         mood_rating: 6,
+        mental_health_score: 3,
+        physical_health_score: 3,
+        overall_score: 3,
         emotions: { calm: 0.5 },
         highlights: ['Reading', 'Relaxing'],
         concerns: []
@@ -90,6 +102,9 @@ const CheckIn = () => {
         label: 'very_positive',
         score: 0.88,
         mood_rating: 8,
+        mental_health_score: 5,
+        physical_health_score: 4,
+        overall_score: 4.5,
         emotions: { joy: 0.82, love: 0.75 },
         highlights: ['Family connection', 'Grandchildren'],
         concerns: []
@@ -105,6 +120,9 @@ const CheckIn = () => {
         label: 'concerned',
         score: -0.3,
         mood_rating: 5,
+        mental_health_score: 3,
+        physical_health_score: 2,
+        overall_score: 2.5,
         emotions: { fatigue: 0.6, discomfort: 0.5 },
         highlights: [],
         concerns: ['Poor sleep', 'Knee pain']
@@ -120,6 +138,9 @@ const CheckIn = () => {
         label: 'very_positive',
         score: 0.95,
         mood_rating: 9,
+        mental_health_score: 5,
+        physical_health_score: 5,
+        overall_score: 5,
         emotions: { energy: 0.88, satisfaction: 0.85 },
         highlights: ['Productive day', 'Gardening', 'Feeling energetic'],
         concerns: []
@@ -135,6 +156,9 @@ const CheckIn = () => {
         label: 'neutral',
         score: 0.3,
         mood_rating: 7,
+        mental_health_score: 4,
+        physical_health_score: 3,
+        overall_score: 3.5,
         emotions: { contentment: 0.6 },
         highlights: ['Family call'],
         concerns: []
@@ -150,6 +174,9 @@ const CheckIn = () => {
         label: '',
         score: 0,
         mood_rating: 0,
+        mental_health_score: 0,
+        physical_health_score: 0,
+        overall_score: 0,
         emotions: {}
       },
       status: 'processing'
@@ -355,6 +382,9 @@ const CheckIn = () => {
         label: sentimentData.sentiment_label,
         score: sentimentData.sentiment_score,
         mood_rating: sentimentData.mood_rating,
+        mental_health_score: sentimentData.mental_health_score,
+        physical_health_score: sentimentData.physical_health_score,
+        overall_score: sentimentData.overall_score,
         emotions: sentimentData.emotions,
         highlights: sentimentData.highlights || [],
         concerns: sentimentData.concerns || []
@@ -376,6 +406,11 @@ const CheckIn = () => {
         sentiment_label: sentimentData.sentiment_label,
         emotions: sentimentData.emotions,
         mood_rating: sentimentData.mood_rating,
+        mental_health_score: sentimentData.mental_health_score,
+        physical_health_score: sentimentData.physical_health_score,
+        overall_score: sentimentData.overall_score,
+        mental_indicators: sentimentData.mental_indicators || [],
+        physical_indicators: sentimentData.physical_indicators || [],
       });
 
     toast({

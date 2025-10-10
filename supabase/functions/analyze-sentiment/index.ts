@@ -31,14 +31,26 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a compassionate AI that analyzes emotional wellbeing. Analyze the text and return ONLY a JSON object with:
-- sentiment_score: -1 to 1 (negative to positive)
+            content: `You are a compassionate AI that analyzes emotional and physical wellbeing. Analyze the text and return ONLY a JSON object with:
+- sentiment_score: -1 to 1 (negative to positive, legacy)
 - sentiment_label: "very_negative", "negative", "neutral", "positive", or "very_positive"
 - emotions: object with joy, sadness, anxiety, calm, pain (0-1 scale)
 - concerns: array of any health/safety concerns detected
-- mood_rating: 1-10 overall mood rating
+- mood_rating: 1-10 overall mood rating (legacy)
+- mental_health_score: 1-5 (MindGlow: reflects mood, emotional tone, positivity, engagement)
+- physical_health_score: 1-5 (BodyPulse: reflects energy, comfort, sleep, pain, activity)
+- overall_score: 1-5 (Balance: harmony between mental and physical health)
+- mental_indicators: array of strings describing mental health factors detected
+- physical_indicators: array of strings describing physical health factors detected
 
-Example: {"sentiment_score": 0.6, "sentiment_label": "positive", "emotions": {"joy": 0.7, "sadness": 0.1, "anxiety": 0.2, "calm": 0.6, "pain": 0.3}, "concerns": [], "mood_rating": 7}`
+Scoring guide:
+1 = Low Glow (Very Concerned) - Signs of distress/fatigue
+2 = Dim Glow (Concerned) - Slightly low energy/mood
+3 = Steady Glow (Neutral) - Balanced and stable
+4 = Bright Glow (Positive) - Good energy/mood
+5 = Radiant Glow (Very Positive) - Excellent mood/energy
+
+Example: {"sentiment_score": 0.6, "sentiment_label": "positive", "emotions": {"joy": 0.7, "sadness": 0.1, "anxiety": 0.2, "calm": 0.6, "pain": 0.3}, "concerns": [], "mood_rating": 7, "mental_health_score": 4, "physical_health_score": 3, "overall_score": 3.5, "mental_indicators": ["positive outlook", "engaged conversation"], "physical_indicators": ["mild fatigue mentioned"]}`
           },
           {
             role: 'user',

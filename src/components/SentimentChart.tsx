@@ -1,30 +1,56 @@
 import { Card } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { format, subDays } from 'date-fns';
-import { Smile, Frown, Meh, AlertCircle, Heart } from 'lucide-react';
+import { Brain, Heart, Scale } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { useState } from 'react';
 
 interface SentimentChartProps {
   sessions: Array<{
     timestamp: string;
     sentiment: {
-      mood_rating: number;
+      mood_rating?: number;
+      mental_health_score?: number;
+      physical_health_score?: number;
+      overall_score?: number;
     };
   }>;
 }
 
+type ViewMode = 'mental' | 'physical' | 'overall';
+
 const SentimentChart = ({ sessions }: SentimentChartProps) => {
-  // Map mood rating to sentiment category
-  const getMoodCategory = (moodRating: number): number => {
-    if (moodRating <= 2) return 1; // Very concerned
-    if (moodRating <= 4) return 2; // Concerned
-    if (moodRating <= 6) return 3; // Neutral
-    if (moodRating <= 8) return 4; // Positive
-    return 5; // Very positive
-  };
+  const [viewMode, setViewMode] = useState<ViewMode>('overall');
 
   const getCategoryLabel = (category: number): string => {
-    const labels = ['', 'Very Concerned', 'Concerned', 'Neutral', 'Positive', 'Very Positive'];
-    return labels[category];
+    const labels = ['', 'Low Glow', 'Dim Glow', 'Steady Glow', 'Bright Glow', 'Radiant Glow'];
+    return labels[category] || '';
+  };
+
+  const getViewConfig = (mode: ViewMode) => {
+    switch (mode) {
+      case 'mental':
+        return {
+          name: 'MindGlow',
+          icon: Brain,
+          color: '#3b82f6', // blue
+          label: 'Mental Health'
+        };
+      case 'physical':
+        return {
+          name: 'BodyPulse',
+          icon: Heart,
+          color: '#f97316', // coral/orange
+          label: 'Physical Health'
+        };
+      case 'overall':
+        return {
+          name: 'Balance',
+          icon: Scale,
+          color: '#fbbf24', // golden yellow
+          label: 'Overall Well-Being'
+        };
+    }
   };
 
   // Generate last 7 days of data
@@ -40,42 +66,82 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
       return sessionDate === day;
     });
 
-    const avgMood = daysSessions.length > 0
-      ? daysSessions.reduce((sum, s) => sum + s.sentiment.mood_rating, 0) / daysSessions.length
-      : null;
+    if (daysSessions.length === 0) {
+      return { day, mental: null, physical: null, overall: null };
+    }
+
+    const avgMental = daysSessions.reduce((sum, s) => sum + (s.sentiment.mental_health_score || 0), 0) / daysSessions.length;
+    const avgPhysical = daysSessions.reduce((sum, s) => sum + (s.sentiment.physical_health_score || 0), 0) / daysSessions.length;
+    const avgOverall = daysSessions.reduce((sum, s) => sum + (s.sentiment.overall_score || 0), 0) / daysSessions.length;
 
     return {
       day,
-      mood: avgMood !== null ? getMoodCategory(avgMood) : null,
-      rawMood: avgMood
+      mental: avgMental || null,
+      physical: avgPhysical || null,
+      overall: avgOverall || null
     };
   });
 
-  // Custom dot component with mood icons
+  // Custom dot component
   const CustomDot = (props: any) => {
     const { cx, cy, payload } = props;
-    if (!payload.mood) return null;
+    const value = payload[viewMode];
+    if (!value) return null;
 
-    const getMoodColor = (mood: number) => {
-      if (mood === 1) return '#dc2626'; // red
-      if (mood === 2) return '#f97316'; // orange
-      if (mood === 3) return '#6b7280'; // gray
-      if (mood === 4) return '#16a34a'; // green
-      return '#2563eb'; // blue
+    const getMoodColor = (score: number) => {
+      if (score <= 1.5) return '#dc2626'; // red - Low Glow
+      if (score <= 2.5) return '#f97316'; // orange - Dim Glow
+      if (score <= 3.5) return '#fbbf24'; // yellow - Steady Glow
+      if (score <= 4.5) return '#16a34a'; // green - Bright Glow
+      return '#059669'; // emerald - Radiant Glow
     };
 
-    const color = getMoodColor(payload.mood);
+    const color = getMoodColor(value);
 
     return (
       <g>
-        <circle cx={cx} cy={cy} r={16} fill={color} stroke="#fff" strokeWidth={3} />
+        <circle cx={cx} cy={cy} r={14} fill={color} stroke="#fff" strokeWidth={3} />
       </g>
     );
   };
 
+  const config = getViewConfig(viewMode);
+
   return (
     <Card className="p-6">
-      <h3 className="text-lg font-semibold mb-4">Your Week at a Glance</h3>
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-semibold">Your Week at a Glance</h3>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant={viewMode === 'mental' ? 'default' : 'outline'}
+            onClick={() => setViewMode('mental')}
+            className="gap-2"
+          >
+            <Brain className="w-4 h-4" />
+            MindGlow
+          </Button>
+          <Button
+            size="sm"
+            variant={viewMode === 'physical' ? 'default' : 'outline'}
+            onClick={() => setViewMode('physical')}
+            className="gap-2"
+          >
+            <Heart className="w-4 h-4" />
+            BodyPulse
+          </Button>
+          <Button
+            size="sm"
+            variant={viewMode === 'overall' ? 'default' : 'outline'}
+            onClick={() => setViewMode('overall')}
+            className="gap-2"
+          >
+            <Scale className="w-4 h-4" />
+            Balance
+          </Button>
+        </div>
+      </div>
+      
       <ResponsiveContainer width="100%" height={320}>
         <LineChart data={chartData} margin={{ top: 30, right: 20, bottom: 10, left: 10 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -98,28 +164,33 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
               border: '1px solid #e5e7eb',
               borderRadius: '8px'
             }}
-            formatter={(value: any, name: string, props: any) => {
+            formatter={(value: any) => {
               if (!value) return ['No data', ''];
-              return [getCategoryLabel(value), 'Mood'];
+              return [getCategoryLabel(Math.round(value)), config.label];
             }}
           />
           <ReferenceLine 
             y={3} 
-            stroke="#ef4444" 
-            strokeWidth={2}
+            stroke="#9ca3af" 
+            strokeWidth={1}
             strokeDasharray="5 5"
-            label={{ value: 'Neutral', position: 'right', fill: '#ef4444', fontSize: 12 }}
+            label={{ value: 'Steady Glow', position: 'right', fill: '#6b7280', fontSize: 11 }}
           />
           <Line 
             type="monotone" 
-            dataKey="mood" 
-            stroke="#000000" 
-            strokeWidth={2}
+            dataKey={viewMode}
+            stroke={config.color}
+            strokeWidth={3}
             dot={<CustomDot />}
             connectNulls
           />
         </LineChart>
       </ResponsiveContainer>
+      
+      <div className="mt-4 text-sm text-muted-foreground text-center">
+        <config.icon className="w-4 h-4 inline mr-2" />
+        Viewing {config.name} — {config.label}
+      </div>
     </Card>
   );
 };
