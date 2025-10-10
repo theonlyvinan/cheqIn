@@ -17,6 +17,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface FamilyMember {
   name: string;
@@ -38,6 +44,7 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [analyzingImage, setAnalyzingImage] = useState(false);
+  const [cameraDialogOpen, setCameraDialogOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -65,16 +72,13 @@ const Auth = () => {
   const [physicalIssues, setPhysicalIssues] = useState("");
   const [mentalIssues, setMentalIssues] = useState("");
 
-  // Avatar
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-
   // Family members
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([
     { name: "", relationship: "", email: "", phone: "" }
   ]);
 
-  const startCamera = async () => {
+  const openCameraDialog = async () => {
+    setCameraDialogOpen(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: 'environment' }
@@ -89,6 +93,7 @@ const Auth = () => {
         description: "Could not access camera",
         variant: "destructive",
       });
+      setCameraDialogOpen(false);
     }
   };
 
@@ -99,6 +104,7 @@ const Auth = () => {
       videoRef.current.srcObject = null;
       setCameraActive(false);
     }
+    setCameraDialogOpen(false);
   };
 
   const capturePhoto = () => {
@@ -112,11 +118,10 @@ const Auth = () => {
       
       canvas.toBlob((blob) => {
         if (blob) {
+          stopCamera();
           analyzeMedicationLabel(blob);
         }
       }, 'image/jpeg', 0.95);
-      
-      stopCamera();
     }
   };
 
@@ -228,18 +233,6 @@ const Auth = () => {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setAvatarFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const addFamilyMember = () => {
     setFamilyMembers([...familyMembers, { name: "", relationship: "", email: "", phone: "" }]);
   };
@@ -299,30 +292,12 @@ const Auth = () => {
 
       const userId = authData.user.id;
 
-      // Upload avatar if provided
-      let avatarUrl = null;
-      if (avatarFile) {
-        const fileExt = avatarFile.name.split('.').pop();
-        const fileName = `${userId}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(fileName, avatarFile);
-
-        if (!uploadError) {
-          const { data: urlData } = supabase.storage
-            .from('avatars')
-            .getPublicUrl(fileName);
-          avatarUrl = urlData.publicUrl;
-        }
-      }
-
       // Create profile
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
           user_id: userId,
           full_name: fullName,
-          avatar_url: avatarUrl,
           physical_health_issues: physicalIssues || null,
           mental_health_issues: mentalIssues || null,
         });
@@ -488,22 +463,6 @@ const Auth = () => {
                   minLength={6}
                 />
               </div>
-
-              {/* Avatar Upload */}
-              <div className="space-y-2">
-                <Label>Profile Photo (Optional)</Label>
-                <div className="flex items-center gap-4">
-                  {avatarPreview && (
-                    <img src={avatarPreview} alt="Avatar" className="w-20 h-20 rounded-full object-cover" />
-                  )}
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="flex-1"
-                  />
-                </div>
-              </div>
             </div>
 
             {/* Medications */}
@@ -517,11 +476,11 @@ const Auth = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={cameraActive ? capturePhoto : startCamera}
+                  onClick={openCameraDialog}
                   disabled={analyzingImage}
                 >
                   <Camera className="w-4 h-4 mr-2" />
-                  {cameraActive ? 'Capture' : 'Take Photo'}
+                  Take Photo
                 </Button>
 
                 <Button
@@ -549,22 +508,42 @@ const Auth = () => {
                 onChange={handleFileSelect}
               />
 
-              {cameraActive && (
-                <div className="relative">
-                  <video ref={videoRef} autoPlay className="w-full rounded-lg" />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={stopCamera}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              )}
-
               <canvas ref={canvasRef} className="hidden" />
+
+              {/* Camera Dialog */}
+              <Dialog open={cameraDialogOpen} onOpenChange={(open) => {
+                if (!open) stopCamera();
+              }}>
+                <DialogContent className="sm:max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Take Photo of Medication Label</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    {cameraActive && (
+                      <div className="relative">
+                        <video ref={videoRef} autoPlay playsInline className="w-full rounded-lg" />
+                      </div>
+                    )}
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={stopCamera}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={capturePhoto}
+                        disabled={!cameraActive}
+                      >
+                        <Camera className="w-4 h-4 mr-2" />
+                        Capture
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
               {/* Manual Entry Form */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
