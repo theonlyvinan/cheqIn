@@ -110,34 +110,21 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
     };
   });
 
-  // Custom dot component with custom emoji icons
+  // Simple dot component
   const CustomDot = (props: any) => {
     const { cx, cy, payload } = props;
     const value = payload[viewMode];
     if (!value) return null;
 
-    const getMoodIcon = (score: number) => {
-      if (score <= 1.5) return { icon: lowIcon, color: '#7BA3D0' }; // muted blue
-      if (score <= 2.5) return { icon: dimIcon, color: '#B8B3C8' }; // lavender gray
-      if (score <= 3.5) return { icon: steadyIcon, color: '#8FD6A1' }; // mint green
-      if (score <= 4.5) return { icon: brightIcon, color: '#FFD75E' }; // sunny yellow
-      return { icon: radiantIcon, color: '#FF9F6B' }; // warm coral
-    };
-
-    const { icon, color } = getMoodIcon(value);
-    const size = 24;
-
     return (
-      <g>
-        <circle cx={cx} cy={cy} r={14} fill={color} opacity={0.15} />
-        <image 
-          href={icon} 
-          x={cx - size / 2} 
-          y={cy - size / 2} 
-          width={size} 
-          height={size}
-        />
-      </g>
+      <circle 
+        cx={cx} 
+        cy={cy} 
+        r={4} 
+        fill="#000000"
+        stroke="#ffffff"
+        strokeWidth={2}
+      />
     );
   };
 
@@ -246,7 +233,7 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
             type="monotone" 
             dataKey={viewMode}
             stroke="#000000"
-            strokeWidth={2}
+            strokeWidth={1}
             dot={<CustomDot />}
             connectNulls
           />
