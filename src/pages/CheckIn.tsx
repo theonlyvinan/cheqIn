@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import SentimentChart from "@/components/SentimentChart";
 import { RealtimeChat } from "@/utils/RealtimeAudio";
+import logo from "@/assets/cheqin-logo.png";
 
 type SessionStatus = 'processing' | 'completed';
 
@@ -397,12 +398,56 @@ const CheckIn = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-accent/20 p-4 md:p-8 space-y-8">
       {/* Header */}
-      <div className="max-w-4xl mx-auto text-center space-y-4">
-        <div className="flex items-center justify-center gap-3">
-          <Heart className="w-12 h-12 text-primary" />
-          <h1 className="text-4xl md:text-5xl font-bold">
-            Daily Check-In with Mira
+      <div className="max-w-4xl mx-auto text-center space-y-6">
+        {/* Logo + Text Combined with 3D Effect */}
+        <div className="flex items-center justify-center gap-4 group perspective-1000">
+          <img 
+            src={logo}
+            alt="CheqIn Logo" 
+            id="checkin-logo"
+            className="w-16 md:w-20 h-auto transition-all duration-500 cursor-pointer"
+            style={{ 
+              filter: 'drop-shadow(0 5px 15px hsl(190 85% 45% / 0.3))',
+              transform: 'rotateY(0deg) rotateX(0deg)',
+              transformStyle: 'preserve-3d',
+              transition: 'transform 0.5s ease-out'
+            }}
+          />
+          <h1 
+            className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-foreground via-foreground to-accent bg-clip-text text-transparent cursor-pointer"
+            onMouseEnter={() => {
+              const logo = document.getElementById('checkin-logo');
+              if (logo) {
+                logo.style.animation = 'pulse 1s ease-in-out infinite';
+              }
+            }}
+            onMouseLeave={() => {
+              const logo = document.getElementById('checkin-logo');
+              if (logo) {
+                logo.style.animation = 'none';
+              }
+            }}
+          >
+            CheqIn
           </h1>
+        </div>
+        
+        <style dangerouslySetInnerHTML={{ __html: `
+          .perspective-1000 {
+            perspective: 1000px;
+          }
+          #checkin-logo {
+            transform-style: preserve-3d;
+          }
+          #checkin-logo:hover {
+            transform: rotateY(15deg) rotateX(5deg) scale(1.15);
+            filter: drop-shadow(0 10px 20px hsl(190 85% 45% / 0.5));
+          }
+        `}} />
+        
+        <div className="flex items-center justify-center gap-2 text-xl md:text-2xl font-semibold text-primary">
+          <Heart className="w-6 h-6" />
+          <span>Daily Check-In with Mira</span>
         </div>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           Have a natural conversation with Mira. Just speak naturally - no buttons to press!

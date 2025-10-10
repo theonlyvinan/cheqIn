@@ -15,43 +15,58 @@ const Index = () => {
       <header className="relative container mx-auto px-4 py-12 overflow-hidden">
         <div className="absolute inset-0 rounded-3xl -z-10" style={{ background: 'var(--shine-gradient)' }}></div>
         <div className="flex flex-col items-center justify-center min-h-[85vh] text-center space-y-10">
-          <div className="animate-fade-in group" style={{ filter: 'drop-shadow(var(--glow-primary))' }}>
+          {/* Logo + Text Combined with 3D Effect */}
+          <div className="animate-fade-in flex items-center gap-6 group perspective-1000">
             <img 
               src={logo} 
               alt="CheqIn Logo" 
-              className="w-56 md:w-72 h-auto transition-all duration-500 group-hover:scale-110 group-hover:drop-shadow-2xl cursor-pointer"
+              id="hero-logo"
+              className="w-40 md:w-52 h-auto transition-all duration-500 cursor-pointer"
               style={{ 
-                animation: 'none',
-                filter: 'drop-shadow(0 10px 30px hsl(190 85% 45% / 0.3))'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.animation = 'pulse 1s ease-in-out infinite';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.animation = 'none';
+                filter: 'drop-shadow(0 10px 30px hsl(190 85% 45% / 0.3))',
+                transform: 'rotateY(0deg) rotateX(0deg)',
+                transformStyle: 'preserve-3d',
+                transition: 'transform 0.5s ease-out'
               }}
             />
-          </div>
-          <div className="space-y-6 max-w-4xl">
-            <div className="group relative inline-block">
-              <h1 className="text-6xl md:text-8xl font-bold bg-gradient-to-r from-foreground via-foreground to-accent bg-clip-text text-transparent">
+            <div className="relative">
+              <h1 
+                className="text-6xl md:text-8xl font-bold bg-gradient-to-r from-foreground via-foreground to-accent bg-clip-text text-transparent cursor-pointer"
+                onMouseEnter={() => {
+                  const logo = document.getElementById('hero-logo');
+                  if (logo) {
+                    logo.style.animation = 'pulse 1s ease-in-out infinite';
+                  }
+                }}
+                onMouseLeave={() => {
+                  const logo = document.getElementById('hero-logo');
+                  if (logo) {
+                    logo.style.animation = 'none';
+                  }
+                }}
+              >
                 CheqIn
               </h1>
               <Heart 
-                className="absolute -top-8 -right-8 md:-top-12 md:-right-12 w-12 h-12 md:w-16 md:h-16 text-accent fill-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300" 
-                style={{
-                  animation: 'none'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.animation = 'pulse 0.6s ease-in-out infinite';
-                }}
+                className="absolute -top-8 -right-8 md:-top-12 md:-right-12 w-12 h-12 md:w-16 md:h-16 text-accent fill-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-pulse" 
               />
             </div>
-            <style dangerouslySetInnerHTML={{ __html: `
-              .group:hover .absolute {
-                animation: pulse 0.6s ease-in-out infinite !important;
-              }
-            `}} />
+          </div>
+          
+          <style dangerouslySetInnerHTML={{ __html: `
+            .perspective-1000 {
+              perspective: 1000px;
+            }
+            #hero-logo {
+              transform-style: preserve-3d;
+            }
+            #hero-logo:hover {
+              transform: rotateY(15deg) rotateX(5deg) scale(1.1);
+              filter: drop-shadow(0 20px 40px hsl(190 85% 45% / 0.5));
+            }
+          `}} />
+          
+          <div className="space-y-6 max-w-4xl">
             <p className="text-2xl md:text-3xl font-medium text-foreground italic">
               Because love deserves a daily CheqIn
             </p>
