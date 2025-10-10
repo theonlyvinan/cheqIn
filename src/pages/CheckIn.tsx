@@ -392,7 +392,7 @@ const CheckIn = () => {
               {sessions.slice(0, 3).map((session) => (
                 <Card
                   key={session.id}
-                  className={`p-4 ${session.status === 'completed' ? `cursor-pointer hover:bg-accent/5 border ${getSentimentColor(session.sentiment.label)}` : 'bg-white border'} transition-colors`}
+                  className={`p-4 ${session.status === 'completed' ? `cursor-pointer hover:bg-accent/5 border ${getSentimentColor(session.sentiment.label)}` : 'bg-gray-100 border'} transition-colors`}
                   onClick={() => session.status === 'completed' && setSelectedSession(session)}
                 >
                   {session.status === 'processing' ? (
