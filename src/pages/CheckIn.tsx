@@ -556,7 +556,7 @@ const CheckIn = () => {
             {sessions.slice(0, 3).map((session) => (
               <Card
                 key={session.id}
-                className={`p-4 bg-white ${session.status === 'completed' ? 'cursor-pointer hover:bg-accent/5 border' : 'bg-gray-100 border'} transition-colors`}
+                className={`p-4 ${session.status === 'completed' ? 'cursor-pointer border' : 'bg-gray-100 border'} transition-colors`}
                 onClick={() => session.status === 'completed' && setSelectedSession(session)}
               >
                 <div className="space-y-3">
