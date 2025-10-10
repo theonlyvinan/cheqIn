@@ -90,6 +90,40 @@ const CheckIn = () => {
         concerns: []
       },
       status: 'completed'
+    },
+    {
+      id: 'sample-4',
+      timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      transcript: "Had a quiet day at home. Called my sister and caught up on some shows. Feeling calm and content.",
+      sentiment: {
+        label: 'neutral',
+        score: 0.3,
+        mood_rating: 7,
+        mental_health_score: 3,
+        physical_health_score: 3,
+        overall_score: 3,
+        emotions: { contentment: 0.6 },
+        highlights: ['Family call', 'Relaxation'],
+        concerns: []
+      },
+      status: 'completed'
+    },
+    {
+      id: 'sample-5',
+      timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+      transcript: "Felt really energetic today! Went grocery shopping and even did some cleaning. Very productive day!",
+      sentiment: {
+        label: 'very_positive',
+        score: 0.95,
+        mood_rating: 9,
+        mental_health_score: 5,
+        physical_health_score: 4,
+        overall_score: 4.5,
+        emotions: { energy: 0.88, satisfaction: 0.85 },
+        highlights: ['Productive day', 'Shopping', 'Feeling energetic'],
+        concerns: []
+      },
+      status: 'completed'
     }
   ]);
   const [selectedSession, setSelectedSession] = useState<CheckInSession | null>(null);
@@ -531,7 +565,37 @@ const CheckIn = () => {
                       <div className="flex items-center gap-2 mb-2">
                         <div className="text-xs text-muted-foreground">{formatTimestamp(session.timestamp)}</div>
                       </div>
-                      <p className="text-sm line-clamp-2">{session.transcript}</p>
+                      <p className="text-sm line-clamp-2 mb-3">{session.transcript}</p>
+                      
+                      {/* Scores */}
+                      <div className="grid grid-cols-3 gap-2 mb-3">
+                        <div className="p-2 bg-background/60 rounded text-center">
+                          <p className="text-xs text-muted-foreground">Mental</p>
+                          <p className="text-sm font-semibold">{session.sentiment.mental_health_score}/5</p>
+                        </div>
+                        <div className="p-2 bg-background/60 rounded text-center">
+                          <p className="text-xs text-muted-foreground">Physical</p>
+                          <p className="text-sm font-semibold">{session.sentiment.physical_health_score}/5</p>
+                        </div>
+                        <div className="p-2 bg-background/60 rounded text-center">
+                          <p className="text-xs text-muted-foreground">Overall</p>
+                          <p className="text-sm font-semibold">{session.sentiment.overall_score?.toFixed(1)}/5</p>
+                        </div>
+                      </div>
+                      
+                      {/* Highlights */}
+                      {session.sentiment.highlights && session.sentiment.highlights.length > 0 && (
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Highlights:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {session.sentiment.highlights.map((highlight, idx) => (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                {highlight}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     {session.status === 'completed' && (
                       <div className="flex items-center gap-2">

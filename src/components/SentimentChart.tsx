@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { format, subDays } from 'date-fns';
 import { Brain, Heart, Scale } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -179,13 +179,12 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
       </div>
       
       <ResponsiveContainer width="100%" height={320}>
-        <ScatterChart data={chartData} margin={{ top: 30, right: 20, bottom: 10, left: 10 }}>
+        <LineChart data={chartData} margin={{ top: 30, right: 20, bottom: 10, left: 10 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis 
             dataKey="day" 
             tick={{ fontSize: 12 }}
             stroke="#6b7280"
-            type="category"
           />
           <YAxis 
             domain={[1, 5]} 
@@ -223,7 +222,6 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
             }}
             stroke="#6b7280"
             width={110}
-            type="number"
           />
           <Tooltip 
             contentStyle={{ 
@@ -244,11 +242,15 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
             strokeDasharray="5 5"
             label={{ value: 'Steady', position: 'right', fill: '#6b7280', fontSize: 11 }}
           />
-          <Scatter 
+          <Line 
+            type="monotone" 
             dataKey={viewMode}
-            shape={<CustomDot />}
+            stroke="#000000"
+            strokeWidth={2}
+            dot={<CustomDot />}
+            connectNulls
           />
-        </ScatterChart>
+        </LineChart>
       </ResponsiveContainer>
       
       <div className="mt-4 text-sm text-muted-foreground text-center">
