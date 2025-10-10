@@ -48,7 +48,7 @@ const Auth = () => {
 
         toast({
           title: "Account created!",
-          description: "Welcome to Check-In!",
+          description: "Welcome to Cheq-In!",
         });
         navigate("/checkin");
       }
@@ -67,7 +67,7 @@ const Auth = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="max-w-md w-full p-8 space-y-6">
         <div className="text-center space-y-4">
-          <img src={logo} alt="Check-In" className="w-24 h-auto mx-auto" />
+          <img src={logo} alt="Cheq-In" className="w-24 h-auto mx-auto" />
           <h1 className="text-3xl font-bold">
             {isLogin ? "Welcome Back" : "Get Started"}
           </h1>

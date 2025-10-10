@@ -19,7 +19,7 @@ const Index = () => {
           <div className="animate-fade-in flex items-end gap-0 group perspective-1000">
             <img 
               src={logo} 
-              alt="Check-In Logo" 
+              alt="Cheq-In Logo" 
               id="hero-logo"
               className="w-52 md:w-64 h-auto transition-all duration-500 cursor-pointer animate-pulse -mr-6"
               style={{ 
@@ -45,7 +45,7 @@ const Index = () => {
                   }
                 }}
               >
-                Check-In
+                Cheq-In
               </h1>
             </div>
           </div>
@@ -65,7 +65,7 @@ const Index = () => {
           
           <div className="space-y-6 max-w-4xl">
             <p className="text-2xl md:text-3xl font-medium text-foreground italic">
-              Because love deserves a daily Check-In
+              Because love deserves a daily Cheq-In
             </p>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               A wellness companion for brighter days
@@ -230,10 +230,10 @@ const Index = () => {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.1),transparent)]"></div>
           <div className="relative z-10 space-y-8">
             <h2 className="text-5xl md:text-6xl font-bold">
-              Ready for your daily Check-In?
+              Ready for your daily Cheq-In?
             </h2>
             <p className="text-2xl md:text-3xl max-w-3xl mx-auto opacity-90 italic">
-              Because love deserves a daily Check-In
+              Because love deserves a daily Cheq-In
             </p>
             <p className="text-xl md:text-2xl max-w-3xl mx-auto opacity-80">
               Join families making wellness a warm, daily conversation
@@ -257,14 +257,14 @@ const Index = () => {
         <div className="container mx-auto px-4 text-center space-y-4">
           <img 
             src={logo} 
-            alt="Check-In" 
+            alt="Cheq-In" 
             className="w-20 h-auto mx-auto opacity-80"
           />
           <p className="text-lg text-muted-foreground">
-            © 2025 Check-In
+            © 2025 Cheq-In
           </p>
           <p className="text-base text-muted-foreground italic">
-            Because love deserves a daily Check-In
+            Because love deserves a daily Cheq-In
           </p>
           <p className="text-sm text-muted-foreground/60">
             A wellness companion for brighter days

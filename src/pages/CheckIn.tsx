@@ -403,7 +403,7 @@ const CheckIn = () => {
         <div className="flex items-end gap-0 justify-center group perspective-1000">
           <img 
             src={logo}
-            alt="Check-In Logo" 
+            alt="Cheq-In Logo" 
             id="checkin-logo"
             className="w-20 md:w-24 h-auto transition-all duration-500 cursor-pointer animate-pulse -mr-3"
             style={{ 
@@ -428,7 +428,7 @@ const CheckIn = () => {
               }
             }}
           >
-            Check-In
+            Cheq-In
           </h1>
         </div>
         
