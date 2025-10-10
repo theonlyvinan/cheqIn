@@ -204,6 +204,7 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
               if (!value) return ['No data', ''];
               return [getCategoryLabel(Math.round(value)), config.label];
             }}
+            cursor={false}
           />
           <ReferenceLine 
             y={3} 
