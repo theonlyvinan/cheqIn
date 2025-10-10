@@ -38,6 +38,8 @@ const CheckIn = () => {
   const [conversationHistory, setConversationHistory] = useState<Array<{role: string, content: string}>>([]);
   const [currentQuestion, setCurrentQuestion] = useState("");
   const [turnCount, setTurnCount] = useState(0);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [questionTopics, setQuestionTopics] = useState<Set<string>>(new Set());
   const [sessions, setSessions] = useState<CheckInSession[]>([
     // Today - Happy session
     {
@@ -205,31 +207,34 @@ const CheckIn = () => {
       setConversationMode(true);
       setTurnCount(0);
       setConversationHistory([]);
+      setQuestionTopics(new Set());
       
       const greeting = "Hi, it's Mira from CheqIn. How are you feeling today?";
       setCurrentQuestion(greeting);
       await speakResponse(greeting);
       
-      // Start listening after greeting
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
+      // Start listening after greeting finishes
+      setTimeout(async () => {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
+        };
 
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        await processConversationalAudio(audioBlob);
-        stream.getTracks().forEach(track => track.stop());
-      };
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          await processConversationalAudio(audioBlob);
+          stream.getTracks().forEach(track => track.stop());
+        };
 
-      mediaRecorder.start();
-      setIsRecording(true);
+        mediaRecorder.start();
+        setIsRecording(true);
+      }, 2000); // Wait for greeting to finish
 
       toast({
         title: "Conversation started",
@@ -262,11 +267,14 @@ const CheckIn = () => {
       reader.onloadend = async () => {
         const base64Audio = reader.result?.toString().split(',')[1];
         
-        // Transcribe audio
-        const { data: transcriptData, error: transcriptError } = await supabase.functions.invoke(
+        // Transcribe audio in background
+        const transcriptionPromise = supabase.functions.invoke(
           'voice-to-text',
           { body: { audio: base64Audio } }
         );
+
+        // Generate and speak next question while transcription is processing
+        const { data: transcriptData, error: transcriptError } = await transcriptionPromise;
 
         if (transcriptError) throw transcriptError;
         
@@ -281,38 +289,48 @@ const CheckIn = () => {
         setConversationHistory(newHistory);
         setTurnCount(prev => prev + 1);
 
-        // Check if we should conclude (after 4-5 turns or if user seems done)
-        if (turnCount >= 4 || userResponse.toLowerCase().includes('that\'s all') || userResponse.toLowerCase().includes('i\'m done')) {
-          // Conclude conversation
+        // Check if we should conclude (after 5-6 turns or if user seems done)
+        if (turnCount >= 5 || userResponse.toLowerCase().includes('that\'s all') || userResponse.toLowerCase().includes('i\'m done') || userResponse.toLowerCase().includes('nothing else')) {
           await concludeConversation(newHistory);
           return;
         }
 
-        // Generate next question based on conversation
+        // Generate next question while processing in background
         const nextQuestion = await generateNextQuestion(newHistory, userResponse);
         setCurrentQuestion(nextQuestion);
-        await speakResponse(nextQuestion);
+        
+        // Start speaking next question immediately
+        const speakPromise = speakResponse(nextQuestion);
+        
+        // Continue recording for next response after question starts
+        setTimeout(async () => {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
 
-        // Continue recording for next response
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const mediaRecorder = new MediaRecorder(stream);
-        mediaRecorderRef.current = mediaRecorder;
-        audioChunksRef.current = [];
+            mediaRecorder.ondataavailable = (event) => {
+              if (event.data.size > 0) {
+                audioChunksRef.current.push(event.data);
+              }
+            };
 
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            audioChunksRef.current.push(event.data);
+            mediaRecorder.onstop = async () => {
+              const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+              await processConversationalAudio(audioBlob);
+              stream.getTracks().forEach(track => track.stop());
+            };
+
+            // Wait for question to finish speaking
+            await speakPromise;
+            
+            mediaRecorder.start();
+            setIsRecording(true);
+          } catch (error) {
+            console.error('Error continuing recording:', error);
           }
-        };
-
-        mediaRecorder.onstop = async () => {
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-          await processConversationalAudio(audioBlob);
-          stream.getTracks().forEach(track => track.stop());
-        };
-
-        mediaRecorder.start();
-        setIsRecording(true);
+        }, 500);
       };
     } catch (error) {
       console.error('Error processing conversational audio:', error);
@@ -327,28 +345,62 @@ const CheckIn = () => {
   };
 
   const generateNextQuestion = async (history: Array<{role: string, content: string}>, lastResponse: string) => {
-    // Use analyze-sentiment to understand the response and generate contextual follow-up
-    const { data } = await supabase.functions.invoke('analyze-sentiment', {
-      body: { 
-        text: lastResponse,
-        conversationHistory: history 
-      }
-    });
-
-    // Generate contextual follow-up questions
-    if (lastResponse.toLowerCase().includes('pain') || lastResponse.toLowerCase().includes('hurt')) {
-      return "I'm sorry to hear that. On a scale from one to ten, how bad is it today?";
-    } else if (lastResponse.toLowerCase().includes('tired') || lastResponse.toLowerCase().includes('sleep')) {
-      return "Was something keeping you up, or just one of those restless nights?";
-    } else if (lastResponse.toLowerCase().includes('family') || lastResponse.toLowerCase().includes('friend')) {
-      return "That sounds lovely! How did that make you feel?";
-    } else if (data?.sentiment_label === 'concerned') {
-      return "I hear you. Is there anything specific that's been on your mind about that?";
-    } else if (data?.sentiment_label === 'very_positive') {
-      return "That's wonderful! Tell me more about what made today special?";
-    } else {
-      return "Thank you for sharing that. How has your day been otherwise?";
+    // Track which topics we've covered
+    const askedTopics = new Set(questionTopics);
+    
+    // Priority questions about wellbeing, medications, and loneliness
+    const responseText = lastResponse.toLowerCase();
+    
+    // Physical health follow-ups
+    if ((responseText.includes('pain') || responseText.includes('hurt') || responseText.includes('ache')) && !askedTopics.has('pain_scale')) {
+      askedTopics.add('pain_scale');
+      setQuestionTopics(askedTopics);
+      return "I'm sorry to hear that. On a scale from one to ten, how bad is the discomfort today?";
     }
+    
+    if ((responseText.includes('tired') || responseText.includes('sleep') || responseText.includes('rest')) && !askedTopics.has('sleep_quality')) {
+      askedTopics.add('sleep_quality');
+      setQuestionTopics(askedTopics);
+      return "Was something keeping you up, or just one of those restless nights?";
+    }
+    
+    // Medication check - Ask early in conversation
+    if (turnCount === 1 && !askedTopics.has('medications')) {
+      askedTopics.add('medications');
+      setQuestionTopics(askedTopics);
+      return "Have you taken your medications today? Just want to make sure you're keeping up with them.";
+    }
+    
+    // Social connection check
+    if ((responseText.includes('alone') || responseText.includes('lonely') || (turnCount === 2 && !askedTopics.has('social'))) && !askedTopics.has('social')) {
+      askedTopics.add('social');
+      setQuestionTopics(askedTopics);
+      return "Have you been able to connect with family or friends recently? It's important to stay in touch.";
+    }
+    
+    // Physical activity
+    if (turnCount === 3 && !askedTopics.has('activity')) {
+      askedTopics.add('activity');
+      setQuestionTopics(askedTopics);
+      return "How has your energy been today? Have you been able to move around and stay active?";
+    }
+    
+    // Emotional check-in
+    if ((responseText.includes('family') || responseText.includes('friend')) && !askedTopics.has('emotional_impact')) {
+      askedTopics.add('emotional_impact');
+      setQuestionTopics(askedTopics);
+      return "That sounds lovely! How did that make you feel?";
+    }
+    
+    // General wellness
+    if (turnCount === 4 && !askedTopics.has('general_wellness')) {
+      askedTopics.add('general_wellness');
+      setQuestionTopics(askedTopics);
+      return "Is there anything else you'd like to share about how you're feeling today, physically or emotionally?";
+    }
+    
+    // Default follow-up
+    return "Thank you for sharing. Is there anything else on your mind today?";
   };
 
   const concludeConversation = async (history: Array<{role: string, content: string}>) => {
@@ -438,19 +490,55 @@ const CheckIn = () => {
     }
   };
 
-  const speakResponse = async (text: string) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('text-to-speech', {
-        body: { text }
-      });
-
-      if (error) throw error;
-
-      const audio = new Audio(`data:audio/mpeg;base64,${data.audioContent}`);
-      audio.play();
-    } catch (error) {
-      console.error('Error playing audio response:', error);
-    }
+  const speakResponse = async (text: string): Promise<void> => {
+    return new Promise((resolve) => {
+      try {
+        setIsSpeaking(true);
+        
+        // Use Web Speech API (built-in, free)
+        if ('speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(text);
+          
+          // Configure voice settings for elderly-friendly speech
+          utterance.rate = 0.85; // Slightly slower for clarity
+          utterance.pitch = 1.0;
+          utterance.volume = 1.0;
+          
+          // Try to use a female voice if available
+          const voices = speechSynthesis.getVoices();
+          const preferredVoice = voices.find(voice => 
+            voice.name.includes('Female') || 
+            voice.name.includes('Samantha') ||
+            voice.name.includes('Karen')
+          ) || voices.find(voice => voice.lang.startsWith('en'));
+          
+          if (preferredVoice) {
+            utterance.voice = preferredVoice;
+          }
+          
+          utterance.onend = () => {
+            setIsSpeaking(false);
+            resolve();
+          };
+          
+          utterance.onerror = (error) => {
+            console.error('Speech synthesis error:', error);
+            setIsSpeaking(false);
+            resolve();
+          };
+          
+          speechSynthesis.speak(utterance);
+        } else {
+          console.warn('Speech synthesis not supported');
+          setIsSpeaking(false);
+          resolve();
+        }
+      } catch (error) {
+        console.error('Error playing audio response:', error);
+        setIsSpeaking(false);
+        resolve();
+      }
+    });
   };
 
   const getSentimentColor = (label: string) => {
@@ -511,8 +599,25 @@ const CheckIn = () => {
           <h1 className="text-4xl md:text-5xl font-bold">
             How Are You Feeling?
           </h1>
+          {conversationMode && (
+            <Card className="p-6 bg-primary/5 border-primary/20 max-w-2xl mx-auto">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+                  {isSpeaking ? (
+                    <Loader2 className="w-5 h-5 text-white animate-spin" />
+                  ) : (
+                    <Heart className="w-5 h-5 text-white" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Mira asks:</p>
+                  <p className="text-lg font-medium">{currentQuestion}</p>
+                </div>
+              </div>
+            </Card>
+          )}
           <p className="text-lg text-muted-foreground">
-            {isRecording ? "I'm listening..." : conversationMode ? currentQuestion : "Tap to start your check-in"}
+            {isRecording ? "I'm listening... take your time" : conversationMode ? "Tap when ready to answer" : "Tap to start your check-in"}
           </p>
         </div>
 
