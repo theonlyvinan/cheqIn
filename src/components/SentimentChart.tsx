@@ -28,11 +28,28 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
   };
 
   const getCategoryIcon = (category: number) => {
-    // Simple circle icons with different colors
-    const colors = ['', '#dc2626', '#f97316', '#fbbf24', '#16a34a', '#059669'];
-    const color = colors[category] || '#9ca3af';
+    const config = [
+      { emoji: '', color: '#9ca3af' },
+      { emoji: '🥺', color: '#7BA3D0' }, // muted blue
+      { emoji: '😕', color: '#B8B3C8' }, // lavender gray
+      { emoji: '🙂', color: '#8FD6A1' }, // mint green
+      { emoji: '😊', color: '#FFD75E' }, // sunny yellow
+      { emoji: '🤗', color: '#FF9F6B' }  // warm coral
+    ];
+    const { emoji, color } = config[category] || config[0];
     return (
-      <circle cx="0" cy="0" r="6" fill={color} stroke="#fff" strokeWidth="2" />
+      <g>
+        <circle cx="0" cy="0" r="8" fill={color} stroke="#fff" strokeWidth="2" />
+        <text 
+          x="0" 
+          y="0" 
+          textAnchor="middle" 
+          dominantBaseline="central" 
+          fontSize="10"
+        >
+          {emoji}
+        </text>
+      </g>
     );
   };
 
@@ -91,25 +108,36 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
     };
   });
 
-  // Custom dot component
+  // Custom dot component with emoji styling
   const CustomDot = (props: any) => {
     const { cx, cy, payload } = props;
     const value = payload[viewMode];
     if (!value) return null;
 
-    const getMoodColor = (score: number) => {
-      if (score <= 1.5) return '#dc2626'; // red - Low Glow
-      if (score <= 2.5) return '#f97316'; // orange - Dim Glow
-      if (score <= 3.5) return '#fbbf24'; // yellow - Steady Glow
-      if (score <= 4.5) return '#16a34a'; // green - Bright Glow
-      return '#059669'; // emerald - Radiant Glow
+    const getMoodEmoji = (score: number) => {
+      if (score <= 1.5) return { emoji: '🥺', color: '#7BA3D0' }; // muted blue
+      if (score <= 2.5) return { emoji: '😕', color: '#B8B3C8' }; // lavender gray
+      if (score <= 3.5) return { emoji: '🙂', color: '#8FD6A1' }; // mint green
+      if (score <= 4.5) return { emoji: '😊', color: '#FFD75E' }; // sunny yellow
+      return { emoji: '🤗', color: '#FF9F6B' }; // warm coral
     };
 
-    const color = getMoodColor(value);
+    const { emoji, color } = getMoodEmoji(value);
 
     return (
       <g>
-        <circle cx={cx} cy={cy} r={14} fill={color} stroke="#fff" strokeWidth={3} />
+        <circle cx={cx} cy={cy} r={16} fill={color} opacity={0.2} />
+        <circle cx={cx} cy={cy} r={14} fill={color} stroke="#fff" strokeWidth={2} />
+        <text 
+          x={cx} 
+          y={cy} 
+          textAnchor="middle" 
+          dominantBaseline="central" 
+          fontSize="16"
+          style={{ userSelect: 'none' }}
+        >
+          {emoji}
+        </text>
       </g>
     );
   };
