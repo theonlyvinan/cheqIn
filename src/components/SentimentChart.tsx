@@ -188,8 +188,8 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
           <Line 
             type="monotone" 
             dataKey={viewMode}
-            stroke={config.color}
-            strokeWidth={3}
+            stroke="#000000"
+            strokeWidth={1.5}
             dot={<CustomDot />}
             connectNulls
           />
