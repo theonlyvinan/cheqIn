@@ -403,9 +403,9 @@ const CheckIn = () => {
         <div className="flex items-end gap-0 justify-center group perspective-1000">
           <img 
             src={logo}
-            alt="CheqIn Logo" 
+            alt="Check-In Logo" 
             id="checkin-logo"
-            className="w-20 md:w-24 h-auto transition-all duration-500 cursor-pointer animate-pulse -mr-1"
+            className="w-20 md:w-24 h-auto transition-all duration-500 cursor-pointer animate-pulse -mr-3"
             style={{ 
               filter: 'drop-shadow(0 5px 15px hsl(190 85% 45% / 0.3))',
               transform: 'rotateY(0deg) rotateX(0deg)',
@@ -428,7 +428,7 @@ const CheckIn = () => {
               }
             }}
           >
-            CheqIn
+            Check-In
           </h1>
         </div>
         
