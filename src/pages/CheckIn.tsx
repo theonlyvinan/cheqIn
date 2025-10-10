@@ -39,127 +39,7 @@ const CheckIn = () => {
   const [conversationTranscript, setConversationTranscript] = useState<string[]>([]);
   const [currentText, setCurrentText] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [sessions, setSessions] = useState<CheckInSession[]>([
-    {
-      id: '1',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      transcript: "I had a wonderful day! Went for a walk in the park, the weather was beautiful, and I met my friend Sarah for coffee. I'm feeling energized and grateful.",
-      sentiment: {
-        label: 'very_positive',
-        score: 0.92,
-        mood_rating: 9,
-        mental_health_score: 5,
-        physical_health_score: 4,
-        overall_score: 4.5,
-        emotions: { joy: 0.85, contentment: 0.78 },
-        highlights: ['Park walk', 'Coffee with friend', 'Beautiful weather', 'Feeling energized'],
-        concerns: []
-      },
-      status: 'completed'
-    },
-    {
-      id: '2',
-      timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      transcript: "I had a fight with my friend today and it's been bothering me. We disagreed about something important and now I'm feeling upset about how things were left.",
-      sentiment: {
-        label: 'concerned',
-        score: -0.65,
-        mood_rating: 4,
-        mental_health_score: 2,
-        physical_health_score: 3,
-        overall_score: 2.5,
-        emotions: { sadness: 0.68, worry: 0.58, upset: 0.45 },
-        highlights: ['Fight with friend', 'Feeling upset'],
-        concerns: ['Unresolved conflict', 'Bothered by disagreement']
-      },
-      status: 'completed'
-    },
-    {
-      id: '4',
-      timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      transcript: "Today was okay. Did some light reading and watched TV. Nothing special.",
-      sentiment: {
-        label: 'neutral',
-        score: 0.1,
-        mood_rating: 6,
-        mental_health_score: 3,
-        physical_health_score: 3,
-        overall_score: 3,
-        emotions: { calm: 0.5 },
-        highlights: ['Reading', 'Relaxing'],
-        concerns: []
-      },
-      status: 'completed'
-    },
-    {
-      id: '5',
-      timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      transcript: "Had a nice video call with my grandchildren. They showed me their new school projects!",
-      sentiment: {
-        label: 'very_positive',
-        score: 0.88,
-        mood_rating: 8,
-        mental_health_score: 5,
-        physical_health_score: 4,
-        overall_score: 4.5,
-        emotions: { joy: 0.82, love: 0.75 },
-        highlights: ['Family connection', 'Grandchildren'],
-        concerns: []
-      },
-      status: 'completed'
-    },
-    {
-      id: '6',
-      timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-      transcript: "Didn't sleep well last night. My knees were bothering me. Took it easy today.",
-      sentiment: {
-        label: 'concerned',
-        score: -0.3,
-        mood_rating: 5,
-        mental_health_score: 3,
-        physical_health_score: 2,
-        overall_score: 2.5,
-        emotions: { fatigue: 0.6, discomfort: 0.5 },
-        highlights: [],
-        concerns: ['Poor sleep', 'Knee pain']
-      },
-      status: 'completed'
-    },
-    {
-      id: '7',
-      timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      transcript: "Felt really energetic today! Went grocery shopping and even did some gardening. Very productive!",
-      sentiment: {
-        label: 'very_positive',
-        score: 0.95,
-        mood_rating: 9,
-        mental_health_score: 5,
-        physical_health_score: 5,
-        overall_score: 5,
-        emotions: { energy: 0.88, satisfaction: 0.85 },
-        highlights: ['Productive day', 'Gardening', 'Feeling energetic'],
-        concerns: []
-      },
-      status: 'completed'
-    },
-    {
-      id: '8',
-      timestamp: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
-      transcript: "Had a quiet day at home. Called my sister and caught up on some shows.",
-      sentiment: {
-        label: 'neutral',
-        score: 0.3,
-        mood_rating: 7,
-        mental_health_score: 4,
-        physical_health_score: 3,
-        overall_score: 3.5,
-        emotions: { contentment: 0.6 },
-        highlights: ['Family call'],
-        concerns: []
-      },
-      status: 'completed'
-    },
-  ]);
+  const [sessions, setSessions] = useState<CheckInSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<CheckInSession | null>(null);
   const chatRef = useRef<RealtimeChat | null>(null);
   const { toast } = useToast();
@@ -167,12 +47,51 @@ const CheckIn = () => {
 
   useEffect(() => {
     checkAuth();
+    fetchCheckIns();
   }, []);
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       navigate("/auth");
+    }
+  };
+
+  const fetchCheckIns = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('check_ins')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const fetchedSessions: CheckInSession[] = data.map(checkIn => ({
+          id: checkIn.id,
+          timestamp: checkIn.created_at,
+          transcript: checkIn.transcript,
+          sentiment: {
+            label: checkIn.sentiment_label || 'neutral',
+            score: checkIn.sentiment_score || 0,
+            mood_rating: checkIn.mood_rating || 5,
+            mental_health_score: checkIn.mental_health_score,
+            physical_health_score: checkIn.physical_health_score,
+            overall_score: checkIn.overall_score,
+            emotions: checkIn.emotions || {},
+            highlights: [],
+            concerns: []
+          },
+          status: 'completed' as SessionStatus
+        }));
+        setSessions(fetchedSessions);
+      }
+    } catch (error) {
+      console.error('Error fetching check-ins:', error);
     }
   };
 
@@ -245,6 +164,10 @@ const CheckIn = () => {
   const startConversation = async () => {
     try {
       setIsInitializing(true);
+      setTranscript("");
+      setSentiment(null);
+      setConversationTranscript([]);
+      setCurrentText("");
       
       // Request microphone permission first
       await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -323,7 +246,7 @@ const CheckIn = () => {
       // Save to database
       const { data: { user } } = await supabase.auth.getUser();
       
-      await supabase
+      const { error: insertError } = await supabase
         .from('check_ins')
         .insert({
           user_id: user!.id,
@@ -338,6 +261,13 @@ const CheckIn = () => {
           mental_indicators: sentimentData.mental_indicators || [],
           physical_indicators: sentimentData.physical_indicators || [],
         });
+
+      if (insertError) {
+        console.error('Error saving check-in:', insertError);
+      } else {
+        // Refresh the list after saving
+        await fetchCheckIns();
+      }
 
       toast({
         title: "Check-in complete!",
