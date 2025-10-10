@@ -211,14 +211,31 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
             width={110}
           />
           <Tooltip 
-            contentStyle={{ 
-              backgroundColor: 'white', 
-              border: '1px solid #e5e7eb',
-              borderRadius: '8px'
-            }}
-            formatter={(value: any) => {
-              if (!value) return ['No data', ''];
-              return [getCategoryLabel(Math.round(value)), config.label];
+            content={({ active, payload }) => {
+              if (!active || !payload?.[0]) return null;
+              const value = payload[0].value as number;
+              if (!value) return null;
+              
+              const roundedValue = Math.round(value);
+              const label = getCategoryLabel(roundedValue);
+              const getIcon = (val: number) => {
+                if (val === 1) return lowIcon;
+                if (val === 2) return dimIcon;
+                if (val === 3) return steadyIcon;
+                if (val === 4) return brightIcon;
+                if (val === 5) return radiantIcon;
+                return null;
+              };
+              const icon = getIcon(roundedValue);
+              
+              return (
+                <div className="bg-white border border-gray-200 rounded-lg p-2 shadow-lg">
+                  <div className="flex items-center gap-2">
+                    {icon && <img src={icon} alt="" className="w-5 h-5" />}
+                    <span className="text-xs font-medium">{label}</span>
+                  </div>
+                </div>
+              );
             }}
             cursor={false}
           />
