@@ -347,12 +347,20 @@ const CheckIn = () => {
     }
   };
 
+  const getOverallScoreLabel = (score: number) => {
+    if (score >= 4.5) return 'Radiant';
+    if (score >= 3.5) return 'Bright';
+    if (score >= 2.5) return 'Steady';
+    if (score >= 1.5) return 'Dim';
+    return 'Low';
+  };
+
   const getOverallScoreIcon = (score: number) => {
-    if (score >= 4.5) return <img src={radiantIcon} alt="Radiant" className="w-8 h-8" />;
-    if (score >= 3.5) return <img src={brightIcon} alt="Bright" className="w-8 h-8" />;
-    if (score >= 2.5) return <img src={steadyIcon} alt="Steady" className="w-8 h-8" />;
-    if (score >= 1.5) return <img src={dimIcon} alt="Dim" className="w-8 h-8" />;
-    return <img src={lowIcon} alt="Low" className="w-8 h-8" />;
+    if (score >= 4.5) return radiantIcon;
+    if (score >= 3.5) return brightIcon;
+    if (score >= 2.5) return steadyIcon;
+    if (score >= 1.5) return dimIcon;
+    return lowIcon;
   };
 
   const formatTimestamp = (timestamp: string) => {
@@ -556,7 +564,7 @@ const CheckIn = () => {
             {sessions.slice(0, 3).map((session) => (
               <Card
                 key={session.id}
-                className={`p-4 ${session.status === 'completed' ? 'cursor-pointer border' : 'bg-gray-100 border'} transition-colors`}
+                className={`p-4 bg-transparent border-none shadow-none ${session.status === 'completed' ? 'cursor-pointer' : ''}`}
                 onClick={() => session.status === 'completed' && setSelectedSession(session)}
               >
                 <div className="space-y-3">
@@ -564,7 +572,10 @@ const CheckIn = () => {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-xs text-muted-foreground">{formatTimestamp(session.timestamp)}</div>
-                        {getOverallScoreIcon(session.sentiment.overall_score || 3)}
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{getOverallScoreLabel(session.sentiment.overall_score || 3)}</span>
+                          <img src={getOverallScoreIcon(session.sentiment.overall_score || 3)} alt="" className="w-6 h-6" />
+                        </div>
                       </div>
                       <p className="text-sm line-clamp-2 mb-3">{session.transcript}</p>
                       
