@@ -257,14 +257,14 @@ const CheckIn = () => {
     switch (label) {
       case 'very_positive':
       case 'positive':
-        return 'from-green-500 to-emerald-400';
+        return 'bg-blue-500/10 border-blue-500/20';
       case 'neutral':
-        return 'from-blue-500 to-cyan-400';
+        return 'bg-blue-300/10 border-blue-300/20';
       case 'negative':
       case 'very_negative':
-        return 'from-orange-500 to-red-400';
+        return 'bg-red-300/10 border-red-300/20';
       default:
-        return 'from-gray-500 to-gray-400';
+        return 'bg-gray-500/10 border-gray-500/20';
     }
   };
 
@@ -381,14 +381,14 @@ const CheckIn = () => {
               {sessions.slice(0, 3).map((session) => (
                 <Card
                   key={session.id}
-                  className={`p-4 ${session.status === 'completed' ? 'cursor-pointer hover:bg-accent/5' : ''} transition-colors`}
+                  className={`p-4 ${session.status === 'completed' ? `cursor-pointer hover:bg-accent/5 border ${getSentimentColor(session.sentiment.label)}` : 'bg-black text-white border-black'} transition-colors`}
                   onClick={() => session.status === 'completed' && setSelectedSession(session)}
                 >
                   {session.status === 'processing' ? (
                     <div className="flex items-center gap-3">
-                      <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                      <Loader2 className="w-5 h-5 animate-spin text-white" />
                       <div className="flex-1">
-                        <div className="text-xs text-muted-foreground">{formatTimestamp(session.timestamp)}</div>
+                        <div className="text-xs text-white/70">{formatTimestamp(session.timestamp)}</div>
                         <div className="text-sm font-medium mt-1">Processing your check-in...</div>
                       </div>
                     </div>
