@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,10 +7,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { Camera, ChevronRight, ChevronLeft, Plus, X } from "lucide-react";
+import { Camera, Plus, X, Loader2, Trash2, Edit2, Check } from "lucide-react";
 import logo from "@/assets/cheqin-logo.png";
-
-type SignupStep = 'auth' | 'medications' | 'health' | 'photo' | 'family';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface FamilyMember {
   name: string;
@@ -19,33 +25,208 @@ interface FamilyMember {
   phone: string;
 }
 
+interface Medication {
+  id: string;
+  name: string;
+  dosage?: string;
+  frequency?: string;
+  timeOfDay: string[];
+  instructions?: string;
+}
+
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [currentStep, setCurrentStep] = useState<SignupStep>('auth');
   const [loading, setLoading] = useState(false);
+  const [analyzingImage, setAnalyzingImage] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [cameraActive, setCameraActive] = useState(false);
 
-  // Auth step
+  // Auth fields
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
 
-  // Medications step
-  const [medications, setMedications] = useState("");
+  // Medications
+  const [medications, setMedications] = useState<Medication[]>([]);
+  const [editingMedId, setEditingMedId] = useState<string | null>(null);
+  const [medForm, setMedForm] = useState({
+    name: '',
+    dosage: '',
+    frequency: '',
+    timeOfDay: [] as string[],
+    instructions: ''
+  });
 
-  // Health step
+  // Health fields
   const [physicalIssues, setPhysicalIssues] = useState("");
   const [mentalIssues, setMentalIssues] = useState("");
 
-  // Photo step
+  // Avatar
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
-  // Family step
+  // Family members
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([
     { name: "", relationship: "", email: "", phone: "" }
   ]);
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' }
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        setCameraActive(true);
+      }
+    } catch (error) {
+      toast({
+        title: "Camera Error",
+        description: "Could not access camera",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current?.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+      setCameraActive(false);
+    }
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(video, 0, 0);
+      
+      canvas.toBlob((blob) => {
+        if (blob) {
+          analyzeMedicationLabel(blob);
+        }
+      }, 'image/jpeg', 0.95);
+      
+      stopCamera();
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      analyzeMedicationLabel(file);
+    }
+  };
+
+  const analyzeMedicationLabel = async (imageFile: Blob) => {
+    setAnalyzingImage(true);
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(imageFile);
+      
+      reader.onloadend = async () => {
+        const base64Image = reader.result as string;
+        
+        const { data, error } = await supabase.functions.invoke('analyze-medication-label', {
+          body: { imageBase64: base64Image }
+        });
+
+        if (error) throw error;
+
+        if (data.confidence === 'low' || data.error) {
+          toast({
+            title: "Could not read label",
+            description: "Please enter medication details manually",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Add the recognized medication
+        const newMed: Medication = {
+          id: Date.now().toString(),
+          name: data.name || '',
+          dosage: data.dosage || '',
+          frequency: data.frequency || '',
+          timeOfDay: data.timeOfDay || [],
+          instructions: data.instructions || ''
+        };
+
+        setMedications([...medications, newMed]);
+        
+        toast({
+          title: "Medication Added",
+          description: `${data.name} has been added`,
+        });
+      };
+    } catch (error: any) {
+      toast({
+        title: "Analysis Failed",
+        description: error.message || "Could not analyze image",
+        variant: "destructive",
+      });
+    } finally {
+      setAnalyzingImage(false);
+    }
+  };
+
+  const addMedication = () => {
+    if (!medForm.name.trim()) {
+      toast({
+        title: "Name Required",
+        description: "Please enter medication name",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newMed: Medication = {
+      id: Date.now().toString(),
+      ...medForm
+    };
+
+    setMedications([...medications, newMed]);
+    setMedForm({ name: '', dosage: '', frequency: '', timeOfDay: [], instructions: '' });
+    
+    toast({
+      title: "Medication Added",
+      description: `${medForm.name} has been added`,
+    });
+  };
+
+  const deleteMedication = (id: string) => {
+    setMedications(medications.filter(m => m.id !== id));
+  };
+
+  const startEdit = (med: Medication) => {
+    setEditingMedId(med.id);
+    setMedForm({
+      name: med.name,
+      dosage: med.dosage || '',
+      frequency: med.frequency || '',
+      timeOfDay: med.timeOfDay,
+      instructions: med.instructions || ''
+    });
+  };
+
+  const saveEdit = () => {
+    if (editingMedId) {
+      setMedications(medications.map(m => 
+        m.id === editingMedId ? { ...m, ...medForm } : m
+      ));
+      setEditingMedId(null);
+      setMedForm({ name: '', dosage: '', frequency: '', timeOfDay: [], instructions: '' });
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -100,11 +281,11 @@ const Auth = () => {
     }
   };
 
-  const handleSignupComplete = async () => {
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
 
     try {
-      // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -148,16 +329,23 @@ const Auth = () => {
 
       if (profileError) throw profileError;
 
-      // Save medications if provided
-      if (medications.trim()) {
-        const medList = medications.split('\n').filter(m => m.trim());
-        for (const med of medList) {
-          await supabase.from('medications').insert({
-            user_id: userId,
-            name: med.trim(),
-            active: true,
-          });
-        }
+      // Save medications
+      if (medications.length > 0) {
+        const medData = medications.map(med => ({
+          user_id: userId,
+          name: med.name,
+          dosage: med.dosage || null,
+          frequency: med.frequency || null,
+          time_of_day: med.timeOfDay.length > 0 ? med.timeOfDay : null,
+          instructions: med.instructions || null,
+          active: true,
+        }));
+
+        const { error: medError } = await supabase
+          .from('medications')
+          .insert(medData);
+
+        if (medError) console.error('Medications error:', medError);
       }
 
       // Save family members
@@ -196,38 +384,6 @@ const Auth = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const nextStep = () => {
-    const steps: SignupStep[] = ['auth', 'medications', 'health', 'photo', 'family'];
-    const currentIndex = steps.indexOf(currentStep);
-    if (currentIndex < steps.length - 1) {
-      setCurrentStep(steps[currentIndex + 1]);
-    }
-  };
-
-  const prevStep = () => {
-    const steps: SignupStep[] = ['auth', 'medications', 'health', 'photo', 'family'];
-    const currentIndex = steps.indexOf(currentStep);
-    if (currentIndex > 0) {
-      setCurrentStep(steps[currentIndex - 1]);
-    }
-  };
-
-  const getStepTitle = () => {
-    switch (currentStep) {
-      case 'auth': return 'Create Your Account';
-      case 'medications': return 'Your Medications';
-      case 'health': return 'Health Information';
-      case 'photo': return 'Add Your Photo';
-      case 'family': return 'Family Contacts';
-      default: return '';
-    }
-  };
-
-  const getStepNumber = () => {
-    const steps: SignupStep[] = ['auth', 'medications', 'health', 'photo', 'family'];
-    return steps.indexOf(currentStep) + 1;
   };
 
   if (isLogin) {
@@ -284,271 +440,324 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="max-w-2xl w-full p-8 space-y-6">
-        <div className="text-center space-y-4">
-          <img src={logo} alt="Cheq-In" className="w-24 h-auto mx-auto" />
-          <h1 className="text-3xl font-bold">{getStepTitle()}</h1>
-          <p className="text-muted-foreground">Step {getStepNumber()} of 5</p>
-        </div>
-
-        {/* Auth Step */}
-        {currentStep === 'auth' && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name *</Label>
-              <Input
-                id="fullName"
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Enter your name"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password *</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 6 characters"
-                required
-                minLength={6}
-              />
-            </div>
-
-            <Button onClick={nextStep} className="w-full" disabled={!fullName || !email || !password}>
-              Continue <ChevronRight className="w-4 h-4 ml-2" />
-            </Button>
+    <div className="min-h-screen bg-background p-4 overflow-y-auto">
+      <div className="max-w-4xl mx-auto py-8">
+        <Card className="p-8 space-y-8">
+          <div className="text-center space-y-4">
+            <img src={logo} alt="Cheq-In" className="w-24 h-auto mx-auto" />
+            <h1 className="text-3xl font-bold">Create Your Account</h1>
+            <p className="text-muted-foreground">Tell us about yourself</p>
           </div>
-        )}
 
-        {/* Medications Step */}
-        {currentStep === 'medications' && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="medications">What medications do you take?</Label>
-              <p className="text-sm text-muted-foreground">Enter each medication on a new line. You can skip this for now.</p>
-              <Textarea
-                id="medications"
-                value={medications}
-                onChange={(e) => setMedications(e.target.value)}
-                placeholder="e.g.&#10;Thyroid medication - Morning&#10;Amlodipine - Morning&#10;Multivitamin - Evening"
-                rows={6}
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <Button onClick={prevStep} variant="outline" className="flex-1">
-                <ChevronLeft className="w-4 h-4 mr-2" /> Back
-              </Button>
-              <Button onClick={nextStep} className="flex-1">
-                Continue <ChevronRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Health Step */}
-        {currentStep === 'health' && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="physical">Physical Health Issues</Label>
-              <p className="text-sm text-muted-foreground">Any ongoing physical health conditions? (Optional)</p>
-              <Textarea
-                id="physical"
-                value={physicalIssues}
-                onChange={(e) => setPhysicalIssues(e.target.value)}
-                placeholder="e.g., High blood pressure, arthritis, diabetes"
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="mental">Mental Health & Emotional Wellbeing</Label>
-              <p className="text-sm text-muted-foreground">Any mental health considerations? (Optional)</p>
-              <Textarea
-                id="mental"
-                value={mentalIssues}
-                onChange={(e) => setMentalIssues(e.target.value)}
-                placeholder="e.g., Anxiety, depression, memory concerns"
-                rows={3}
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <Button onClick={prevStep} variant="outline" className="flex-1">
-                <ChevronLeft className="w-4 h-4 mr-2" /> Back
-              </Button>
-              <Button onClick={nextStep} className="flex-1">
-                Continue <ChevronRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Photo Step */}
-        {currentStep === 'photo' && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Add Your Photo (Optional)</Label>
-              <p className="text-sm text-muted-foreground">This helps personalize your experience</p>
+          <form onSubmit={handleSignup} className="space-y-8">
+            {/* Basic Info */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold">Basic Information</h2>
               
-              <div className="flex flex-col items-center gap-4 p-6 border-2 border-dashed rounded-lg">
-                {avatarPreview ? (
-                  <div className="relative">
-                    <img src={avatarPreview} alt="Preview" className="w-32 h-32 rounded-full object-cover" />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="absolute -top-2 -right-2"
-                      onClick={() => {
-                        setAvatarFile(null);
-                        setAvatarPreview(null);
-                      }}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="w-32 h-32 rounded-full bg-muted flex items-center justify-center">
-                    <Camera className="w-12 h-12 text-muted-foreground" />
-                  </div>
-                )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name *</Label>
+                  <Input
+                    id="fullName"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                  />
+                </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password *</Label>
                 <Input
-                  id="avatar"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFileChange}
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
                 />
-                <Label htmlFor="avatar" className="cursor-pointer">
-                  <Button type="button" variant="outline" asChild>
-                    <span>{avatarPreview ? 'Change Photo' : 'Upload Photo'}</span>
-                  </Button>
-                </Label>
+              </div>
+
+              {/* Avatar Upload */}
+              <div className="space-y-2">
+                <Label>Profile Photo (Optional)</Label>
+                <div className="flex items-center gap-4">
+                  {avatarPreview && (
+                    <img src={avatarPreview} alt="Avatar" className="w-20 h-20 rounded-full object-cover" />
+                  )}
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="flex-1"
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="flex gap-3">
-              <Button onClick={prevStep} variant="outline" className="flex-1">
-                <ChevronLeft className="w-4 h-4 mr-2" /> Back
-              </Button>
-              <Button onClick={nextStep} className="flex-1">
-                {avatarFile ? 'Continue' : 'Skip for Now'} <ChevronRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          </div>
-        )}
+            {/* Medications */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold">Medications</h2>
+              <p className="text-sm text-muted-foreground">
+                Take a photo of your medication label or enter manually
+              </p>
 
-        {/* Family Step */}
-        {currentStep === 'family' && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Family Member Contacts (Optional)</Label>
-              <p className="text-sm text-muted-foreground">Add contacts for children, siblings, or other family members</p>
-            </div>
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={cameraActive ? capturePhoto : startCamera}
+                  disabled={analyzingImage}
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  {cameraActive ? 'Capture' : 'Take Photo'}
+                </Button>
 
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {familyMembers.map((member, index) => (
-                <Card key={index} className="p-4 space-y-3 relative">
-                  {familyMembers.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-2 right-2"
-                      onClick={() => removeFamilyMember(index)}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={analyzingImage}
+                >
+                  Upload Photo
+                </Button>
 
-                  <div className="space-y-2">
-                    <Label>Name</Label>
-                    <Input
-                      value={member.name}
-                      onChange={(e) => updateFamilyMember(index, 'name', e.target.value)}
-                      placeholder="Family member's name"
-                    />
+                {analyzingImage && (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="text-sm">Analyzing...</span>
                   </div>
+                )}
+              </div>
 
-                  <div className="space-y-2">
-                    <Label>Relationship</Label>
-                    <Input
-                      value={member.relationship}
-                      onChange={(e) => updateFamilyMember(index, 'relationship', e.target.value)}
-                      placeholder="e.g., Daughter, Son, Sibling"
-                    />
-                  </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label>Email</Label>
+              {cameraActive && (
+                <div className="relative">
+                  <video ref={videoRef} autoPlay className="w-full rounded-lg" />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={stopCamera}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
+
+              <canvas ref={canvasRef} className="hidden" />
+
+              {/* Manual Entry Form */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
+                <div className="space-y-2">
+                  <Label>Medication Name</Label>
+                  <Input
+                    value={medForm.name}
+                    onChange={(e) => setMedForm({ ...medForm, name: e.target.value })}
+                    placeholder="e.g., Amlodipine"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Dosage</Label>
+                  <Input
+                    value={medForm.dosage}
+                    onChange={(e) => setMedForm({ ...medForm, dosage: e.target.value })}
+                    placeholder="e.g., 10mg"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Frequency</Label>
+                  <Input
+                    value={medForm.frequency}
+                    onChange={(e) => setMedForm({ ...medForm, frequency: e.target.value })}
+                    placeholder="e.g., Once daily"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Time of Day</Label>
+                  <Input
+                    value={medForm.timeOfDay.join(', ')}
+                    onChange={(e) => setMedForm({ ...medForm, timeOfDay: e.target.value.split(',').map(t => t.trim()) })}
+                    placeholder="e.g., Morning, Evening"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <Button
+                    type="button"
+                    onClick={editingMedId ? saveEdit : addMedication}
+                    className="w-full"
+                  >
+                    {editingMedId ? <><Check className="w-4 h-4 mr-2" /> Save</> : <><Plus className="w-4 h-4 mr-2" /> Add Medication</>}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Medications Table */}
+              {medications.length > 0 && (
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Dosage</TableHead>
+                        <TableHead>Frequency</TableHead>
+                        <TableHead>Time</TableHead>
+                        <TableHead className="w-24">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {medications.map((med) => (
+                        <TableRow key={med.id}>
+                          <TableCell className="font-medium">{med.name}</TableCell>
+                          <TableCell>{med.dosage || '-'}</TableCell>
+                          <TableCell>{med.frequency || '-'}</TableCell>
+                          <TableCell>{med.timeOfDay.join(', ') || '-'}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => startEdit(med)}
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => deleteMedication(med.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
+
+            {/* Health Information */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold">Health Information (Optional)</h2>
+              
+              <div className="space-y-2">
+                <Label htmlFor="physical">Physical Health Issues</Label>
+                <Textarea
+                  id="physical"
+                  value={physicalIssues}
+                  onChange={(e) => setPhysicalIssues(e.target.value)}
+                  placeholder="e.g., High blood pressure, arthritis"
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="mental">Mental Health & Emotional Wellbeing</Label>
+                <Textarea
+                  id="mental"
+                  value={mentalIssues}
+                  onChange={(e) => setMentalIssues(e.target.value)}
+                  placeholder="e.g., Anxiety, memory concerns"
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            {/* Family Contacts */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold">Family Contacts (Optional)</h2>
+              
+              <div className="space-y-4">
+                {familyMembers.map((member, index) => (
+                  <Card key={index} className="p-4 space-y-3 relative">
+                    {familyMembers.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 right-2"
+                        onClick={() => removeFamilyMember(index)}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <Input
+                        value={member.name}
+                        onChange={(e) => updateFamilyMember(index, 'name', e.target.value)}
+                        placeholder="Name"
+                      />
+                      <Input
+                        value={member.relationship}
+                        onChange={(e) => updateFamilyMember(index, 'relationship', e.target.value)}
+                        placeholder="Relationship (e.g., Daughter)"
+                      />
                       <Input
                         type="email"
                         value={member.email}
                         onChange={(e) => updateFamilyMember(index, 'email', e.target.value)}
-                        placeholder="email@example.com"
+                        placeholder="Email"
                       />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Phone</Label>
                       <Input
                         type="tel"
                         value={member.phone}
                         onChange={(e) => updateFamilyMember(index, 'phone', e.target.value)}
-                        placeholder="(555) 123-4567"
+                        placeholder="Phone"
                       />
                     </div>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                ))}
+              </div>
+
+              <Button type="button" onClick={addFamilyMember} variant="outline" className="w-full">
+                <Plus className="w-4 h-4 mr-2" /> Add Family Member
+              </Button>
             </div>
 
-            <Button type="button" onClick={addFamilyMember} variant="outline" className="w-full">
-              <Plus className="w-4 h-4 mr-2" /> Add Another Family Member
+            <Button type="submit" className="w-full" size="lg" disabled={loading}>
+              {loading ? "Creating Account..." : "Create Account"}
             </Button>
+          </form>
 
-            <div className="flex gap-3">
-              <Button onClick={prevStep} variant="outline" className="flex-1">
-                <ChevronLeft className="w-4 h-4 mr-2" /> Back
-              </Button>
-              <Button onClick={handleSignupComplete} className="flex-1" disabled={loading}>
-                {loading ? "Creating Account..." : "Complete Sign Up"}
-              </Button>
-            </div>
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => setIsLogin(true)}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Already have an account? Sign in
+            </button>
           </div>
-        )}
-
-        <div className="text-center">
-          <button
-            type="button"
-            onClick={() => setIsLogin(true)}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Already have an account? Sign in
-          </button>
-        </div>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 };
