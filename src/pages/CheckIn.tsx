@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import SentimentChart from "@/components/SentimentChart";
 import { RealtimeChat } from "@/utils/RealtimeAudio";
 import logo from "@/assets/cheqin-logo.png";
@@ -564,10 +565,21 @@ const CheckIn = () => {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-xs text-muted-foreground">{formatTimestamp(session.timestamp)}</div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">{getOverallScoreLabel(session.sentiment.overall_score || 3)}</span>
-                          <img src={getOverallScoreIcon(session.sentiment.overall_score || 3)} alt="" className="w-6 h-6" />
-                        </div>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center gap-2 cursor-help">
+                                <img src={getOverallScoreIcon(session.sentiment.overall_score || 3)} alt="" className="w-6 h-6" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="flex items-center gap-2">
+                                <img src={getOverallScoreIcon(session.sentiment.overall_score || 3)} alt="" className="w-5 h-5" />
+                                <span className="text-xs">{getOverallScoreLabel(session.sentiment.overall_score || 3)}</span>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                       <p className="text-sm line-clamp-2 mb-3">{session.transcript}</p>
                       
