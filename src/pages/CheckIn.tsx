@@ -48,7 +48,7 @@ const CheckIn = () => {
   const [sessions, setSessions] = useState<CheckInSession[]>([
     {
       id: 'sample-1',
-      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
       transcript: "I had a wonderful day! Went for a walk in the park, the weather was beautiful, and I met my friend Sarah for coffee. I'm feeling energized and grateful.",
       sentiment: {
         label: 'very_positive',
@@ -128,6 +128,23 @@ const CheckIn = () => {
         emotions: { sadness: 0.5, fatigue: 0.7 },
         highlights: [],
         concerns: ['Low energy', 'Feeling down', 'Stayed in bed']
+      },
+      status: 'completed'
+    },
+    {
+      id: 'sample-6',
+      timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      transcript: "Had a pretty good day overall. Went for a short walk and did some reading. Felt peaceful and content.",
+      sentiment: {
+        label: 'positive',
+        score: 0.65,
+        mood_rating: 7,
+        mental_health_score: 4,
+        physical_health_score: 3,
+        overall_score: 3.5,
+        emotions: { contentment: 0.7, peace: 0.6 },
+        highlights: ['Walk', 'Reading', 'Peaceful'],
+        concerns: []
       },
       status: 'completed'
     }
@@ -555,7 +572,7 @@ const CheckIn = () => {
           </h2>
           
           <div className="space-y-3">
-            {sessions.slice(0, 3).map((session) => (
+            {sessions.slice(0, 5).map((session) => (
               <Card
                 key={session.id}
                 className={`p-4 bg-transparent border border-black rounded-lg shadow-none ${session.status === 'completed' ? 'cursor-pointer' : ''}`}
