@@ -411,7 +411,7 @@ const CheckIn = () => {
               transform: 'rotateY(0deg) rotateX(0deg)',
               transformStyle: 'preserve-3d',
               transition: 'transform 0.5s ease-out',
-              animation: 'glow-pulse 2.5s ease-in-out infinite'
+              animation: 'glow-pulse 3s ease-in-out infinite'
             }}
           />
           <h1 
@@ -425,7 +425,7 @@ const CheckIn = () => {
             onMouseLeave={() => {
               const logo = document.getElementById('checkin-logo');
               if (logo) {
-                logo.style.animation = 'glow-pulse 2.5s ease-in-out infinite';
+                logo.style.animation = 'glow-pulse 3s ease-in-out infinite';
               }
             }}
           >
