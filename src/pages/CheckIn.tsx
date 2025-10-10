@@ -117,17 +117,17 @@ const CheckIn = () => {
     {
       id: 'sample-5',
       timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-      transcript: "Felt really energetic today! Went grocery shopping and even did some cleaning. Very productive day!",
+      transcript: "Not feeling great today. Stayed in bed most of the day. Feeling low on energy and a bit down.",
       sentiment: {
-        label: 'very_positive',
-        score: 0.95,
-        mood_rating: 9,
-        mental_health_score: 5,
-        physical_health_score: 4,
-        overall_score: 4.5,
-        emotions: { energy: 0.88, satisfaction: 0.85 },
-        highlights: ['Productive day', 'Shopping', 'Feeling energetic'],
-        concerns: []
+        label: 'negative',
+        score: -0.65,
+        mood_rating: 3,
+        mental_health_score: 1,
+        physical_health_score: 1,
+        overall_score: 1,
+        emotions: { sadness: 0.5, fatigue: 0.7 },
+        highlights: [],
+        concerns: ['Low energy', 'Feeling down', 'Stayed in bed']
       },
       status: 'completed'
     }
