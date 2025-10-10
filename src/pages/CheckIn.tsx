@@ -99,51 +99,12 @@ const CheckIn = () => {
 
   useEffect(() => {
     checkAuth();
-    fetchCheckIns();
   }, []);
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       navigate("/auth");
-    }
-  };
-
-  const fetchCheckIns = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('check_ins')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        const fetchedSessions: CheckInSession[] = data.map(checkIn => ({
-          id: checkIn.id,
-          timestamp: checkIn.created_at,
-          transcript: checkIn.transcript,
-          sentiment: {
-            label: checkIn.sentiment_label || 'neutral',
-            score: checkIn.sentiment_score || 0,
-            mood_rating: checkIn.mood_rating || 5,
-            mental_health_score: checkIn.mental_health_score,
-            physical_health_score: checkIn.physical_health_score,
-            overall_score: checkIn.overall_score,
-            emotions: checkIn.emotions || {},
-            highlights: [],
-            concerns: []
-          },
-          status: 'completed' as SessionStatus
-        }));
-        setSessions(fetchedSessions);
-      }
-    } catch (error) {
-      console.error('Error fetching check-ins:', error);
     }
   };
 
@@ -316,9 +277,6 @@ const CheckIn = () => {
 
       if (insertError) {
         console.error('Error saving check-in:', insertError);
-      } else {
-        // Refresh the list after saving
-        await fetchCheckIns();
       }
 
       toast({
