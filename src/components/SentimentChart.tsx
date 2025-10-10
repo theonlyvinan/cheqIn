@@ -23,8 +23,17 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>('overall');
 
   const getCategoryLabel = (category: number): string => {
-    const labels = ['', 'Low Glow', 'Dim Glow', 'Steady Glow', 'Bright Glow', 'Radiant Glow'];
+    const labels = ['', 'Low', 'Dim', 'Steady', 'Bright', 'Radiant'];
     return labels[category] || '';
+  };
+
+  const getCategoryIcon = (category: number) => {
+    // Simple circle icons with different colors
+    const colors = ['', '#dc2626', '#f97316', '#fbbf24', '#16a34a', '#059669'];
+    const color = colors[category] || '#9ca3af';
+    return (
+      <circle cx="0" cy="0" r="6" fill={color} stroke="#fff" strokeWidth="2" />
+    );
   };
 
   const getViewConfig = (mode: ViewMode) => {
@@ -174,7 +183,7 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
             stroke="#9ca3af" 
             strokeWidth={1}
             strokeDasharray="5 5"
-            label={{ value: 'Steady Glow', position: 'right', fill: '#6b7280', fontSize: 11 }}
+            label={{ value: 'Steady', position: 'right', fill: '#6b7280', fontSize: 11 }}
           />
           <Line 
             type="monotone" 

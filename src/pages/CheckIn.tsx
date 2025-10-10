@@ -627,15 +627,23 @@ const CheckIn = () => {
                         <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                       </div>
                       
-                      {/* Emotion Analysis Summary */}
-                      <div className="flex items-center gap-4 pt-2 border-t">
-                        <div className="flex items-center gap-2">
-                          {getSentimentIcon(session.sentiment.label)}
-                          <span className="text-xs capitalize">{session.sentiment.label.replace('_', ' ')}</span>
+                      {/* Emotion Analysis Summary - Three Scores */}
+                      <div className="flex items-center gap-3 pt-2 border-t text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                          <span className="text-muted-foreground">Balance:</span>
+                          <span className="font-semibold">{session.sentiment.overall_score || 0}/5</span>
                         </div>
-                        <Badge className={`text-xs ${getMoodColor(session.sentiment.label)}`}>
-                          Mood: {session.sentiment.mood_rating}/10
-                        </Badge>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full bg-blue-500" />
+                          <span className="text-muted-foreground">Mind:</span>
+                          <span className="font-semibold">{session.sentiment.mental_health_score || 0}/5</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full bg-orange-500" />
+                          <span className="text-muted-foreground">Body:</span>
+                          <span className="font-semibold">{session.sentiment.physical_health_score || 0}/5</span>
+                        </div>
                       </div>
                       
                       {/* Key Findings */}
