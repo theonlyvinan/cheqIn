@@ -57,11 +57,8 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
 
   const getCategoryFromScore = (score?: number | null): number | null => {
     if (score == null) return null;
-    if (score >= 4.5) return 5;
-    if (score >= 3.5) return 4;
-    if (score >= 2.5) return 3;
-    if (score >= 1.5) return 2;
-    return 1;
+    // Scores are already in 1-5 range, just round them
+    return Math.round(score);
   };
 
   const getViewConfig = (mode: ViewMode) => {
@@ -103,15 +100,24 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
     if (daysSessions.length === 0) {
+      console.log('No session for day:', day);
       return { day, mental: null, physical: null, overall: null };
     }
 
     const latest = daysSessions[0];
+    const mentalCat = getCategoryFromScore(latest.sentiment.mental_health_score);
+    const physicalCat = getCategoryFromScore(latest.sentiment.physical_health_score);
+    const overallCat = getCategoryFromScore(latest.sentiment.overall_score);
+    
+    console.log('Day:', day, 'Raw scores - Mental:', latest.sentiment.mental_health_score, 
+      'Physical:', latest.sentiment.physical_health_score, 'Overall:', latest.sentiment.overall_score);
+    console.log('Day:', day, 'Categories - Mental:', mentalCat, 'Physical:', physicalCat, 'Overall:', overallCat);
+    
     return {
       day,
-      mental: getCategoryFromScore(latest.sentiment.mental_health_score),
-      physical: getCategoryFromScore(latest.sentiment.physical_health_score),
-      overall: getCategoryFromScore(latest.sentiment.overall_score),
+      mental: mentalCat,
+      physical: physicalCat,
+      overall: overallCat,
     };
   });
 
