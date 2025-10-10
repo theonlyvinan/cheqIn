@@ -117,6 +117,15 @@ export class RealtimeChat {
       
       this.dc.addEventListener("open", () => {
         console.log('Data channel opened');
+        // Send initial greeting to trigger Mira to start the conversation
+        setTimeout(() => {
+          if (this.dc && this.dc.readyState === 'open') {
+            console.log('Sending initial greeting');
+            this.dc.send(JSON.stringify({
+              type: 'response.create'
+            }));
+          }
+        }, 500);
       });
       
       this.dc.addEventListener("message", (e) => {
