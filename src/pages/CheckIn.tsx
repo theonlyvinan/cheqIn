@@ -379,7 +379,8 @@ const CheckIn = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 p-4 md:p-8 space-y-8">
+    <TooltipProvider>
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 p-4 md:p-8 space-y-8">
       {/* Header */}
       <div className="max-w-4xl mx-auto text-center space-y-6">
         {/* Logo + Text Combined with 3D Effect */}
@@ -565,21 +566,19 @@ const CheckIn = () => {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-xs text-muted-foreground">{formatTimestamp(session.timestamp)}</div>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="flex items-center gap-2 cursor-help">
-                                <img src={getOverallScoreIcon(session.sentiment.overall_score || 3)} alt="" className="w-6 h-6" />
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <div className="flex items-center gap-2">
-                                <img src={getOverallScoreIcon(session.sentiment.overall_score || 3)} alt="" className="w-5 h-5" />
-                                <span className="text-xs">{getOverallScoreLabel(session.sentiment.overall_score || 3)}</span>
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-2 cursor-help">
+                              <img src={getOverallScoreIcon(session.sentiment.overall_score || 3)} alt="" className="w-6 h-6" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <div className="flex items-center gap-2">
+                              <img src={getOverallScoreIcon(session.sentiment.overall_score || 3)} alt="" className="w-5 h-5" />
+                              <span className="text-xs">{getOverallScoreLabel(session.sentiment.overall_score || 3)}</span>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
                       </div>
                       <p className="text-sm line-clamp-2 mb-3">{session.transcript}</p>
                       
@@ -700,6 +699,7 @@ const CheckIn = () => {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 };
 
