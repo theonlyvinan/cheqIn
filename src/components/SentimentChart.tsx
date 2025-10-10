@@ -4,6 +4,11 @@ import { format, subDays } from 'date-fns';
 import { Brain, Heart, Scale } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useState } from 'react';
+import lowIcon from '@/assets/low.png';
+import dimIcon from '@/assets/dim.png';
+import steadyIcon from '@/assets/steady.png';
+import brightIcon from '@/assets/bright.png';
+import radiantIcon from '@/assets/radiant.png';
 
 interface SentimentChartProps {
   sessions: Array<{
@@ -29,27 +34,24 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
 
   const getCategoryIcon = (category: number) => {
     const config = [
-      { emoji: '', color: '#9ca3af' },
-      { emoji: '🥺', color: '#7BA3D0' }, // muted blue
-      { emoji: '😕', color: '#B8B3C8' }, // lavender gray
-      { emoji: '🙂', color: '#8FD6A1' }, // mint green
-      { emoji: '😊', color: '#FFD75E' }, // sunny yellow
-      { emoji: '🤗', color: '#FF9F6B' }  // warm coral
+      { icon: null, color: '#9ca3af' },
+      { icon: lowIcon, color: '#7BA3D0' }, // muted blue
+      { icon: dimIcon, color: '#B8B3C8' }, // lavender gray
+      { icon: steadyIcon, color: '#8FD6A1' }, // mint green
+      { icon: brightIcon, color: '#FFD75E' }, // sunny yellow
+      { icon: radiantIcon, color: '#FF9F6B' }  // warm coral
     ];
-    const { emoji, color } = config[category] || config[0];
+    const { icon, color } = config[category] || config[0];
+    if (!icon) return <circle cx="0" cy="0" r="8" fill={color} />;
+    
     return (
-      <g>
-        <circle cx="0" cy="0" r="8" fill={color} stroke="#fff" strokeWidth="2" />
-        <text 
-          x="0" 
-          y="0" 
-          textAnchor="middle" 
-          dominantBaseline="central" 
-          fontSize="10"
-        >
-          {emoji}
-        </text>
-      </g>
+      <image 
+        href={icon} 
+        x="-10" 
+        y="-10" 
+        width="20" 
+        height="20"
+      />
     );
   };
 
@@ -108,36 +110,33 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
     };
   });
 
-  // Custom dot component with emoji styling
+  // Custom dot component with custom emoji icons
   const CustomDot = (props: any) => {
     const { cx, cy, payload } = props;
     const value = payload[viewMode];
     if (!value) return null;
 
-    const getMoodEmoji = (score: number) => {
-      if (score <= 1.5) return { emoji: '🥺', color: '#7BA3D0' }; // muted blue
-      if (score <= 2.5) return { emoji: '😕', color: '#B8B3C8' }; // lavender gray
-      if (score <= 3.5) return { emoji: '🙂', color: '#8FD6A1' }; // mint green
-      if (score <= 4.5) return { emoji: '😊', color: '#FFD75E' }; // sunny yellow
-      return { emoji: '🤗', color: '#FF9F6B' }; // warm coral
+    const getMoodIcon = (score: number) => {
+      if (score <= 1.5) return { icon: lowIcon, color: '#7BA3D0' }; // muted blue
+      if (score <= 2.5) return { icon: dimIcon, color: '#B8B3C8' }; // lavender gray
+      if (score <= 3.5) return { icon: steadyIcon, color: '#8FD6A1' }; // mint green
+      if (score <= 4.5) return { icon: brightIcon, color: '#FFD75E' }; // sunny yellow
+      return { icon: radiantIcon, color: '#FF9F6B' }; // warm coral
     };
 
-    const { emoji, color } = getMoodEmoji(value);
+    const { icon, color } = getMoodIcon(value);
+    const size = 32;
 
     return (
       <g>
-        <circle cx={cx} cy={cy} r={16} fill={color} opacity={0.2} />
-        <circle cx={cx} cy={cy} r={14} fill={color} stroke="#fff" strokeWidth={2} />
-        <text 
-          x={cx} 
-          y={cy} 
-          textAnchor="middle" 
-          dominantBaseline="central" 
-          fontSize="16"
-          style={{ userSelect: 'none' }}
-        >
-          {emoji}
-        </text>
+        <circle cx={cx} cy={cy} r={18} fill={color} opacity={0.15} />
+        <image 
+          href={icon} 
+          x={cx - size / 2} 
+          y={cy - size / 2} 
+          width={size} 
+          height={size}
+        />
       </g>
     );
   };
