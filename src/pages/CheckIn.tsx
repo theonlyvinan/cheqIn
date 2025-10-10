@@ -398,11 +398,18 @@ const CheckIn = () => {
                   onClick={() => session.status === 'completed' && setSelectedSession(session)}
                 >
                   {session.status === 'processing' ? (
-                    <div className="flex items-center gap-3">
-                      <Loader2 className="w-5 h-5 animate-spin text-white" />
-                      <div className="flex-1">
-                        <div className="text-xs text-white/70">{formatTimestamp(session.timestamp)}</div>
-                        <div className="text-sm font-medium mt-1">Processing your check-in...</div>
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <div className="text-xs text-white/70">{formatTimestamp(session.timestamp)}</div>
+                            <Badge className="bg-white/20 text-white text-xs">
+                              <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                              Processing
+                            </Badge>
+                          </div>
+                          <div className="text-sm font-medium mt-1">Analyzing your check-in...</div>
+                        </div>
                       </div>
                     </div>
                   ) : (
