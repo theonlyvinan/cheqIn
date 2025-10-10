@@ -378,7 +378,7 @@ const CheckIn = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-accent/10 p-4 md:p-8 space-y-8">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 p-4 md:p-8 space-y-8">
       {/* Header */}
       <div className="max-w-4xl mx-auto text-center space-y-6">
         {/* Logo + Text Combined with 3D Effect */}
