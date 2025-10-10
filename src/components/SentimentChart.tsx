@@ -57,17 +57,17 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
     if (!payload.mood) return null;
 
     const getIcon = (mood: number) => {
-      if (mood === 1) return <AlertCircle className="w-7 h-7 text-red-600 fill-red-100" />;
-      if (mood === 2) return <Frown className="w-7 h-7 text-orange-600 fill-orange-100" />;
-      if (mood === 3) return <Meh className="w-7 h-7 text-gray-600 fill-gray-100" />;
-      if (mood === 4) return <Smile className="w-7 h-7 text-green-600 fill-green-100" />;
-      return <Heart className="w-7 h-7 text-blue-600 fill-blue-100" />;
+      if (mood === 1) return <AlertCircle className="w-10 h-10 text-red-600" fill="currentColor" strokeWidth={0} />;
+      if (mood === 2) return <Frown className="w-10 h-10 text-orange-500" fill="currentColor" strokeWidth={0} />;
+      if (mood === 3) return <Meh className="w-10 h-10 text-gray-500" fill="currentColor" strokeWidth={0} />;
+      if (mood === 4) return <Smile className="w-10 h-10 text-green-600" fill="currentColor" strokeWidth={0} />;
+      return <Heart className="w-10 h-10 text-blue-600" fill="currentColor" strokeWidth={0} />;
     };
 
     return (
-      <g transform={`translate(${cx - 14}, ${cy - 14})`}>
-        <foreignObject x="0" y="0" width="28" height="28">
-          <div className="bg-white rounded-full p-0.5 border-2 border-black/10">
+      <g transform={`translate(${cx - 20}, ${cy - 20})`}>
+        <foreignObject x="0" y="0" width="40" height="40">
+          <div className="bg-white rounded-full p-1.5 shadow-md border-2 border-gray-200">
             {getIcon(payload.mood)}
           </div>
         </foreignObject>
