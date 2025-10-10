@@ -400,17 +400,18 @@ const CheckIn = () => {
       {/* Header */}
       <div className="max-w-4xl mx-auto text-center space-y-6">
         {/* Logo + Text Combined with 3D Effect */}
-        <div className="flex items-end gap-0 justify-center group perspective-1000">
+        <div className="flex flex-col items-center gap-2 group perspective-1000">
           <img 
             src={logo}
             alt="Cheq-In Logo" 
             id="checkin-logo"
-            className="w-24 md:w-32 h-auto transition-all duration-500 cursor-pointer animate-pulse -mr-5 -mt-4"
+            className="w-24 md:w-32 h-auto transition-all duration-500 cursor-pointer"
             style={{ 
               filter: 'drop-shadow(0 0 30px hsl(190 85% 45% / 0.8)) drop-shadow(0 0 60px hsl(190 85% 45% / 0.5))',
               transform: 'rotateY(0deg) rotateX(0deg)',
               transformStyle: 'preserve-3d',
-              transition: 'transform 0.5s ease-out'
+              transition: 'transform 0.5s ease-out',
+              animation: 'pulse 4s ease-in-out infinite'
             }}
           />
           <h1 
@@ -424,7 +425,7 @@ const CheckIn = () => {
             onMouseLeave={() => {
               const logo = document.getElementById('checkin-logo');
               if (logo) {
-                logo.style.animation = 'none';
+                logo.style.animation = 'pulse 4s ease-in-out infinite';
               }
             }}
           >

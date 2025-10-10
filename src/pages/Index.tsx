@@ -16,38 +16,37 @@ const Index = () => {
         <div className="absolute inset-0 rounded-3xl -z-10" style={{ background: 'var(--shine-gradient)' }}></div>
         <div className="flex flex-col items-center justify-center min-h-[85vh] text-center space-y-10">
           {/* Logo + Text Combined with 3D Effect */}
-          <div className="animate-fade-in flex items-end gap-0 group perspective-1000">
+          <div className="animate-fade-in flex flex-col items-center gap-4 group perspective-1000">
             <img 
               src={logo} 
               alt="Cheq-In Logo" 
               id="hero-logo"
-              className="w-64 md:w-80 h-auto transition-all duration-500 cursor-pointer animate-pulse -mr-10 -mt-8"
+              className="w-64 md:w-80 h-auto transition-all duration-500 cursor-pointer"
               style={{ 
                 filter: 'drop-shadow(0 0 40px hsl(190 85% 45% / 0.8)) drop-shadow(0 0 80px hsl(190 85% 45% / 0.5))',
                 transform: 'rotateY(0deg) rotateX(0deg)',
                 transformStyle: 'preserve-3d',
-                transition: 'transform 0.5s ease-out'
+                transition: 'transform 0.5s ease-out',
+                animation: 'pulse 4s ease-in-out infinite'
               }}
             />
-            <div className="relative">
-              <h1 
-                className="text-6xl md:text-8xl font-bold bg-gradient-to-r from-foreground via-foreground to-accent bg-clip-text text-transparent cursor-pointer"
+            <h1 
+              className="text-6xl md:text-8xl font-bold bg-gradient-to-r from-foreground via-foreground to-accent bg-clip-text text-transparent cursor-pointer"
                 onMouseEnter={() => {
                   const logo = document.getElementById('hero-logo');
                   if (logo) {
                     logo.style.animation = 'pulse 1s ease-in-out infinite';
                   }
                 }}
-                onMouseLeave={() => {
-                  const logo = document.getElementById('hero-logo');
-                  if (logo) {
-                    logo.style.animation = 'none';
-                  }
-                }}
-              >
-                Cheq-In
-              </h1>
-            </div>
+              onMouseLeave={() => {
+                const logo = document.getElementById('hero-logo');
+                if (logo) {
+                  logo.style.animation = 'pulse 4s ease-in-out infinite';
+                }
+              }}
+            >
+              Cheq-In
+            </h1>
           </div>
           
           <style dangerouslySetInnerHTML={{ __html: `
