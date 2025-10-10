@@ -342,17 +342,12 @@ const CheckIn = () => {
     }
   };
 
-  const getSentimentColor = (label: string) => {
-    switch (label) {
-      case 'very_positive':
-        return 'border-green-200 bg-green-50';
-      case 'neutral':
-        return 'border-yellow-200 bg-yellow-50';
-      case 'concerned':
-        return 'border-orange-200 bg-orange-50';
-      default:
-        return 'border-gray-200 bg-gray-50';
-    }
+  const getSentimentColor = (score: number) => {
+    if (score >= 4.5) return 'border-[#FF9F6B] border-2'; // Radiant - warm coral
+    if (score >= 3.5) return 'border-[#FFD75E] border-2'; // Bright - sunny yellow
+    if (score >= 2.5) return 'border-[#8FD6A1] border-2'; // Steady - mint green
+    if (score >= 1.5) return 'border-[#B8B3C8] border-2'; // Dim - lavender gray
+    return 'border-[#7BA3D0] border-2'; // Low - muted blue
   };
 
   const formatTimestamp = (timestamp: string) => {
@@ -556,7 +551,7 @@ const CheckIn = () => {
             {sessions.slice(0, 3).map((session) => (
               <Card
                 key={session.id}
-                className={`p-4 ${session.status === 'completed' ? `cursor-pointer hover:bg-accent/5 border ${getSentimentColor(session.sentiment.label)}` : 'bg-gray-100 border'} transition-colors`}
+                className={`p-4 bg-white ${session.status === 'completed' ? `cursor-pointer hover:bg-accent/5 ${getSentimentColor(session.sentiment.overall_score || 3)}` : 'bg-gray-100 border'} transition-colors`}
                 onClick={() => session.status === 'completed' && setSelectedSession(session)}
               >
                 <div className="space-y-3">
@@ -569,15 +564,15 @@ const CheckIn = () => {
                       
                       {/* Scores */}
                       <div className="grid grid-cols-3 gap-2 mb-3">
-                        <div className="p-2 bg-background/60 rounded text-center">
+                        <div className="p-2 bg-gray-50 rounded text-center">
                           <p className="text-xs text-muted-foreground">Mental</p>
                           <p className="text-sm font-semibold">{session.sentiment.mental_health_score}/5</p>
                         </div>
-                        <div className="p-2 bg-background/60 rounded text-center">
+                        <div className="p-2 bg-gray-50 rounded text-center">
                           <p className="text-xs text-muted-foreground">Physical</p>
                           <p className="text-sm font-semibold">{session.sentiment.physical_health_score}/5</p>
                         </div>
-                        <div className="p-2 bg-background/60 rounded text-center">
+                        <div className="p-2 bg-gray-50 rounded text-center">
                           <p className="text-xs text-muted-foreground">Overall</p>
                           <p className="text-sm font-semibold">{session.sentiment.overall_score?.toFixed(1)}/5</p>
                         </div>
@@ -589,9 +584,9 @@ const CheckIn = () => {
                           <p className="text-xs text-muted-foreground mb-1">Highlights:</p>
                           <div className="flex flex-wrap gap-1">
                             {session.sentiment.highlights.map((highlight, idx) => (
-                              <Badge key={idx} variant="secondary" className="text-xs">
-                                {highlight}
-                              </Badge>
+                              <span key={idx} className="text-xs text-black">
+                                {highlight}{idx < session.sentiment.highlights!.length - 1 ? ', ' : ''}
+                              </span>
                             ))}
                           </div>
                         </div>
