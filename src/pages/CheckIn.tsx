@@ -441,7 +441,7 @@ const CheckIn = () => {
           <span>Daily Check-In with Mira</span>
         </div>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Have a natural conversation with Mira. Just speak naturally - no buttons to press!
+          Just talk to Mira — she understands you naturally.
         </p>
       </div>
 
