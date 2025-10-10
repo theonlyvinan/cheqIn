@@ -91,6 +91,7 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
   const chartData = last7Days.map(day => {
     const daysSessions = sessions.filter(session => {
       const sessionDate = format(new Date(session.timestamp), 'MMM dd');
+      console.log('Chart debug - Day:', day, 'Session date:', sessionDate, 'Match:', sessionDate === day, 'Overall score:', session.sentiment.overall_score);
       return sessionDate === day;
     });
 
@@ -101,6 +102,8 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
     const avgMental = daysSessions.reduce((sum, s) => sum + (s.sentiment.mental_health_score || 0), 0) / daysSessions.length;
     const avgPhysical = daysSessions.reduce((sum, s) => sum + (s.sentiment.physical_health_score || 0), 0) / daysSessions.length;
     const avgOverall = daysSessions.reduce((sum, s) => sum + (s.sentiment.overall_score || 0), 0) / daysSessions.length;
+
+    console.log('Chart data for', day, '- Overall:', avgOverall, 'Mental:', avgMental, 'Physical:', avgPhysical);
 
     return {
       day,
