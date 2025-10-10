@@ -36,7 +36,7 @@ const CheckIn = () => {
   const [currentQuestion, setCurrentQuestion] = useState("");
   const [turnCount, setTurnCount] = useState(0);
   const [sessions, setSessions] = useState<CheckInSession[]>([
-    // Example: Happy session
+    // Today - Happy session
     {
       id: '1',
       timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
@@ -51,10 +51,10 @@ const CheckIn = () => {
       },
       status: 'completed'
     },
-    // Example: Concerned session
+    // Yesterday - Concerned session
     {
       id: '2',
-      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+      timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
       transcript: "I had a fight with my friend today and it's been bothering me. We disagreed about something important and now I'm feeling upset about how things were left.",
       sentiment: {
         label: 'concerned',
@@ -66,7 +66,82 @@ const CheckIn = () => {
       },
       status: 'completed'
     },
-    // Example: Processing session
+    // 2 days ago - Neutral
+    {
+      id: '4',
+      timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      transcript: "Today was okay. Did some light reading and watched TV. Nothing special.",
+      sentiment: {
+        label: 'neutral',
+        score: 0.1,
+        mood_rating: 6,
+        emotions: { calm: 0.5 },
+        highlights: ['Reading', 'Relaxing'],
+        concerns: []
+      },
+      status: 'completed'
+    },
+    // 3 days ago - Good day
+    {
+      id: '5',
+      timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      transcript: "Had a nice video call with my grandchildren. They showed me their new school projects!",
+      sentiment: {
+        label: 'very_positive',
+        score: 0.88,
+        mood_rating: 8,
+        emotions: { joy: 0.82, love: 0.75 },
+        highlights: ['Family connection', 'Grandchildren'],
+        concerns: []
+      },
+      status: 'completed'
+    },
+    // 4 days ago - Slightly tired
+    {
+      id: '6',
+      timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+      transcript: "Didn't sleep well last night. My knees were bothering me. Took it easy today.",
+      sentiment: {
+        label: 'concerned',
+        score: -0.3,
+        mood_rating: 5,
+        emotions: { fatigue: 0.6, discomfort: 0.5 },
+        highlights: [],
+        concerns: ['Poor sleep', 'Knee pain']
+      },
+      status: 'completed'
+    },
+    // 5 days ago - Great day
+    {
+      id: '7',
+      timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      transcript: "Felt really energetic today! Went grocery shopping and even did some gardening. Very productive!",
+      sentiment: {
+        label: 'very_positive',
+        score: 0.95,
+        mood_rating: 9,
+        emotions: { energy: 0.88, satisfaction: 0.85 },
+        highlights: ['Productive day', 'Gardening', 'Feeling energetic'],
+        concerns: []
+      },
+      status: 'completed'
+    },
+    // 6 days ago - Decent day
+    {
+      id: '8',
+      timestamp: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+      transcript: "Had a quiet day at home. Called my sister and caught up on some shows.",
+      sentiment: {
+        label: 'neutral',
+        score: 0.3,
+        mood_rating: 7,
+        emotions: { contentment: 0.6 },
+        highlights: ['Family call'],
+        concerns: []
+      },
+      status: 'completed'
+    },
+    // Processing session
     {
       id: '3',
       timestamp: new Date().toISOString(),
