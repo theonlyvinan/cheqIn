@@ -125,11 +125,11 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
     };
 
     const { icon, color } = getMoodIcon(value);
-    const size = 32;
+    const size = 24;
 
     return (
       <g>
-        <circle cx={cx} cy={cy} r={18} fill={color} opacity={0.15} />
+        <circle cx={cx} cy={cy} r={14} fill={color} opacity={0.15} />
         <image 
           href={icon} 
           x={cx - size / 2} 
