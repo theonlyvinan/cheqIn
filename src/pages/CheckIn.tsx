@@ -458,48 +458,50 @@ const CheckIn = () => {
   };
 
   const speakResponse = async (text: string): Promise<void> => {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
       try {
         setIsSpeaking(true);
         
-        // Use Web Speech API (built-in, free)
-        if ('speechSynthesis' in window) {
-          const utterance = new SpeechSynthesisUtterance(text);
-          
-          // Configure voice settings for elderly-friendly speech
-          utterance.rate = 0.85; // Slightly slower for clarity
-          utterance.pitch = 1.0;
-          utterance.volume = 1.0;
-          
-          // Try to use a female voice if available
-          const voices = speechSynthesis.getVoices();
-          const preferredVoice = voices.find(voice => 
-            voice.name.includes('Female') || 
-            voice.name.includes('Samantha') ||
-            voice.name.includes('Karen')
-          ) || voices.find(voice => voice.lang.startsWith('en'));
-          
-          if (preferredVoice) {
-            utterance.voice = preferredVoice;
-          }
-          
-          utterance.onend = () => {
-            setIsSpeaking(false);
-            resolve();
-          };
-          
-          utterance.onerror = (error) => {
-            console.error('Speech synthesis error:', error);
-            setIsSpeaking(false);
-            resolve();
-          };
-          
-          speechSynthesis.speak(utterance);
-        } else {
-          console.warn('Speech synthesis not supported');
+        // Use ElevenLabs for natural, human-like speech
+        const { data: ttsData, error: ttsError } = await supabase.functions.invoke(
+          'text-to-speech-eleven',
+          { body: { text } }
+        );
+
+        if (ttsError) {
+          console.error('ElevenLabs TTS error:', ttsError);
           setIsSpeaking(false);
           resolve();
+          return;
         }
+
+        // Convert base64 to audio and play
+        const audioData = atob(ttsData.audioContent);
+        const arrayBuffer = new ArrayBuffer(audioData.length);
+        const uint8Array = new Uint8Array(arrayBuffer);
+        
+        for (let i = 0; i < audioData.length; i++) {
+          uint8Array[i] = audioData.charCodeAt(i);
+        }
+
+        const audioBlob = new Blob([uint8Array], { type: 'audio/mpeg' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        
+        audio.onended = () => {
+          URL.revokeObjectURL(audioUrl);
+          setIsSpeaking(false);
+          resolve();
+        };
+        
+        audio.onerror = (error) => {
+          console.error('Audio playback error:', error);
+          URL.revokeObjectURL(audioUrl);
+          setIsSpeaking(false);
+          resolve();
+        };
+        
+        await audio.play();
       } catch (error) {
         console.error('Error playing audio response:', error);
         setIsSpeaking(false);

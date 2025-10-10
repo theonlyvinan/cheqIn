@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.text-to-speech]
 verify_jwt = true
+
+[functions.text-to-speech-eleven]
+verify_jwt = true
