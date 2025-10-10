@@ -595,22 +595,17 @@ const CheckIn = () => {
                         </div>
                       </div>
                       
-                      {/* Highlights */}
-                      {session.sentiment.highlights && session.sentiment.highlights.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          {session.sentiment.highlights.map((highlight, idx) => (
-                            <span key={idx} className="px-3 py-1 rounded-full text-xs font-bold italic text-black">
+                      {/* Highlights and Concerns */}
+                      {((session.sentiment.highlights && session.sentiment.highlights.length > 0) || 
+                        (session.sentiment.concerns && session.sentiment.concerns.length > 0)) && (
+                        <div className="flex flex-wrap gap-2">
+                          {session.sentiment.highlights?.map((highlight, idx) => (
+                            <span key={`h-${idx}`} className="px-3 py-1 rounded-full text-xs font-bold italic text-black">
                               {highlight}
                             </span>
                           ))}
-                        </div>
-                      )}
-                      
-                      {/* Concerns */}
-                      {session.sentiment.concerns && session.sentiment.concerns.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {session.sentiment.concerns.map((concern, idx) => (
-                            <span key={idx} className="px-3 py-1 rounded-full text-xs font-bold italic text-red-700">
+                          {session.sentiment.concerns?.map((concern, idx) => (
+                            <span key={`c-${idx}`} className="px-3 py-1 rounded-full text-xs font-bold italic text-red-700">
                               {concern}
                             </span>
                           ))}
