@@ -179,7 +179,7 @@ const CheckIn = () => {
         const aiText = event.transcript;
         console.log('AI said:', aiText);
         setConversationTranscript(prev => [...prev, `Mira: ${aiText}`]);
-        setCurrentText("");
+        setCurrentText(aiText); // Keep showing the last thing Mira said
         break;
         
       case 'response.audio.delta':
@@ -459,16 +459,8 @@ const CheckIn = () => {
             </div>
             {currentText && (
               <div className="p-3 bg-background/60 rounded-lg">
+                <p className="text-sm font-medium">Mira:</p>
                 <p className="text-sm">{currentText}</p>
-              </div>
-            )}
-            {conversationTranscript.length > 0 && (
-              <div className="mt-4 max-h-40 overflow-y-auto space-y-2">
-                {conversationTranscript.slice(-4).map((text, idx) => (
-                  <p key={idx} className="text-xs text-muted-foreground">
-                    {text}
-                  </p>
-                ))}
               </div>
             )}
           </div>
