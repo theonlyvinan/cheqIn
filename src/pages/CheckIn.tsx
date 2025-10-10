@@ -392,7 +392,7 @@ const CheckIn = () => {
               {sessions.slice(0, 3).map((session) => (
                 <Card
                   key={session.id}
-                  className={`p-4 ${session.status === 'completed' ? `cursor-pointer hover:bg-accent/5 border ${getSentimentColor(session.sentiment.label)}` : 'bg-black text-white border-black'} transition-colors`}
+                  className={`p-4 ${session.status === 'completed' ? `cursor-pointer hover:bg-accent/5 border ${getSentimentColor(session.sentiment.label)}` : 'bg-white border'} transition-colors`}
                   onClick={() => session.status === 'completed' && setSelectedSession(session)}
                 >
                   {session.status === 'processing' ? (
@@ -400,13 +400,13 @@ const CheckIn = () => {
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <div className="text-xs text-white/70">{formatTimestamp(session.timestamp)}</div>
-                            <Badge className="bg-white text-black text-xs">
+                            <div className="text-xs text-muted-foreground">{formatTimestamp(session.timestamp)}</div>
+                            <Badge className="bg-black text-white text-xs">
                               <Loader2 className="w-3 h-3 animate-spin mr-1" />
                               Processing
                             </Badge>
                           </div>
-                          <div className="text-sm mt-1 line-clamp-2 text-white">{session.transcript}</div>
+                          <div className="text-sm mt-1 line-clamp-2">{session.transcript}</div>
                         </div>
                       </div>
                     </div>
