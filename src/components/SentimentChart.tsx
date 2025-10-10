@@ -56,19 +56,22 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
     const { cx, cy, payload } = props;
     if (!payload.mood) return null;
 
-    const getIcon = (mood: number) => {
-      if (mood === 1) return <AlertCircle className="w-10 h-10 text-red-600" fill="currentColor" strokeWidth={0} />;
-      if (mood === 2) return <Frown className="w-10 h-10 text-orange-500" fill="currentColor" strokeWidth={0} />;
-      if (mood === 3) return <Meh className="w-10 h-10 text-gray-500" fill="currentColor" strokeWidth={0} />;
-      if (mood === 4) return <Smile className="w-10 h-10 text-green-600" fill="currentColor" strokeWidth={0} />;
-      return <Heart className="w-10 h-10 text-blue-600" fill="currentColor" strokeWidth={0} />;
+    const getMoodColor = (mood: number) => {
+      if (mood === 1) return { bg: '#dc2626', emoji: '😟' };
+      if (mood === 2) return { bg: '#f97316', emoji: '😕' };
+      if (mood === 3) return { bg: '#6b7280', emoji: '😐' };
+      if (mood === 4) return { bg: '#16a34a', emoji: '😊' };
+      return { bg: '#2563eb', emoji: '😄' };
     };
 
+    const { bg, emoji } = getMoodColor(payload.mood);
+
     return (
-      <g transform={`translate(${cx - 20}, ${cy - 20})`}>
-        <foreignObject x="0" y="0" width="40" height="40">
-          <div className="bg-white rounded-full p-1.5 shadow-md border-2 border-gray-200">
-            {getIcon(payload.mood)}
+      <g>
+        <circle cx={cx} cy={cy} r={18} fill={bg} stroke="#fff" strokeWidth={3} />
+        <foreignObject x={cx - 12} y={cy - 12} width="24" height="24">
+          <div className="flex items-center justify-center w-full h-full text-xl">
+            {emoji}
           </div>
         </foreignObject>
       </g>
