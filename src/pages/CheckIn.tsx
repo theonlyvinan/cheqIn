@@ -46,13 +46,13 @@ const CheckIn = () => {
       },
       status: 'completed'
     },
-    // Example: In pain session
+    // Example: Concerned session
     {
       id: '2',
       timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
       transcript: "My arm has been hurting since yesterday. It's a dull ache that gets worse when I try to lift things. I took some pain medication but it didn't help much. Also feeling a bit tired and worried about it.",
       sentiment: {
-        label: 'negative',
+        label: 'concerned',
         score: -0.65,
         mood_rating: 4,
         emotions: { pain: 0.72, worry: 0.58, fatigue: 0.45 },
@@ -65,7 +65,7 @@ const CheckIn = () => {
     {
       id: '3',
       timestamp: new Date().toISOString(),
-      transcript: '',
+      transcript: 'Today I spent time with my grandchildren and we baked cookies together. The recipe was a bit tricky but we managed to make it work.',
       sentiment: {
         label: '',
         score: 0,
@@ -227,14 +227,14 @@ const CheckIn = () => {
     const mood = sentimentData.sentiment_label;
     const concerns = sentimentData.concerns || [];
 
-    if (mood === 'very_positive' || mood === 'positive') {
+    if (mood === 'very_positive') {
       return "You sound wonderful today! It's lovely to hear such positive energy. Keep up the great spirit!";
     } else if (mood === 'neutral') {
       return "Thanks for sharing. How about we make today a little brighter? Is there something nice you're looking forward to?";
     } else if (concerns.length > 0) {
       return `I noticed you mentioned ${concerns[0]}. Would you like to talk more about that? Remember, I'm here to listen.`;
     } else {
-      return "I'm sorry you're feeling down. It's okay to have these days. Want to tell me what's been on your mind?";
+      return "I'm here for you. It's okay to have these days. Want to tell me what's been on your mind?";
     }
   };
 
@@ -256,12 +256,10 @@ const CheckIn = () => {
   const getSentimentColor = (label: string) => {
     switch (label) {
       case 'very_positive':
-      case 'positive':
         return 'bg-blue-500/10 border-blue-500/20';
       case 'neutral':
-        return 'bg-blue-300/10 border-blue-300/20';
-      case 'negative':
-      case 'very_negative':
+        return 'bg-gray-300/10 border-gray-300/20';
+      case 'concerned':
         return 'bg-red-300/10 border-red-300/20';
       default:
         return 'bg-gray-500/10 border-gray-500/20';
@@ -271,11 +269,11 @@ const CheckIn = () => {
   const getSentimentIcon = (label: string) => {
     switch (label) {
       case 'very_positive':
-      case 'positive':
         return <Smile className="w-5 h-5" />;
-      case 'negative':
-      case 'very_negative':
+      case 'concerned':
         return <AlertCircle className="w-5 h-5" />;
+      case 'neutral':
+        return <Heart className="w-5 h-5" />;
       default:
         return <Heart className="w-5 h-5" />;
     }
@@ -284,11 +282,11 @@ const CheckIn = () => {
   const getMoodColor = (label: string) => {
     switch (label) {
       case 'very_positive':
-      case 'positive':
         return 'bg-green-400 text-black';
-      case 'negative':
-      case 'very_negative':
+      case 'concerned':
         return 'bg-red-300 text-black';
+      case 'neutral':
+        return 'bg-gray-300 text-black';
       default:
         return 'bg-gray-300 text-black';
     }
@@ -401,14 +399,14 @@ const CheckIn = () => {
                     <div className="space-y-3">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 mb-2">
                             <div className="text-xs text-white/70">{formatTimestamp(session.timestamp)}</div>
                             <Badge className="bg-white/20 text-white text-xs">
                               <Loader2 className="w-3 h-3 animate-spin mr-1" />
                               Processing
                             </Badge>
                           </div>
-                          <div className="text-sm font-medium mt-1">Analyzing your check-in...</div>
+                          <div className="text-sm mt-1 line-clamp-2">{session.transcript}</div>
                         </div>
                       </div>
                     </div>
