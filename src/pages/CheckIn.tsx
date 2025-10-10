@@ -378,7 +378,7 @@ const CheckIn = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-accent/20 p-4 md:p-8 space-y-8">
+    <div className="min-h-screen bg-gradient-to-b from-background to-accent/10 p-4 md:p-8 space-y-8">
       {/* Header */}
       <div className="max-w-4xl mx-auto text-center space-y-6">
         {/* Logo + Text Combined with 3D Effect */}
@@ -564,7 +564,7 @@ const CheckIn = () => {
             {sessions.slice(0, 3).map((session) => (
               <Card
                 key={session.id}
-                className={`p-4 bg-transparent border-none shadow-none ${session.status === 'completed' ? 'cursor-pointer' : ''}`}
+                className={`p-4 bg-transparent border border-gray-200 rounded-lg shadow-none ${session.status === 'completed' ? 'cursor-pointer' : ''}`}
                 onClick={() => session.status === 'completed' && setSelectedSession(session)}
               >
                 <div className="space-y-3">
@@ -581,15 +581,15 @@ const CheckIn = () => {
                       
                       {/* Scores */}
                       <div className="grid grid-cols-3 gap-2 mb-3">
-                        <div className="p-2 bg-gray-50 rounded text-center">
+                        <div className="p-2 rounded text-center">
                           <p className="text-xs text-muted-foreground">Mental</p>
                           <p className="text-sm font-semibold">{session.sentiment.mental_health_score}/5</p>
                         </div>
-                        <div className="p-2 bg-gray-50 rounded text-center">
+                        <div className="p-2 rounded text-center">
                           <p className="text-xs text-muted-foreground">Physical</p>
                           <p className="text-sm font-semibold">{session.sentiment.physical_health_score}/5</p>
                         </div>
-                        <div className="p-2 bg-gray-50 rounded text-center">
+                        <div className="p-2 rounded text-center">
                           <p className="text-xs text-muted-foreground">Overall</p>
                           <p className="text-sm font-semibold">{session.sentiment.overall_score?.toFixed(1)}/5</p>
                         </div>
@@ -599,7 +599,7 @@ const CheckIn = () => {
                       {session.sentiment.highlights && session.sentiment.highlights.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           {session.sentiment.highlights.map((highlight, idx) => (
-                            <span key={idx} className="px-3 py-1 bg-gray-100 rounded-full text-xs font-bold italic text-black">
+                            <span key={idx} className="px-3 py-1 rounded-full text-xs font-bold italic text-black">
                               {highlight}
                             </span>
                           ))}
