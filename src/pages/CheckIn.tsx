@@ -627,20 +627,34 @@ const CheckIn = () => {
             <div className="flex flex-col items-center gap-4">
               <Button
                 size="lg"
-                variant={isRecording ? "destructive" : "default"}
-                className="w-40 h-40 rounded-full bg-black hover:bg-black/90 text-white shadow-[0_0_30px_rgba(0,0,0,0.4)]"
+                variant={isRecording ? "default" : "default"}
+                className={`w-40 h-40 rounded-full shadow-[0_0_30px_rgba(0,0,0,0.4)] transition-all ${
+                  isRecording 
+                    ? 'bg-green-500 hover:bg-green-600 text-white animate-pulse' 
+                    : isSpeaking 
+                    ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                    : 'bg-black hover:bg-black/90 text-white'
+                }`}
                 onClick={isRecording ? stopRecording : startRecording}
-                disabled={isProcessing}
+                disabled={isProcessing || isSpeaking}
               >
                 {isProcessing ? (
                   <Loader2 className="w-24 h-24 animate-spin" />
                 ) : isRecording ? (
-                  <MicOff className="w-24 h-24" />
+                  <Mic className="w-24 h-24" />
+                ) : isSpeaking ? (
+                  <Loader2 className="w-24 h-24 animate-spin" />
                 ) : (
                   <Mic className="w-24 h-24" />
                 )}
               </Button>
               
+              {isRecording && (
+                <p className="text-sm font-medium text-green-600 animate-pulse">🎤 Listening...</p>
+              )}
+              {isSpeaking && (
+                <p className="text-sm font-medium text-blue-600">💬 Mira is speaking...</p>
+              )}
               {isProcessing && (
                 <p className="text-sm text-muted-foreground">Analyzing...</p>
               )}
