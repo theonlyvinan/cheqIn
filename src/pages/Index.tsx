@@ -16,12 +16,12 @@ const Index = () => {
         <div className="absolute inset-0 rounded-3xl -z-10" style={{ background: 'var(--shine-gradient)' }}></div>
         <div className="flex flex-col items-center justify-center min-h-[85vh] text-center space-y-10">
           {/* Logo + Text Combined with 3D Effect */}
-          <div className="animate-fade-in flex items-center gap-6 group perspective-1000">
+          <div className="animate-fade-in flex items-center gap-3 group perspective-1000">
             <img 
               src={logo} 
               alt="CheqIn Logo" 
               id="hero-logo"
-              className="w-40 md:w-52 h-auto transition-all duration-500 cursor-pointer"
+              className="w-52 md:w-64 h-auto transition-all duration-500 cursor-pointer"
               style={{ 
                 filter: 'drop-shadow(0 10px 30px hsl(190 85% 45% / 0.3))',
                 transform: 'rotateY(0deg) rotateX(0deg)',
@@ -47,9 +47,6 @@ const Index = () => {
               >
                 CheqIn
               </h1>
-              <Heart 
-                className="absolute -top-8 -right-8 md:-top-12 md:-right-12 w-12 h-12 md:w-16 md:h-16 text-accent fill-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-pulse" 
-              />
             </div>
           </div>
           

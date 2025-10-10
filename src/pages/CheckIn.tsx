@@ -400,12 +400,12 @@ const CheckIn = () => {
       {/* Header */}
       <div className="max-w-4xl mx-auto text-center space-y-6">
         {/* Logo + Text Combined with 3D Effect */}
-        <div className="flex items-center justify-center gap-4 group perspective-1000">
+        <div className="flex items-center justify-center gap-2 group perspective-1000">
           <img 
             src={logo}
             alt="CheqIn Logo" 
             id="checkin-logo"
-            className="w-16 md:w-20 h-auto transition-all duration-500 cursor-pointer"
+            className="w-20 md:w-24 h-auto transition-all duration-500 cursor-pointer"
             style={{ 
               filter: 'drop-shadow(0 5px 15px hsl(190 85% 45% / 0.3))',
               transform: 'rotateY(0deg) rotateX(0deg)',
