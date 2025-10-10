@@ -564,7 +564,7 @@ const CheckIn = () => {
             {sessions.slice(0, 3).map((session) => (
               <Card
                 key={session.id}
-                className={`p-4 bg-transparent border border-gray-200 rounded-lg shadow-none ${session.status === 'completed' ? 'cursor-pointer' : ''}`}
+                className={`p-4 bg-transparent border border-black rounded-lg shadow-none ${session.status === 'completed' ? 'cursor-pointer' : ''}`}
                 onClick={() => session.status === 'completed' && setSelectedSession(session)}
               >
                 <div className="space-y-3">
