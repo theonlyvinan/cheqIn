@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { format, subDays } from 'date-fns';
 import { Brain, Heart, Scale } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -179,20 +179,51 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
       </div>
       
       <ResponsiveContainer width="100%" height={320}>
-        <LineChart data={chartData} margin={{ top: 30, right: 20, bottom: 10, left: 10 }}>
+        <ScatterChart data={chartData} margin={{ top: 30, right: 20, bottom: 10, left: 10 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis 
             dataKey="day" 
             tick={{ fontSize: 12 }}
             stroke="#6b7280"
+            type="category"
           />
           <YAxis 
             domain={[1, 5]} 
             ticks={[1, 2, 3, 4, 5]}
-            tick={{ fontSize: 11 }}
+            tick={(props) => {
+              const { x, y, payload } = props;
+              const getMoodIcon = (value: number) => {
+                if (value === 1) return lowIcon;
+                if (value === 2) return dimIcon;
+                if (value === 3) return steadyIcon;
+                if (value === 4) return brightIcon;
+                if (value === 5) return radiantIcon;
+                return null;
+              };
+              
+              const icon = getMoodIcon(payload.value);
+              const label = getCategoryLabel(payload.value);
+              
+              return (
+                <g transform={`translate(${x},${y})`}>
+                  <text x={-15} y={0} dy={4} textAnchor="end" fill="#6b7280" fontSize={11}>
+                    {label}
+                  </text>
+                  {icon && (
+                    <image 
+                      href={icon} 
+                      x={-85} 
+                      y={-10} 
+                      width={20} 
+                      height={20}
+                    />
+                  )}
+                </g>
+              );
+            }}
             stroke="#6b7280"
-            tickFormatter={(value) => getCategoryLabel(value)}
             width={110}
+            type="number"
           />
           <Tooltip 
             contentStyle={{ 
@@ -213,15 +244,11 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
             strokeDasharray="5 5"
             label={{ value: 'Steady', position: 'right', fill: '#6b7280', fontSize: 11 }}
           />
-          <Line 
-            type="monotone" 
+          <Scatter 
             dataKey={viewMode}
-            stroke="#000000"
-            strokeWidth={1.5}
-            dot={<CustomDot />}
-            connectNulls
+            shape={<CustomDot />}
           />
-        </LineChart>
+        </ScatterChart>
       </ResponsiveContainer>
       
       <div className="mt-4 text-sm text-muted-foreground text-center">

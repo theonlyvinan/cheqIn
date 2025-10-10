@@ -39,7 +39,59 @@ const CheckIn = () => {
   const [conversationTranscript, setConversationTranscript] = useState<string[]>([]);
   const [currentText, setCurrentText] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [sessions, setSessions] = useState<CheckInSession[]>([]);
+  const [sessions, setSessions] = useState<CheckInSession[]>([
+    {
+      id: 'sample-1',
+      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+      transcript: "I had a wonderful day! Went for a walk in the park, the weather was beautiful, and I met my friend Sarah for coffee. I'm feeling energized and grateful.",
+      sentiment: {
+        label: 'very_positive',
+        score: 0.92,
+        mood_rating: 9,
+        mental_health_score: 5,
+        physical_health_score: 5,
+        overall_score: 5,
+        emotions: { joy: 0.85, contentment: 0.78 },
+        highlights: ['Park walk', 'Coffee with friend', 'Beautiful weather'],
+        concerns: []
+      },
+      status: 'completed'
+    },
+    {
+      id: 'sample-2',
+      timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      transcript: "Today was okay. Did some light reading and watched TV. Nothing special. Feeling a bit tired.",
+      sentiment: {
+        label: 'neutral',
+        score: 0.1,
+        mood_rating: 5,
+        mental_health_score: 2,
+        physical_health_score: 2,
+        overall_score: 2,
+        emotions: { calm: 0.5, fatigue: 0.4 },
+        highlights: ['Reading', 'Relaxing'],
+        concerns: ['Feeling tired']
+      },
+      status: 'completed'
+    },
+    {
+      id: 'sample-3',
+      timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      transcript: "Today was a really good day! Felt energetic, did some gardening, and video called with my grandchildren. They showed me their school projects!",
+      sentiment: {
+        label: 'very_positive',
+        score: 0.88,
+        mood_rating: 8,
+        mental_health_score: 4,
+        physical_health_score: 4,
+        overall_score: 4,
+        emotions: { joy: 0.82, energy: 0.75 },
+        highlights: ['Gardening', 'Family connection', 'Grandchildren'],
+        concerns: []
+      },
+      status: 'completed'
+    }
+  ]);
   const [selectedSession, setSelectedSession] = useState<CheckInSession | null>(null);
   const chatRef = useRef<RealtimeChat | null>(null);
   const { toast } = useToast();
