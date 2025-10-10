@@ -411,7 +411,7 @@ const CheckIn = () => {
               transform: 'rotateY(0deg) rotateX(0deg)',
               transformStyle: 'preserve-3d',
               transition: 'transform 0.5s ease-out',
-              animation: 'pulse 4s ease-in-out infinite'
+              animation: 'glow-pulse 2.5s ease-in-out infinite'
             }}
           />
           <h1 
@@ -425,7 +425,7 @@ const CheckIn = () => {
             onMouseLeave={() => {
               const logo = document.getElementById('checkin-logo');
               if (logo) {
-                logo.style.animation = 'pulse 4s ease-in-out infinite';
+                logo.style.animation = 'glow-pulse 2.5s ease-in-out infinite';
               }
             }}
           >
@@ -443,6 +443,14 @@ const CheckIn = () => {
           #checkin-logo:hover {
             transform: rotateY(15deg) rotateX(5deg) scale(1.15);
             filter: drop-shadow(0 10px 20px hsl(190 85% 45% / 0.5));
+          }
+          @keyframes glow-pulse {
+            0%, 100% {
+              filter: drop-shadow(0 0 30px hsl(190 85% 45% / 0.8)) drop-shadow(0 0 60px hsl(190 85% 45% / 0.5));
+            }
+            50% {
+              filter: drop-shadow(0 0 50px hsl(190 85% 45% / 1)) drop-shadow(0 0 100px hsl(190 85% 45% / 0.8));
+            }
           }
         `}} />
         

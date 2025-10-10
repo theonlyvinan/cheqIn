@@ -27,7 +27,7 @@ const Index = () => {
                 transform: 'rotateY(0deg) rotateX(0deg)',
                 transformStyle: 'preserve-3d',
                 transition: 'transform 0.5s ease-out',
-                animation: 'pulse 4s ease-in-out infinite'
+                animation: 'glow-pulse 2.5s ease-in-out infinite'
               }}
             />
             <h1 
@@ -41,7 +41,7 @@ const Index = () => {
               onMouseLeave={() => {
                 const logo = document.getElementById('hero-logo');
                 if (logo) {
-                  logo.style.animation = 'pulse 4s ease-in-out infinite';
+                  logo.style.animation = 'glow-pulse 2.5s ease-in-out infinite';
                 }
               }}
             >
@@ -59,6 +59,14 @@ const Index = () => {
             #hero-logo:hover {
               transform: rotateY(15deg) rotateX(5deg) scale(1.1);
               filter: drop-shadow(0 20px 40px hsl(190 85% 45% / 0.5));
+            }
+            @keyframes glow-pulse {
+              0%, 100% {
+                filter: drop-shadow(0 0 40px hsl(190 85% 45% / 0.8)) drop-shadow(0 0 80px hsl(190 85% 45% / 0.5));
+              }
+              50% {
+                filter: drop-shadow(0 0 60px hsl(190 85% 45% / 1)) drop-shadow(0 0 120px hsl(190 85% 45% / 0.8));
+              }
             }
           `}} />
           
