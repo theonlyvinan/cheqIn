@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { format, subDays } from 'date-fns';
 import { Smile, Frown, Meh, AlertCircle, Heart } from 'lucide-react';
 
@@ -57,17 +57,19 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
     if (!payload.mood) return null;
 
     const getIcon = (mood: number) => {
-      if (mood === 1) return <AlertCircle className="w-5 h-5 text-red-500" />;
-      if (mood === 2) return <Frown className="w-5 h-5 text-orange-500" />;
-      if (mood === 3) return <Meh className="w-5 h-5 text-gray-500" />;
-      if (mood === 4) return <Smile className="w-5 h-5 text-green-500" />;
-      return <Heart className="w-5 h-5 text-blue-500" />;
+      if (mood === 1) return <AlertCircle className="w-7 h-7 text-red-600 fill-red-100" />;
+      if (mood === 2) return <Frown className="w-7 h-7 text-orange-600 fill-orange-100" />;
+      if (mood === 3) return <Meh className="w-7 h-7 text-gray-600 fill-gray-100" />;
+      if (mood === 4) return <Smile className="w-7 h-7 text-green-600 fill-green-100" />;
+      return <Heart className="w-7 h-7 text-blue-600 fill-blue-100" />;
     };
 
     return (
-      <g transform={`translate(${cx - 10}, ${cy - 10})`}>
-        <foreignObject x="0" y="0" width="20" height="20">
-          {getIcon(payload.mood)}
+      <g transform={`translate(${cx - 14}, ${cy - 14})`}>
+        <foreignObject x="0" y="0" width="28" height="28">
+          <div className="bg-white rounded-full p-0.5 border-2 border-black/10">
+            {getIcon(payload.mood)}
+          </div>
         </foreignObject>
       </g>
     );
@@ -102,6 +104,13 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
               if (!value) return ['No data', ''];
               return [getCategoryLabel(value), 'Mood'];
             }}
+          />
+          <ReferenceLine 
+            y={3} 
+            stroke="#ef4444" 
+            strokeWidth={2}
+            strokeDasharray="5 5"
+            label={{ value: 'Neutral', position: 'right', fill: '#ef4444', fontSize: 12 }}
           />
           <Line 
             type="monotone" 
