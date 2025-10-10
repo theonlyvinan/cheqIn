@@ -10,6 +10,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import SentimentChart from "@/components/SentimentChart";
 import { RealtimeChat } from "@/utils/RealtimeAudio";
 import logo from "@/assets/cheqin-logo.png";
+import radiantIcon from "@/assets/radiant.png";
+import brightIcon from "@/assets/bright.png";
+import steadyIcon from "@/assets/steady.png";
+import dimIcon from "@/assets/dim.png";
+import lowIcon from "@/assets/low.png";
 
 type SessionStatus = 'processing' | 'completed';
 
@@ -342,12 +347,12 @@ const CheckIn = () => {
     }
   };
 
-  const getSentimentColor = (score: number) => {
-    if (score >= 4.5) return 'border-[#FF9F6B] border-2'; // Radiant - warm coral
-    if (score >= 3.5) return 'border-[#FFD75E] border-2'; // Bright - sunny yellow
-    if (score >= 2.5) return 'border-[#8FD6A1] border-2'; // Steady - mint green
-    if (score >= 1.5) return 'border-[#B8B3C8] border-2'; // Dim - lavender gray
-    return 'border-[#7BA3D0] border-2'; // Low - muted blue
+  const getOverallScoreIcon = (score: number) => {
+    if (score >= 4.5) return <img src={radiantIcon} alt="Radiant" className="w-8 h-8" />;
+    if (score >= 3.5) return <img src={brightIcon} alt="Bright" className="w-8 h-8" />;
+    if (score >= 2.5) return <img src={steadyIcon} alt="Steady" className="w-8 h-8" />;
+    if (score >= 1.5) return <img src={dimIcon} alt="Dim" className="w-8 h-8" />;
+    return <img src={lowIcon} alt="Low" className="w-8 h-8" />;
   };
 
   const formatTimestamp = (timestamp: string) => {
@@ -551,14 +556,15 @@ const CheckIn = () => {
             {sessions.slice(0, 3).map((session) => (
               <Card
                 key={session.id}
-                className={`p-4 bg-white ${session.status === 'completed' ? `cursor-pointer hover:bg-accent/5 ${getSentimentColor(session.sentiment.overall_score || 3)}` : 'bg-gray-100 border'} transition-colors`}
+                className={`p-4 bg-white ${session.status === 'completed' ? 'cursor-pointer hover:bg-accent/5 border' : 'bg-gray-100 border'} transition-colors`}
                 onClick={() => session.status === 'completed' && setSelectedSession(session)}
               >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center justify-between mb-2">
                         <div className="text-xs text-muted-foreground">{formatTimestamp(session.timestamp)}</div>
+                        {getOverallScoreIcon(session.sentiment.overall_score || 3)}
                       </div>
                       <p className="text-sm line-clamp-2 mb-3">{session.transcript}</p>
                       
@@ -580,23 +586,17 @@ const CheckIn = () => {
                       
                       {/* Highlights */}
                       {session.sentiment.highlights && session.sentiment.highlights.length > 0 && (
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">Highlights:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {session.sentiment.highlights.map((highlight, idx) => (
-                              <span key={idx} className="text-xs text-black">
-                                {highlight}{idx < session.sentiment.highlights!.length - 1 ? ', ' : ''}
-                              </span>
-                            ))}
-                          </div>
+                        <div className="flex flex-wrap gap-2">
+                          {session.sentiment.highlights.map((highlight, idx) => (
+                            <span key={idx} className="px-3 py-1 bg-gray-100 rounded-full text-xs font-bold italic text-black">
+                              {highlight}
+                            </span>
+                          ))}
                         </div>
                       )}
                     </div>
                     {session.status === 'completed' && (
-                      <div className="flex items-center gap-2">
-                        {getSentimentIcon(session.sentiment.label)}
-                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
                     )}
                   </div>
                 </div>
