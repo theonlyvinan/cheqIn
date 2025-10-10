@@ -406,7 +406,7 @@ const CheckIn = () => {
                               Processing
                             </Badge>
                           </div>
-                          <div className="text-sm mt-1 line-clamp-2">{session.transcript}</div>
+                          <div className="text-sm mt-1 line-clamp-2 text-white">{session.transcript}</div>
                         </div>
                       </div>
                     </div>
