@@ -57,23 +57,18 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
     if (!payload.mood) return null;
 
     const getMoodColor = (mood: number) => {
-      if (mood === 1) return { bg: '#dc2626', emoji: '😟' };
-      if (mood === 2) return { bg: '#f97316', emoji: '😕' };
-      if (mood === 3) return { bg: '#6b7280', emoji: '😐' };
-      if (mood === 4) return { bg: '#16a34a', emoji: '😊' };
-      return { bg: '#2563eb', emoji: '😄' };
+      if (mood === 1) return '#dc2626'; // red
+      if (mood === 2) return '#f97316'; // orange
+      if (mood === 3) return '#6b7280'; // gray
+      if (mood === 4) return '#16a34a'; // green
+      return '#2563eb'; // blue
     };
 
-    const { bg, emoji } = getMoodColor(payload.mood);
+    const color = getMoodColor(payload.mood);
 
     return (
       <g>
-        <circle cx={cx} cy={cy} r={18} fill={bg} stroke="#fff" strokeWidth={3} />
-        <foreignObject x={cx - 12} y={cy - 12} width="24" height="24">
-          <div className="flex items-center justify-center w-full h-full text-xl">
-            {emoji}
-          </div>
-        </foreignObject>
+        <circle cx={cx} cy={cy} r={16} fill={color} stroke="#fff" strokeWidth={3} />
       </g>
     );
   };
@@ -81,8 +76,8 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
   return (
     <Card className="p-6">
       <h3 className="text-lg font-semibold mb-4">Your Week at a Glance</h3>
-      <ResponsiveContainer width="100%" height={280}>
-        <LineChart data={chartData}>
+      <ResponsiveContainer width="100%" height={320}>
+        <LineChart data={chartData} margin={{ top: 30, right: 20, bottom: 10, left: 10 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis 
             dataKey="day" 
@@ -95,7 +90,7 @@ const SentimentChart = ({ sessions }: SentimentChartProps) => {
             tick={{ fontSize: 11 }}
             stroke="#6b7280"
             tickFormatter={(value) => getCategoryLabel(value)}
-            width={100}
+            width={110}
           />
           <Tooltip 
             contentStyle={{ 
