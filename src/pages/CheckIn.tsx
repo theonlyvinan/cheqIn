@@ -400,7 +400,7 @@ const CheckIn = () => {
       {/* Header */}
       <div className="max-w-4xl mx-auto text-center space-y-6">
         {/* Logo + Text Combined with 3D Effect */}
-        <div className="flex items-center justify-center gap-2 group perspective-1000">
+        <div className="flex items-center justify-center gap-1 group perspective-1000">
           <img 
             src={logo}
             alt="CheqIn Logo" 
