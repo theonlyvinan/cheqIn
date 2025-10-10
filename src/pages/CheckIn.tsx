@@ -50,14 +50,14 @@ const CheckIn = () => {
     {
       id: '2',
       timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-      transcript: "My arm has been hurting since yesterday. It's a dull ache that gets worse when I try to lift things. I took some pain medication but it didn't help much. Also feeling a bit tired and worried about it.",
+      transcript: "I had a fight with my friend today and it's been bothering me. We disagreed about something important and now I'm feeling upset about how things were left.",
       sentiment: {
         label: 'concerned',
         score: -0.65,
         mood_rating: 4,
-        emotions: { pain: 0.72, worry: 0.58, fatigue: 0.45 },
-        highlights: ['Arm pain reported', 'Pain when lifting', 'Medication not helping'],
-        concerns: ['Persistent arm pain', 'Limited mobility', 'Fatigue']
+        emotions: { sadness: 0.68, worry: 0.58, upset: 0.45 },
+        highlights: ['Fight with friend', 'Feeling upset'],
+        concerns: ['Unresolved conflict', 'Bothered by disagreement']
       },
       status: 'completed'
     },
@@ -323,7 +323,7 @@ const CheckIn = () => {
               <Button
                 size="lg"
                 variant={isRecording ? "destructive" : "default"}
-                className="w-40 h-40 rounded-full bg-black hover:bg-black/90 text-white"
+                className="w-40 h-40 rounded-full bg-black hover:bg-black/90 text-white shadow-[0_0_30px_rgba(0,0,0,0.4)]"
                 onClick={isRecording ? stopRecording : startRecording}
                 disabled={isProcessing}
               >
