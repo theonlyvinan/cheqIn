@@ -281,6 +281,19 @@ const CheckIn = () => {
     }
   };
 
+  const getMoodColor = (label: string) => {
+    switch (label) {
+      case 'very_positive':
+      case 'positive':
+        return 'bg-green-400 text-black';
+      case 'negative':
+      case 'very_negative':
+        return 'bg-red-300 text-black';
+      default:
+        return 'bg-gray-300 text-black';
+    }
+  };
+
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -408,7 +421,7 @@ const CheckIn = () => {
                           {getSentimentIcon(session.sentiment.label)}
                           <span className="text-xs capitalize">{session.sentiment.label.replace('_', ' ')}</span>
                         </div>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge className={`text-xs ${getMoodColor(session.sentiment.label)}`}>
                           Mood: {session.sentiment.mood_rating}/10
                         </Badge>
                       </div>
