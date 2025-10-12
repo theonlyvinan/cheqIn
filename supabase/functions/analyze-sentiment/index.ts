@@ -35,6 +35,7 @@ serve(async (req) => {
 - sentiment_score: -1 to 1 (negative to positive, legacy)
 - sentiment_label: "very_negative", "negative", "neutral", "positive", or "very_positive"
 - emotions: object with joy, sadness, anxiety, calm, pain (0-1 scale)
+- highlights: array of positive moments, achievements, or good news mentioned
 - concerns: array of any health/safety concerns detected
 - mood_rating: 1-10 overall mood rating (legacy)
 - mental_health_score: 1-5 (MindGlow: reflects mood, emotional tone, positivity, engagement)
@@ -50,7 +51,7 @@ Scoring guide:
 4 = Bright Glow (Positive) - Good energy/mood
 5 = Radiant Glow (Very Positive) - Excellent mood/energy
 
-Example: {"sentiment_score": 0.6, "sentiment_label": "positive", "emotions": {"joy": 0.7, "sadness": 0.1, "anxiety": 0.2, "calm": 0.6, "pain": 0.3}, "concerns": [], "mood_rating": 7, "mental_health_score": 4, "physical_health_score": 3, "overall_score": 3.5, "mental_indicators": ["positive outlook", "engaged conversation"], "physical_indicators": ["mild fatigue mentioned"]}`
+Example: {"sentiment_score": 0.6, "sentiment_label": "positive", "emotions": {"joy": 0.7, "sadness": 0.1, "anxiety": 0.2, "calm": 0.6, "pain": 0.3}, "highlights": ["Went for a walk", "Feeling positive"], "concerns": ["Mild back pain"], "mood_rating": 7, "mental_health_score": 4, "physical_health_score": 3, "overall_score": 3.5, "mental_indicators": ["positive outlook", "engaged conversation"], "physical_indicators": ["mild fatigue mentioned"]}`
           },
           {
             role: 'user',
