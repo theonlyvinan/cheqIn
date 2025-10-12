@@ -45,6 +45,8 @@ const CheckIn = () => {
   const [conversationTranscript, setConversationTranscript] = useState<string[]>([]);
   const [currentText, setCurrentText] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
+  const inactivityTimerRef = useRef<number | null>(null);
   const [sessions, setSessions] = useState<CheckInSession[]>([
     {
       id: 'sample-1',
@@ -165,6 +167,35 @@ const CheckIn = () => {
     }
   };
 
+  // Inactivity and auto-finalize helpers
+  const clearInactivityTimer = () => {
+    if (inactivityTimerRef.current) {
+      window.clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
+    }
+  };
+
+  const scheduleInactivityTimer = () => {
+    clearInactivityTimer();
+    inactivityTimerRef.current = window.setTimeout(() => {
+      if (isConnected && !isFinalizing) {
+        console.log('Inactivity timeout reached, auto-finalizing conversation.');
+        endConversation();
+      }
+    }, 15000);
+  };
+
+  const maybeEndOnClosingPhrase = (text: string) => {
+    const closers = [/i'll check in again soon/i, /let you rest now/i, /glad we talked/i, /thank you for sharing/i, /talk again soon/i];
+    if (closers.some(r => r.test(text))) {
+      if (!isFinalizing) {
+        console.log('Detected closing phrase, auto-finalizing.');
+        clearInactivityTimer();
+        window.setTimeout(() => endConversation(), 800);
+      }
+    }
+  };
+
   const handleRealtimeMessage = (event: any) => {
     console.log('Received event:', event.type);
     
@@ -183,6 +214,7 @@ const CheckIn = () => {
         // User's speech transcribed
         const userText = event.transcript;
         console.log('User said:', userText);
+        clearInactivityTimer();
         setConversationTranscript(prev => [...prev, `User: ${userText}`]);
         break;
         
@@ -198,6 +230,7 @@ const CheckIn = () => {
         console.log('AI said:', aiText);
         setConversationTranscript(prev => [...prev, `Mira: ${aiText}`]);
         setCurrentText(aiText); // Keep showing the last thing Mira said
+        maybeEndOnClosingPhrase(aiText);
         break;
         
       case 'response.audio.delta':
@@ -208,6 +241,7 @@ const CheckIn = () => {
       case 'response.audio.done':
         // AI finished generating audio
         setIsSpeaking(false);
+        scheduleInactivityTimer();
         break;
         
       case 'response.done':
@@ -233,6 +267,8 @@ const CheckIn = () => {
       setSentiment(null);
       setConversationTranscript([]);
       setCurrentText("");
+      setIsFinalizing(false);
+      clearInactivityTimer();
       
       // Request microphone permission first
       await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -252,11 +288,12 @@ const CheckIn = () => {
   };
 
   const endConversation = async () => {
-    if (!chatRef.current) return;
-    
-    console.log('Ending conversation. Full transcript:', conversationTranscript);
-    
-    chatRef.current.disconnect();
+    if (isFinalizing) return;
+    setIsFinalizing(true);
+    clearInactivityTimer();
+    if (chatRef.current) {
+      chatRef.current.disconnect();
+    }
     setIsConnected(false);
     setIsSpeaking(false);
     
@@ -270,6 +307,7 @@ const CheckIn = () => {
         variant: "destructive",
       });
       setConversationTranscript([]);
+      setIsFinalizing(false);
       return;
     }
     
