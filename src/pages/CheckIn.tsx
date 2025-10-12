@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Smile, AlertCircle, Clock, ChevronRight, Heart, Activity, Phone, PhoneOff } from "lucide-react";
+import { Loader2, Smile, AlertCircle, Clock, ChevronRight, Heart, Activity, Phone, PhoneOff, Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -451,6 +451,19 @@ const CheckIn = () => {
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 p-4 md:p-8 space-y-8">
+      {/* Home Button */}
+      <div className="max-w-4xl mx-auto">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2 hover:bg-primary/10 transition-colors"
+        >
+          <Home className="w-4 h-4" />
+          <span>Home</span>
+        </Button>
+      </div>
+      
       {/* Header */}
       <div className="max-w-4xl mx-auto text-center space-y-6">
         {/* Logo + Text Combined with 3D Effect */}
@@ -587,26 +600,7 @@ const CheckIn = () => {
             </div>
             <span className="text-sm font-medium">Mood: {sentiment.mood_rating}/10</span>
           </div>
-
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/")}
-            className="w-full"
-          >
-            Back to Home
-          </Button>
         </Card>
-      )}
-
-      {!transcript && (
-        <div className="flex justify-center">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/")}
-          >
-            Back to Home
-          </Button>
-        </div>
       )}
 
       {/* Sentiment Chart */}
