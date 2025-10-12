@@ -211,13 +211,8 @@ const CheckIn = () => {
         break;
         
       case 'response.done':
-        // Check if conversation should end (usually after 5-7 exchanges)
-        const userMessages = conversationTranscript.filter(t => t.startsWith('User:')).length;
-        if (userMessages >= 6) {
-          setTimeout(() => {
-            endConversation();
-          }, 2000);
-        }
+        // Let user manually end the conversation
+        // (Mira will naturally conclude after covering all 7 areas)
         break;
         
       case 'error':
@@ -259,15 +254,14 @@ const CheckIn = () => {
   const endConversation = async () => {
     if (!chatRef.current) return;
     
+    console.log('Ending conversation. Full transcript:', conversationTranscript);
+    
     chatRef.current.disconnect();
     setIsConnected(false);
     setIsSpeaking(false);
     
-    // Compile full transcript
-    const fullTranscript = conversationTranscript
-      .filter(t => t.startsWith('User:'))
-      .map(t => t.replace('User: ', ''))
-      .join(' ');
+    // Compile full transcript from both user and AI
+    const fullTranscript = conversationTranscript.join('\n');
     
     if (!fullTranscript.trim()) {
       toast({
@@ -279,6 +273,7 @@ const CheckIn = () => {
       return;
     }
     
+    console.log('Processing transcript:', fullTranscript);
     setTranscript(fullTranscript);
 
     // Analyze sentiment
