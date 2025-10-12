@@ -186,14 +186,12 @@ const CheckIn = () => {
     }, 15000);
   };
 
+  // Disabled auto-ending on closing phrases - user controls when to end
   const maybeEndOnClosingPhrase = (text: string) => {
+    // Just log that Mira is wrapping up, but don't auto-end
     const closers = [/i'll check in again soon/i, /let you rest now/i, /glad we talked/i, /thank you for sharing/i, /talk again soon/i];
     if (closers.some(r => r.test(text))) {
-      if (!isFinalizing) {
-        console.log('Detected closing phrase, auto-finalizing.');
-        clearInactivityTimer();
-        window.setTimeout(() => endConversation(), 800);
-      }
+      console.log('Mira used a closing phrase - conversation can be ended by user when ready.');
     }
   };
 
