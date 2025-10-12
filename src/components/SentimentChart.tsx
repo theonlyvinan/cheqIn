@@ -4,11 +4,11 @@ import { format, subDays } from 'date-fns';
 import { Brain, Heart, Scale } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useState } from 'react';
-import lowIcon from '@/assets/low.png';
-import dimIcon from '@/assets/dim.png';
-import steadyIcon from '@/assets/steady.png';
-import brightIcon from '@/assets/bright.png';
-import radiantIcon from '@/assets/radiant.png';
+import lowIcon from '@/assets/low-new.png';
+import dimIcon from '@/assets/dim-new.png';
+import steadyIcon from '@/assets/steady-new.png';
+import brightIcon from '@/assets/bright-new.png';
+import radiantIcon from '@/assets/radiant-new.png';
 
 interface SentimentChartProps {
   sessions: Array<{
