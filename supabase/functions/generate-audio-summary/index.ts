@@ -45,16 +45,13 @@ serve(async (req) => {
       checkIns = [singleCheckIn]
       console.log('Generating summary for specific check-in')
     } else {
-      // Get the last 5 days of check-ins for overview
-      const fiveDaysAgo = new Date()
-      fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5)
-
+      // Use the most recent check-in only (daily summary)
       const { data: fetchedCheckIns, error: checkInsError } = await supabase
         .from('check_ins')
         .select('*')
         .eq('user_id', seniorUserId)
-        .gte('created_at', fiveDaysAgo.toISOString())
         .order('created_at', { ascending: false })
+        .limit(1)
 
       if (checkInsError) {
         console.error('Error fetching check-ins:', checkInsError)
@@ -62,65 +59,42 @@ serve(async (req) => {
       }
 
       if (!fetchedCheckIns || fetchedCheckIns.length === 0) {
-        throw new Error('No check-ins found in the last 5 days')
+        throw new Error('No check-ins found')
       }
 
       checkIns = fetchedCheckIns
       todayCheckIn = checkIns[0]
-      console.log(`Found ${checkIns.length} check-ins`)
+      console.log(`Using most recent check-in`)
     }
 
     // Generate summary text
     const summaryParts: string[] = []
 
     const getScoreLabel = (score: number) => {
-      if (score >= 4.5) return 'radiant'
-      if (score >= 3.5) return 'bright'
-      if (score >= 2.5) return 'steady'
-      if (score >= 1.5) return 'dim'
+      const s = Math.round(Number(score) || 0)
+      if (s >= 5) return 'radiant'
+      if (s === 4) return 'bright'
+      if (s === 3) return 'steady'
+      if (s === 2) return 'dim'
       return 'low'
     }
 
-    if (checkInId) {
-      // Single check-in summary
-      summaryParts.push('Daily Health Summary.')
-      
-      if (todayCheckIn.highlights && Array.isArray(todayCheckIn.highlights) && todayCheckIn.highlights.length > 0) {
-        summaryParts.push(`Highlights: ${todayCheckIn.highlights.join('. ')}.`)
-      }
-
-      if (todayCheckIn.concerns && Array.isArray(todayCheckIn.concerns) && todayCheckIn.concerns.length > 0) {
-        summaryParts.push(`Concerns: ${todayCheckIn.concerns.join('. ')}.`)
-      }
-
-      summaryParts.push(
-        `Mental wellbeing is ${getScoreLabel(todayCheckIn.mental_health_score || 3)}, ` +
-        `physical health is ${getScoreLabel(todayCheckIn.physical_health_score || 3)}, ` +
-        `and overall wellness is ${getScoreLabel(todayCheckIn.overall_score || 3)}.`
-      )
-    } else {
-      // Multi-day summary
-      summaryParts.push('Daily Health Summary.')
-      
-      if (todayCheckIn.highlights && Array.isArray(todayCheckIn.highlights) && todayCheckIn.highlights.length > 0) {
-        summaryParts.push(`Today's highlights: ${todayCheckIn.highlights.join('. ')}.`)
-      }
-
-      if (todayCheckIn.concerns && Array.isArray(todayCheckIn.concerns) && todayCheckIn.concerns.length > 0) {
-        summaryParts.push(`Concerns: ${todayCheckIn.concerns.join('. ')}.`)
-      }
-
-      // Calculate 5-day averages
-      const avgMentalScore = checkIns.reduce((sum, ci) => sum + (ci.mental_health_score || 0), 0) / checkIns.length
-      const avgPhysicalScore = checkIns.reduce((sum, ci) => sum + (ci.physical_health_score || 0), 0) / checkIns.length
-      const avgOverallScore = checkIns.reduce((sum, ci) => sum + (ci.overall_score || 0), 0) / checkIns.length
-
-      summaryParts.push(
-        `Five day overview: Mental wellbeing is ${getScoreLabel(avgMentalScore)}, ` +
-        `physical health is ${getScoreLabel(avgPhysicalScore)}, ` +
-        `and overall wellness is ${getScoreLabel(avgOverallScore)}.`
-      )
+    // Always produce a daily summary based on the selected or most recent check-in
+    summaryParts.push('Daily Health Summary.')
+    
+    if (todayCheckIn.highlights && Array.isArray(todayCheckIn.highlights) && todayCheckIn.highlights.length > 0) {
+      summaryParts.push(`Highlights: ${todayCheckIn.highlights.join('. ')}.`)
     }
+
+    if (todayCheckIn.concerns && Array.isArray(todayCheckIn.concerns) && todayCheckIn.concerns.length > 0) {
+      summaryParts.push(`Concerns: ${todayCheckIn.concerns.join('. ')}.`)
+    }
+
+    summaryParts.push(
+      `Mental wellbeing is ${getScoreLabel(todayCheckIn.mental_health_score ?? 3)}, ` +
+      `physical health is ${getScoreLabel(todayCheckIn.physical_health_score ?? 3)}, ` +
+      `and overall wellness is ${getScoreLabel(Number(todayCheckIn.overall_score) ?? 3)}.`
+    )
 
     const summaryText = summaryParts.join(' ')
 
