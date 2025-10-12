@@ -90,11 +90,20 @@ serve(async (req) => {
       summaryParts.push(`Concerns: ${todayCheckIn.concerns.join('. ')}.`)
     }
 
+    const mentalScore = Math.round(Number(todayCheckIn.mental_health_score) || 3)
+    const physicalScore = Math.round(Number(todayCheckIn.physical_health_score) || 3)
+    const overallScore = Math.round(Number(todayCheckIn.overall_score) || 3)
+
     summaryParts.push(
-      `Mental wellbeing is ${getScoreLabel(todayCheckIn.mental_health_score ?? 3)}, ` +
-      `physical health is ${getScoreLabel(todayCheckIn.physical_health_score ?? 3)}, ` +
-      `and overall wellness is ${getScoreLabel(Number(todayCheckIn.overall_score) ?? 3)}.`
+      `Mental wellbeing is ${getScoreLabel(mentalScore)}, ` +
+      `physical health is ${getScoreLabel(physicalScore)}, ` +
+      `and overall wellness is ${getScoreLabel(overallScore)}.`
     )
+
+    // Add urgent message if wellness is dim or low
+    if (overallScore <= 2) {
+      summaryParts.push('Please call your parents, they need your help.')
+    }
 
     const summaryText = summaryParts.join(' ')
 
