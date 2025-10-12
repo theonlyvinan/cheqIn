@@ -70,6 +70,7 @@ const CheckIn = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Load actual check-ins from database
       const { data: checkIns, error } = await supabase
         .from('check_ins')
         .select('*')
@@ -82,8 +83,11 @@ const CheckIn = () => {
         return;
       }
 
+      let formattedSessions: CheckInSession[] = [];
+
+      // Add actual database data first
       if (checkIns && checkIns.length > 0) {
-        const formattedSessions: CheckInSession[] = checkIns.map(checkIn => ({
+        formattedSessions = checkIns.map(checkIn => ({
           id: checkIn.id,
           timestamp: checkIn.created_at,
           transcript: checkIn.transcript,
@@ -100,8 +104,65 @@ const CheckIn = () => {
           },
           status: 'completed' as SessionStatus
         }));
-        setSessions(formattedSessions);
       }
+
+      // Add sample data at the end
+      const sampleSessions: CheckInSession[] = [
+        {
+          id: 'sample-1',
+          timestamp: new Date(Date.now() - 3600000 * 24).toISOString(),
+          transcript: "Today I'm feeling pretty good. I went for a walk this morning, and the weather was nice. I'm still dealing with some back pain, but it's manageable. I took my medication as scheduled.",
+          sentiment: {
+            label: 'very_positive',
+            score: 0.85,
+            mood_rating: 8,
+            mental_health_score: 4,
+            physical_health_score: 3,
+            overall_score: 3.5,
+            emotions: { joy: 0.7, contentment: 0.8 },
+            highlights: ['Went for a morning walk', 'Weather was nice'],
+            concerns: ['Back pain persists']
+          },
+          status: 'completed'
+        },
+        {
+          id: 'sample-2',
+          timestamp: new Date(Date.now() - 3600000 * 48).toISOString(),
+          transcript: "I had a rough night with limited sleep. My knees were bothering me, which made it hard to get comfortable. I'm feeling a bit tired and anxious about my doctor's appointment tomorrow.",
+          sentiment: {
+            label: 'concerned',
+            score: 0.45,
+            mood_rating: 5,
+            mental_health_score: 3,
+            physical_health_score: 2,
+            overall_score: 2.5,
+            emotions: { anxiety: 0.6, fatigue: 0.7 },
+            highlights: [],
+            concerns: ['Poor sleep quality', 'Knee pain', 'Anxiety about appointment']
+          },
+          status: 'completed'
+        },
+        {
+          id: 'sample-3',
+          timestamp: new Date(Date.now() - 3600000 * 72).toISOString(),
+          transcript: "Had a wonderful day! My grandkids visited, and we had a great time together. I felt energetic and happy. No major pain issues today, which is a blessing.",
+          sentiment: {
+            label: 'very_positive',
+            score: 0.92,
+            mood_rating: 9,
+            mental_health_score: 5,
+            physical_health_score: 4,
+            overall_score: 4.5,
+            emotions: { joy: 0.9, love: 0.85, contentment: 0.95 },
+            highlights: ['Family visit', 'High energy', 'Minimal pain'],
+            concerns: []
+          },
+          status: 'completed'
+        }
+      ];
+
+      // Combine actual data (first) with sample data (after)
+      setSessions([...formattedSessions, ...sampleSessions]);
     } catch (error) {
       console.error('Error loading check-ins:', error);
     }
