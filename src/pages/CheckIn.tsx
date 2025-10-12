@@ -46,6 +46,7 @@ const CheckIn = () => {
   const [currentText, setCurrentText] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isFinalizing, setIsFinalizing] = useState(false);
+  const [isBackfilling, setIsBackfilling] = useState(false);
   const inactivityTimerRef = useRef<number | null>(null);
   const [sessions, setSessions] = useState<CheckInSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<CheckInSession | null>(null);
@@ -193,6 +194,40 @@ const CheckIn = () => {
     const closers = [/i'll check in again soon/i, /let you rest now/i, /glad we talked/i, /thank you for sharing/i, /talk again soon/i];
     if (closers.some(r => r.test(text))) {
       console.log('Mira used a closing phrase - conversation can be ended by user when ready.');
+    }
+  };
+
+  const handleBackfill = async () => {
+    try {
+      setIsBackfilling(true);
+      toast({
+        title: "Starting backfill...",
+        description: "Re-analyzing existing check-ins to extract highlights and concerns",
+      });
+
+      const { data, error } = await supabase.functions.invoke('backfill-highlights');
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Backfill complete!",
+        description: `Processed ${data.processed} check-ins. Failed: ${data.failed}`,
+      });
+
+      // Reload check-ins to show updated data
+      await loadCheckIns();
+
+    } catch (error) {
+      console.error('Backfill error:', error);
+      toast({
+        title: "Backfill failed",
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: "destructive",
+      });
+    } finally {
+      setIsBackfilling(false);
     }
   };
 
@@ -515,6 +550,23 @@ const CheckIn = () => {
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           Just talk to Mira — she understands you naturally.
         </p>
+        {/* Backfill button - can be hidden after initial use */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleBackfill}
+          disabled={isBackfilling}
+          className="mt-2"
+        >
+          {isBackfilling ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            'Update Highlights & Concerns'
+          )}
+        </Button>
       </div>
 
       {/* Connection Status */}
