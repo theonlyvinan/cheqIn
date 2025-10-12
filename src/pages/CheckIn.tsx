@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Smile, AlertCircle, Clock, ChevronRight, Heart, Activity, Phone, PhoneOff, Home, PlayCircle } from "lucide-react";
+import { Loader2, Smile, AlertCircle, Clock, ChevronRight, Heart, Activity, Phone, PhoneOff, Home, PlayCircle, Headphones } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -49,6 +49,8 @@ const CheckIn = () => {
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [audioSummaryUrl, setAudioSummaryUrl] = useState<string | null>(null);
   const [audioSummaryText, setAudioSummaryText] = useState<string | null>(null);
+  const [generatingAudioForCheckIn, setGeneratingAudioForCheckIn] = useState<string | null>(null);
+  const [checkInAudios, setCheckInAudios] = useState<Record<string, { url: string; text: string }>>({});
   const inactivityTimerRef = useRef<number | null>(null);
   const [sessions, setSessions] = useState<CheckInSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<CheckInSession | null>(null);
@@ -230,6 +232,49 @@ const CheckIn = () => {
       });
     } finally {
       setIsGeneratingSummary(false);
+    }
+  };
+
+  const handleGenerateCheckInAudio = async (checkInId: string) => {
+    try {
+      setGeneratingAudioForCheckIn(checkInId);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('generate-audio-summary', {
+        body: { seniorUserId: user.id, checkInId }
+      });
+
+      if (error) throw error;
+      if (!data?.audioContent) throw new Error('No audio content received');
+
+      const src = `data:audio/mpeg;base64,${data.audioContent}`;
+      setCheckInAudios(prev => ({
+        ...prev,
+        [checkInId]: { url: src, text: data.summaryText || '' }
+      }));
+
+      toast({
+        title: "Audio ready",
+        description: "Play the audio summary below.",
+      });
+    } catch (error) {
+      console.error('Error generating check-in audio:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to generate audio",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingAudioForCheckIn(null);
     }
   };
 
@@ -693,27 +738,52 @@ const CheckIn = () => {
             {sessions.slice(0, 5).map((session) => (
               <Card
                 key={session.id}
-                className={`p-4 bg-transparent border border-black rounded-lg shadow-none ${session.status === 'completed' ? 'cursor-pointer' : ''}`}
-                onClick={() => session.status === 'completed' && setSelectedSession(session)}
+                className="p-4 bg-transparent border border-black rounded-lg shadow-none"
               >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
+                    <div 
+                      className="flex-1 cursor-pointer"
+                      onClick={() => session.status === 'completed' && setSelectedSession(session)}
+                    >
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-xs text-muted-foreground">{formatTimestamp(session.timestamp)}</div>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="flex items-center gap-2 cursor-help">
-                              <img src={getOverallScoreIcon(session.sentiment.overall_score || 3)} alt="" className="w-6 h-6" />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <div className="flex items-center gap-2">
-                              <img src={getOverallScoreIcon(session.sentiment.overall_score || 3)} alt="" className="w-5 h-5" />
-                              <span className="text-xs">{getOverallScoreLabel(session.sentiment.overall_score || 3)}</span>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
+                        <div className="flex items-center gap-2">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleGenerateCheckInAudio(session.id);
+                                }}
+                                disabled={generatingAudioForCheckIn === session.id}
+                                className="p-1.5 hover:bg-primary/10 rounded-full transition-colors"
+                              >
+                                {generatingAudioForCheckIn === session.id ? (
+                                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                                ) : (
+                                  <Headphones className="w-5 h-5 text-primary" />
+                                )}
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">Generate audio summary</p>
+                            </TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center gap-2 cursor-help">
+                                <img src={getOverallScoreIcon(session.sentiment.overall_score || 3)} alt="" className="w-6 h-6" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="flex items-center gap-2">
+                                <img src={getOverallScoreIcon(session.sentiment.overall_score || 3)} alt="" className="w-5 h-5" />
+                                <span className="text-xs">{getOverallScoreLabel(session.sentiment.overall_score || 3)}</span>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
                       </div>
                       <p className="text-sm line-clamp-2 mb-3">{session.transcript}</p>
                       
@@ -751,9 +821,26 @@ const CheckIn = () => {
                       )}
                     </div>
                     {session.status === 'completed' && (
-                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                      <ChevronRight className="w-4 h-4 text-muted-foreground self-center" />
                     )}
                   </div>
+
+                  {/* Audio Player for this check-in */}
+                  {checkInAudios[session.id] && (
+                    <div className="pt-3 border-t space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground">Audio Summary:</p>
+                      {checkInAudios[session.id].text && (
+                        <p className="text-xs text-muted-foreground">{checkInAudios[session.id].text}</p>
+                      )}
+                      <audio 
+                        controls 
+                        src={checkInAudios[session.id].url} 
+                        className="w-full h-8" 
+                        style={{ maxHeight: '32px' }}
+                        preload="none"
+                      />
+                    </div>
+                  )}
                 </div>
               </Card>
             ))}

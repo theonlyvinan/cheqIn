@@ -12,61 +12,66 @@ serve(async (req) => {
   }
 
   try {
-    const { seniorUserId } = await req.json()
+    const { seniorUserId, checkInId } = await req.json()
 
     if (!seniorUserId) {
       throw new Error('Senior user ID is required')
     }
 
-    console.log('Generating audio summary for senior:', seniorUserId)
+    console.log('Generating audio summary for senior:', seniorUserId, checkInId ? `checkIn: ${checkInId}` : '')
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // Get the last 5 days of check-ins
-    const fiveDaysAgo = new Date()
-    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5)
+    let todayCheckIn: any
+    let checkIns: any[]
 
-    const { data: checkIns, error: checkInsError } = await supabase
-      .from('check_ins')
-      .select('*')
-      .eq('user_id', seniorUserId)
-      .gte('created_at', fiveDaysAgo.toISOString())
-      .order('created_at', { ascending: false })
+    if (checkInId) {
+      // Generate summary for a specific check-in
+      const { data: singleCheckIn, error: checkInError } = await supabase
+        .from('check_ins')
+        .select('*')
+        .eq('id', checkInId)
+        .eq('user_id', seniorUserId)
+        .single()
 
-    if (checkInsError) {
-      console.error('Error fetching check-ins:', checkInsError)
-      throw checkInsError
+      if (checkInError || !singleCheckIn) {
+        console.error('Error fetching check-in:', checkInError)
+        throw new Error('Check-in not found')
+      }
+
+      todayCheckIn = singleCheckIn
+      checkIns = [singleCheckIn]
+      console.log('Generating summary for specific check-in')
+    } else {
+      // Get the last 5 days of check-ins for overview
+      const fiveDaysAgo = new Date()
+      fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5)
+
+      const { data: fetchedCheckIns, error: checkInsError } = await supabase
+        .from('check_ins')
+        .select('*')
+        .eq('user_id', seniorUserId)
+        .gte('created_at', fiveDaysAgo.toISOString())
+        .order('created_at', { ascending: false })
+
+      if (checkInsError) {
+        console.error('Error fetching check-ins:', checkInsError)
+        throw checkInsError
+      }
+
+      if (!fetchedCheckIns || fetchedCheckIns.length === 0) {
+        throw new Error('No check-ins found in the last 5 days')
+      }
+
+      checkIns = fetchedCheckIns
+      todayCheckIn = checkIns[0]
+      console.log(`Found ${checkIns.length} check-ins`)
     }
-
-    if (!checkIns || checkIns.length === 0) {
-      throw new Error('No check-ins found in the last 5 days')
-    }
-
-    console.log(`Found ${checkIns.length} check-ins`)
-
-    // Get the most recent check-in (today's)
-    const todayCheckIn = checkIns[0]
 
     // Generate summary text
     const summaryParts: string[] = []
-
-    // Today's summary
-    summaryParts.push('Daily Health Summary.')
-    
-    if (todayCheckIn.highlights && Array.isArray(todayCheckIn.highlights) && todayCheckIn.highlights.length > 0) {
-      summaryParts.push(`Today's highlights: ${todayCheckIn.highlights.join('. ')}.`)
-    }
-
-    if (todayCheckIn.concerns && Array.isArray(todayCheckIn.concerns) && todayCheckIn.concerns.length > 0) {
-      summaryParts.push(`Concerns: ${todayCheckIn.concerns.join('. ')}.`)
-    }
-
-    // Calculate 5-day averages
-    const avgMentalScore = checkIns.reduce((sum, ci) => sum + (ci.mental_health_score || 0), 0) / checkIns.length
-    const avgPhysicalScore = checkIns.reduce((sum, ci) => sum + (ci.physical_health_score || 0), 0) / checkIns.length
-    const avgOverallScore = checkIns.reduce((sum, ci) => sum + (ci.overall_score || 0), 0) / checkIns.length
 
     const getScoreLabel = (score: number) => {
       if (score >= 4) return 'radiant'
@@ -76,11 +81,46 @@ serve(async (req) => {
       return 'low'
     }
 
-    summaryParts.push(
-      `Five day overview: Mental wellbeing is ${getScoreLabel(avgMentalScore)}, ` +
-      `physical health is ${getScoreLabel(avgPhysicalScore)}, ` +
-      `and overall wellness is ${getScoreLabel(avgOverallScore)}.`
-    )
+    if (checkInId) {
+      // Single check-in summary
+      summaryParts.push('Daily Health Summary.')
+      
+      if (todayCheckIn.highlights && Array.isArray(todayCheckIn.highlights) && todayCheckIn.highlights.length > 0) {
+        summaryParts.push(`Highlights: ${todayCheckIn.highlights.join('. ')}.`)
+      }
+
+      if (todayCheckIn.concerns && Array.isArray(todayCheckIn.concerns) && todayCheckIn.concerns.length > 0) {
+        summaryParts.push(`Concerns: ${todayCheckIn.concerns.join('. ')}.`)
+      }
+
+      summaryParts.push(
+        `Mental wellbeing is ${getScoreLabel(todayCheckIn.mental_health_score || 3)}, ` +
+        `physical health is ${getScoreLabel(todayCheckIn.physical_health_score || 3)}, ` +
+        `and overall wellness is ${getScoreLabel(todayCheckIn.overall_score || 3)}.`
+      )
+    } else {
+      // Multi-day summary
+      summaryParts.push('Daily Health Summary.')
+      
+      if (todayCheckIn.highlights && Array.isArray(todayCheckIn.highlights) && todayCheckIn.highlights.length > 0) {
+        summaryParts.push(`Today's highlights: ${todayCheckIn.highlights.join('. ')}.`)
+      }
+
+      if (todayCheckIn.concerns && Array.isArray(todayCheckIn.concerns) && todayCheckIn.concerns.length > 0) {
+        summaryParts.push(`Concerns: ${todayCheckIn.concerns.join('. ')}.`)
+      }
+
+      // Calculate 5-day averages
+      const avgMentalScore = checkIns.reduce((sum, ci) => sum + (ci.mental_health_score || 0), 0) / checkIns.length
+      const avgPhysicalScore = checkIns.reduce((sum, ci) => sum + (ci.physical_health_score || 0), 0) / checkIns.length
+      const avgOverallScore = checkIns.reduce((sum, ci) => sum + (ci.overall_score || 0), 0) / checkIns.length
+
+      summaryParts.push(
+        `Five day overview: Mental wellbeing is ${getScoreLabel(avgMentalScore)}, ` +
+        `physical health is ${getScoreLabel(avgPhysicalScore)}, ` +
+        `and overall wellness is ${getScoreLabel(avgOverallScore)}.`
+      )
+    }
 
     const summaryText = summaryParts.join(' ')
 
