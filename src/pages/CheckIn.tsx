@@ -11,11 +11,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import SentimentChart from "@/components/SentimentChart";
 import { RealtimeChat } from "@/utils/RealtimeAudio";
 import logo from "@/assets/cheqin-logo.png";
-import radiantIcon from "@/assets/radiant.png";
-import brightIcon from "@/assets/bright.png";
-import steadyIcon from "@/assets/steady.png";
-import dimIcon from "@/assets/dim.png";
-import lowIcon from "@/assets/low.png";
+import radiantIcon from "@/assets/radiant-new.png";
+import brightIcon from "@/assets/bright-new.png";
+import steadyIcon from "@/assets/steady-new.png";
+import dimIcon from "@/assets/dim-new.png";
+import lowIcon from "@/assets/low-new.png";
 
 type SessionStatus = 'processing' | 'completed';
 
