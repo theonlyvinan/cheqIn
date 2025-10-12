@@ -50,6 +50,7 @@ const CheckIn = () => {
   const [sessions, setSessions] = useState<CheckInSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<CheckInSession | null>(null);
   const chatRef = useRef<RealtimeChat | null>(null);
+  const transcriptRef = useRef<string>("");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -215,6 +216,7 @@ const CheckIn = () => {
         console.log('User said:', userText);
         clearInactivityTimer();
         setConversationTranscript(prev => [...prev, `User: ${userText}`]);
+        transcriptRef.current += `User: ${userText}\n`;
         break;
         
       case 'response.audio_transcript.delta':
@@ -228,6 +230,7 @@ const CheckIn = () => {
         const aiText = event.transcript;
         console.log('AI said:', aiText);
         setConversationTranscript(prev => [...prev, `Mira: ${aiText}`]);
+        transcriptRef.current += `Mira: ${aiText}\n`;
         setCurrentText(aiText); // Keep showing the last thing Mira said
         maybeEndOnClosingPhrase(aiText);
         break;
@@ -268,6 +271,7 @@ const CheckIn = () => {
       setCurrentText("");
       setIsFinalizing(false);
       clearInactivityTimer();
+      transcriptRef.current = "";
       
       // Request microphone permission first
       await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -300,7 +304,7 @@ const CheckIn = () => {
       setIsSpeaking(false);
       
       // Compile full transcript from both user and AI
-      const fullTranscript = conversationTranscript.join('\n');
+      let fullTranscript = transcriptRef.current || conversationTranscript.join('\n');
       
       if (!fullTranscript.trim()) {
         toast({
@@ -308,6 +312,7 @@ const CheckIn = () => {
           description: "Please try again - make sure to speak during the check-in",
           variant: "destructive",
         });
+        transcriptRef.current = "";
         setConversationTranscript([]);
         setIsFinalizing(false);
         return;
@@ -382,6 +387,7 @@ const CheckIn = () => {
         description: "Your check-in has been saved successfully.",
       });
       
+      transcriptRef.current = "";
       setConversationTranscript([]);
       setIsFinalizing(false);
       
