@@ -500,22 +500,20 @@ const CheckIn = () => {
           <span>Home</span>
         </Button>
 
-        {transcript && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSendReport}
-            disabled={isSendingReport}
-            className="flex items-center gap-2"
-          >
-            {isSendingReport ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Mail className="w-4 h-4" />
-            )}
-            <span>Send Report to Family</span>
-          </Button>
-        )}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleSendReport}
+          disabled={isSendingReport}
+          className="flex items-center gap-2"
+        >
+          {isSendingReport ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Mail className="w-4 h-4" />
+          )}
+          <span>Send Report to Family</span>
+        </Button>
       </div>
       
       {/* Header */}
