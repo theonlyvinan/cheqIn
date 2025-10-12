@@ -74,10 +74,10 @@ serve(async (req) => {
     const summaryParts: string[] = []
 
     const getScoreLabel = (score: number) => {
-      if (score >= 4) return 'radiant'
-      if (score >= 3) return 'bright'
-      if (score >= 2) return 'steady'
-      if (score >= 1) return 'dim'
+      if (score >= 4.5) return 'radiant'
+      if (score >= 3.5) return 'bright'
+      if (score >= 2.5) return 'steady'
+      if (score >= 1.5) return 'dim'
       return 'low'
     }
 
