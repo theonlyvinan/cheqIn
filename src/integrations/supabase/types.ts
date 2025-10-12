@@ -229,6 +229,41 @@ export type Database = {
         }
         Relationships: []
       }
+      report_settings: {
+        Row: {
+          created_at: string
+          delivery_time: string
+          enabled: boolean
+          family_member_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_time?: string
+          enabled?: boolean
+          family_member_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          delivery_time?: string
+          enabled?: boolean
+          family_member_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_settings_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: true
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Smile, AlertCircle, Clock, ChevronRight, Heart, Activity, Phone, PhoneOff, Home } from "lucide-react";
+import { Loader2, Smile, AlertCircle, Clock, ChevronRight, Heart, Activity, Phone, PhoneOff, Home, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -46,6 +46,7 @@ const CheckIn = () => {
   const [currentText, setCurrentText] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isFinalizing, setIsFinalizing] = useState(false);
+  const [isSendingReport, setIsSendingReport] = useState(false);
   const inactivityTimerRef = useRef<number | null>(null);
   const [sessions, setSessions] = useState<CheckInSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<CheckInSession | null>(null);
@@ -185,6 +186,42 @@ const CheckIn = () => {
         endConversation();
       }
     }, 15000);
+  };
+
+  const handleSendReport = async () => {
+    try {
+      setIsSendingReport(true);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to send reports",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('send-daily-report', {
+        body: { seniorUserId: user.id }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Report Sent",
+        description: `Audio summary sent to ${data.recipientCount} family member(s)`,
+      });
+    } catch (error) {
+      console.error('Error sending report:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to send report",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingReport(false);
+    }
   };
 
   // Disabled auto-ending on closing phrases - user controls when to end
@@ -451,8 +488,8 @@ const CheckIn = () => {
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 p-4 md:p-8 space-y-8">
-      {/* Home Button */}
-      <div className="max-w-4xl mx-auto">
+      {/* Home Button and Send Report */}
+      <div className="max-w-4xl mx-auto flex justify-between items-center">
         <Button
           variant="ghost"
           size="sm"
@@ -462,6 +499,23 @@ const CheckIn = () => {
           <Home className="w-4 h-4" />
           <span>Home</span>
         </Button>
+
+        {transcript && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSendReport}
+            disabled={isSendingReport}
+            className="flex items-center gap-2"
+          >
+            {isSendingReport ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Mail className="w-4 h-4" />
+            )}
+            <span>Send Report to Family</span>
+          </Button>
+        )}
       </div>
       
       {/* Header */}
