@@ -553,21 +553,6 @@ const CheckIn = () => {
           <Home className="w-4 h-4" />
           <span>Home</span>
         </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleGenerateAudio}
-          disabled={isGeneratingSummary}
-          className="flex items-center gap-2"
-        >
-          {isGeneratingSummary ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <PlayCircle className="w-4 h-4" />
-          )}
-          <span>Generate Audio Summary</span>
-        </Button>
       </div>
       
       {/* Header */}
