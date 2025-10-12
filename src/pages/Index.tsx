@@ -236,7 +236,7 @@ const Index = () => {
         <Card className="relative overflow-hidden p-16 text-center space-y-8 bg-gradient-to-br from-accent via-accent to-accent/80 text-accent-foreground border-0 shadow-2xl">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.1),transparent)]"></div>
           <div className="relative z-10 space-y-8">
-            <h2 className="text-5xl md:text-6xl font-bold">
+            <h2 className="text-3xl md:text-4xl font-bold">
               Ready for your daily Cheq-In?
             </h2>
             <p className="text-2xl md:text-3xl max-w-3xl mx-auto opacity-90 italic">
