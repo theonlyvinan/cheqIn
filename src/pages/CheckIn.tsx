@@ -47,110 +47,7 @@ const CheckIn = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isFinalizing, setIsFinalizing] = useState(false);
   const inactivityTimerRef = useRef<number | null>(null);
-  const [sessions, setSessions] = useState<CheckInSession[]>([
-    {
-      id: 'sample-1',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      transcript: "I had a wonderful day! Went for a walk in the park, the weather was beautiful, and I met my friend Sarah for coffee. I'm feeling energized and grateful.",
-      sentiment: {
-        label: 'very_positive',
-        score: 0.92,
-        mood_rating: 9,
-        mental_health_score: 5,
-        physical_health_score: 5,
-        overall_score: 5,
-        emotions: { joy: 0.85, contentment: 0.78 },
-        highlights: ['Park walk', 'Coffee with friend', 'Beautiful weather'],
-        concerns: []
-      },
-      status: 'completed'
-    },
-    {
-      id: 'sample-2',
-      timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      transcript: "Today was okay. Did some light reading and watched TV. Nothing special. Feeling a bit tired.",
-      sentiment: {
-        label: 'neutral',
-        score: 0.1,
-        mood_rating: 5,
-        mental_health_score: 2,
-        physical_health_score: 2,
-        overall_score: 2,
-        emotions: { calm: 0.5, fatigue: 0.4 },
-        highlights: ['Reading', 'Relaxing'],
-        concerns: ['Feeling tired']
-      },
-      status: 'completed'
-    },
-    {
-      id: 'sample-3',
-      timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      transcript: "Today was a really good day! Felt energetic, did some gardening, and video called with my grandchildren. They showed me their school projects!",
-      sentiment: {
-        label: 'very_positive',
-        score: 0.88,
-        mood_rating: 8,
-        mental_health_score: 4,
-        physical_health_score: 4,
-        overall_score: 4,
-        emotions: { joy: 0.82, energy: 0.75 },
-        highlights: ['Gardening', 'Family connection', 'Grandchildren'],
-        concerns: []
-      },
-      status: 'completed'
-    },
-    {
-      id: 'sample-4',
-      timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      transcript: "Had a quiet day at home. Called my sister and caught up on some shows. Feeling calm and content.",
-      sentiment: {
-        label: 'neutral',
-        score: 0.3,
-        mood_rating: 7,
-        mental_health_score: 3,
-        physical_health_score: 3,
-        overall_score: 3,
-        emotions: { contentment: 0.6 },
-        highlights: ['Family call', 'Relaxation'],
-        concerns: []
-      },
-      status: 'completed'
-    },
-    {
-      id: 'sample-5',
-      timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-      transcript: "Not feeling great today. Stayed in bed most of the day. Feeling low on energy and a bit down.",
-      sentiment: {
-        label: 'negative',
-        score: -0.65,
-        mood_rating: 3,
-        mental_health_score: 1,
-        physical_health_score: 1,
-        overall_score: 1,
-        emotions: { sadness: 0.5, fatigue: 0.7 },
-        highlights: [],
-        concerns: ['Low energy', 'Feeling down', 'Stayed in bed']
-      },
-      status: 'completed'
-    },
-    {
-      id: 'sample-6',
-      timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      transcript: "Had a pretty good day overall. Went for a short walk and did some reading. Felt peaceful and content.",
-      sentiment: {
-        label: 'positive',
-        score: 0.65,
-        mood_rating: 7,
-        mental_health_score: 4,
-        physical_health_score: 3,
-        overall_score: 3.5,
-        emotions: { contentment: 0.7, peace: 0.6 },
-        highlights: ['Walk', 'Reading', 'Peaceful'],
-        concerns: []
-      },
-      status: 'completed'
-    }
-  ]);
+  const [sessions, setSessions] = useState<CheckInSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<CheckInSession | null>(null);
   const chatRef = useRef<RealtimeChat | null>(null);
   const { toast } = useToast();
@@ -158,12 +55,55 @@ const CheckIn = () => {
 
   useEffect(() => {
     checkAuth();
+    loadCheckIns();
   }, []);
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       navigate("/auth");
+    }
+  };
+
+  const loadCheckIns = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: checkIns, error } = await supabase
+        .from('check_ins')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error('Error loading check-ins:', error);
+        return;
+      }
+
+      if (checkIns && checkIns.length > 0) {
+        const formattedSessions: CheckInSession[] = checkIns.map(checkIn => ({
+          id: checkIn.id,
+          timestamp: checkIn.created_at,
+          transcript: checkIn.transcript,
+          sentiment: {
+            label: checkIn.sentiment_label || 'neutral',
+            score: checkIn.sentiment_score || 0,
+            mood_rating: checkIn.mood_rating || 5,
+            mental_health_score: checkIn.mental_health_score,
+            physical_health_score: checkIn.physical_health_score,
+            overall_score: checkIn.overall_score,
+            emotions: checkIn.emotions || {},
+            highlights: [],
+            concerns: []
+          },
+          status: 'completed' as SessionStatus
+        }));
+        setSessions(formattedSessions);
+      }
+    } catch (error) {
+      console.error('Error loading check-ins:', error);
     }
   };
 
@@ -291,95 +231,108 @@ const CheckIn = () => {
     if (isFinalizing) return;
     setIsFinalizing(true);
     clearInactivityTimer();
-    if (chatRef.current) {
-      chatRef.current.disconnect();
-    }
-    setIsConnected(false);
-    setIsSpeaking(false);
     
-    // Compile full transcript from both user and AI
-    const fullTranscript = conversationTranscript.join('\n');
-    
-    if (!fullTranscript.trim()) {
-      toast({
-        title: "No conversation recorded",
-        description: "Please try again",
-        variant: "destructive",
-      });
-      setConversationTranscript([]);
-      setIsFinalizing(false);
-      return;
-    }
-    
-    console.log('Processing transcript:', fullTranscript);
-    setTranscript(fullTranscript);
-
-    // Analyze sentiment
     try {
+      // Disconnect the chat first
+      if (chatRef.current) {
+        chatRef.current.disconnect();
+      }
+      setIsConnected(false);
+      setIsSpeaking(false);
+      
+      // Compile full transcript from both user and AI
+      const fullTranscript = conversationTranscript.join('\n');
+      
+      if (!fullTranscript.trim()) {
+        toast({
+          title: "No conversation recorded",
+          description: "Please try again - make sure to speak during the check-in",
+          variant: "destructive",
+        });
+        setConversationTranscript([]);
+        setIsFinalizing(false);
+        return;
+      }
+      
+      console.log('Processing transcript:', fullTranscript);
+      setTranscript(fullTranscript);
+
+      // Show processing toast
+      toast({
+        title: "Processing your check-in...",
+        description: "Analyzing your conversation",
+      });
+
+      // Analyze sentiment
       const { data: sentimentData, error: sentimentError } = await supabase.functions.invoke(
         'analyze-sentiment',
         { body: { text: fullTranscript } }
       );
 
-      if (sentimentError) throw sentimentError;
+      if (sentimentError) {
+        console.error('Sentiment analysis error:', sentimentError);
+        throw new Error(`Sentiment analysis failed: ${sentimentError.message || 'Unknown error'}`);
+      }
+
+      if (!sentimentData) {
+        throw new Error('No sentiment data received');
+      }
       
+      console.log('Sentiment analysis complete:', sentimentData);
       setSentiment(sentimentData);
 
-      // Create new session
-      const newSession: CheckInSession = {
-        id: Date.now().toString(),
-        timestamp: new Date().toISOString(),
-        transcript: fullTranscript,
-        sentiment: {
-          label: sentimentData.sentiment_label,
-          score: sentimentData.sentiment_score,
-          mood_rating: sentimentData.mood_rating,
-          mental_health_score: sentimentData.mental_health_score,
-          physical_health_score: sentimentData.physical_health_score,
-          overall_score: sentimentData.overall_score,
-          emotions: sentimentData.emotions,
-          highlights: sentimentData.highlights || [],
-          concerns: sentimentData.concerns || []
-        },
-        status: 'completed'
-      };
-
-      setSessions(prev => [newSession, ...prev]);
-
-      // Save to database
-      const { data: { user } } = await supabase.auth.getUser();
+      // Get authenticated user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       
-      const { error: insertError } = await supabase
+      if (userError || !user) {
+        throw new Error('User not authenticated. Please log in and try again.');
+      }
+
+      console.log('Saving check-in to database for user:', user.id);
+
+      // Save to database with better error handling
+      const { data: insertData, error: insertError } = await supabase
         .from('check_ins')
         .insert({
-          user_id: user!.id,
+          user_id: user.id,
           transcript: fullTranscript,
           sentiment_score: sentimentData.sentiment_score,
           sentiment_label: sentimentData.sentiment_label,
-          emotions: sentimentData.emotions,
+          emotions: sentimentData.emotions || {},
           mood_rating: sentimentData.mood_rating,
           mental_health_score: sentimentData.mental_health_score,
           physical_health_score: sentimentData.physical_health_score,
           overall_score: sentimentData.overall_score,
           mental_indicators: sentimentData.mental_indicators || [],
           physical_indicators: sentimentData.physical_indicators || [],
-        });
+        })
+        .select();
 
       if (insertError) {
-        console.error('Error saving check-in:', insertError);
+        console.error('Database insert error:', insertError);
+        throw new Error(`Failed to save check-in: ${insertError.message}`);
       }
 
+      console.log('Check-in saved successfully:', insertData);
+
+      // Reload check-ins from database to ensure consistency
+      await loadCheckIns();
+
       toast({
-        title: "Check-in complete!",
-        description: "Thank you for sharing with me today.",
+        title: "Check-in complete! ✓",
+        description: "Your check-in has been saved successfully.",
       });
       
       setConversationTranscript([]);
+      setIsFinalizing(false);
+      
     } catch (error) {
       console.error('Error processing conversation:', error);
+      setIsFinalizing(false);
+      
       toast({
-        title: "Error",
-        description: "Failed to process conversation",
+        title: "Error saving check-in",
+        description: error instanceof Error ? error.message : "Failed to process conversation. Please try again.",
         variant: "destructive",
       });
     }
