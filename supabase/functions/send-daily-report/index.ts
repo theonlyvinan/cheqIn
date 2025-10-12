@@ -64,7 +64,13 @@ serve(async (req) => {
     }
 
     if (recipients.length === 0) {
-      throw new Error('No recipients found for report')
+      // Fallback: send to senior user's own email so they can verify delivery
+      const { data: userData, error: userError } = await supabase.auth.admin.getUserById(seniorUserId)
+      if (userError || !userData?.user?.email) {
+        throw new Error('No recipients found for report')
+      }
+      recipients = [userData.user.email]
+      console.log('No family recipients configured; falling back to senior user email')
     }
 
     console.log(`Sending report to ${recipients.length} recipients`)
@@ -85,7 +91,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'CheqIn Health <health@updates.cheqin.app>',
+          from: 'CheqIn Health <onboarding@resend.dev>',
           to: [email],
           subject: 'Daily Health Summary',
           html: `
@@ -99,6 +105,7 @@ serve(async (req) => {
             {
               filename: 'health-summary.mp3',
               content: summaryData.audioContent,
+              content_type: 'audio/mpeg'
             },
           ],
         }),
