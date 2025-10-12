@@ -17,8 +17,10 @@ export type Database = {
       check_ins: {
         Row: {
           audio_url: string | null
+          concerns: Json | null
           created_at: string | null
           emotions: Json | null
+          highlights: Json | null
           id: string
           mental_health_score: number | null
           mental_indicators: Json | null
@@ -36,8 +38,10 @@ export type Database = {
         }
         Insert: {
           audio_url?: string | null
+          concerns?: Json | null
           created_at?: string | null
           emotions?: Json | null
+          highlights?: Json | null
           id?: string
           mental_health_score?: number | null
           mental_indicators?: Json | null
@@ -55,8 +59,10 @@ export type Database = {
         }
         Update: {
           audio_url?: string | null
+          concerns?: Json | null
           created_at?: string | null
           emotions?: Json | null
+          highlights?: Json | null
           id?: string
           mental_health_score?: number | null
           mental_indicators?: Json | null

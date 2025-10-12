@@ -100,8 +100,8 @@ const CheckIn = () => {
             physical_health_score: checkIn.physical_health_score,
             overall_score: checkIn.overall_score,
             emotions: checkIn.emotions || {},
-            highlights: [],
-            concerns: []
+            highlights: (Array.isArray(checkIn.highlights) ? checkIn.highlights : []) as string[],
+            concerns: (Array.isArray(checkIn.concerns) ? checkIn.concerns : []) as string[]
           },
           status: 'completed' as SessionStatus
         }));
@@ -369,6 +369,8 @@ const CheckIn = () => {
           overall_score: sentimentData.overall_score,
           mental_indicators: sentimentData.mental_indicators || [],
           physical_indicators: sentimentData.physical_indicators || [],
+          highlights: sentimentData.highlights || [],
+          concerns: sentimentData.concerns || [],
         })
         .select();
 
