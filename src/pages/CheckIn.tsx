@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Smile, AlertCircle, Clock, ChevronRight, Heart, Activity, Phone, PhoneOff, Home, Mail } from "lucide-react";
+import { Loader2, Smile, AlertCircle, Clock, ChevronRight, Heart, Activity, Phone, PhoneOff, Home, PlayCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -46,7 +46,9 @@ const CheckIn = () => {
   const [currentText, setCurrentText] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isFinalizing, setIsFinalizing] = useState(false);
-  const [isSendingReport, setIsSendingReport] = useState(false);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [audioSummaryUrl, setAudioSummaryUrl] = useState<string | null>(null);
+  const [audioSummaryText, setAudioSummaryText] = useState<string | null>(null);
   const inactivityTimerRef = useRef<number | null>(null);
   const [sessions, setSessions] = useState<CheckInSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<CheckInSession | null>(null);
@@ -188,39 +190,46 @@ const CheckIn = () => {
     }, 15000);
   };
 
-  const handleSendReport = async () => {
+  const handleGenerateAudio = async () => {
     try {
-      setIsSendingReport(true);
-      
+      setIsGeneratingSummary(true);
+      setAudioSummaryUrl(null);
+      setAudioSummaryText(null);
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
           title: "Error",
-          description: "You must be logged in to send reports",
+          description: "You must be logged in to generate the summary",
           variant: "destructive",
         });
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('send-daily-report', {
+      const { data, error } = await supabase.functions.invoke('generate-audio-summary', {
         body: { seniorUserId: user.id }
       });
 
       if (error) throw error;
+      if (!data?.audioContent) throw new Error('No audio content received');
+
+      const src = `data:audio/mpeg;base64,${data.audioContent}`;
+      setAudioSummaryUrl(src);
+      setAudioSummaryText(data.summaryText || '');
 
       toast({
-        title: "Report Sent",
-        description: `Audio summary sent to ${data.recipientCount} family member(s)`,
+        title: "Audio summary ready",
+        description: "Press play to listen.",
       });
     } catch (error) {
-      console.error('Error sending report:', error);
+      console.error('Error generating audio summary:', error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to send report",
+        description: error instanceof Error ? error.message : "Failed to generate audio summary",
         variant: "destructive",
       });
     } finally {
-      setIsSendingReport(false);
+      setIsGeneratingSummary(false);
     }
   };
 
@@ -503,16 +512,16 @@ const CheckIn = () => {
         <Button
           variant="outline"
           size="sm"
-          onClick={handleSendReport}
-          disabled={isSendingReport}
+          onClick={handleGenerateAudio}
+          disabled={isGeneratingSummary}
           className="flex items-center gap-2"
         >
-          {isSendingReport ? (
+          {isGeneratingSummary ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            <Mail className="w-4 h-4" />
+            <PlayCircle className="w-4 h-4" />
           )}
-          <span>Send Report to Family</span>
+          <span>Generate Audio Summary</span>
         </Button>
       </div>
       
@@ -637,6 +646,16 @@ const CheckIn = () => {
             : "Tap to start your daily check-in"}
         </p>
       </div>
+
+      {audioSummaryUrl && (
+        <Card className="max-w-2xl mx-auto mt-4 p-6 space-y-4">
+          <h3 className="text-lg font-semibold">Today's Audio Summary</h3>
+          {audioSummaryText && (
+            <p className="text-sm text-muted-foreground">{audioSummaryText}</p>
+          )}
+          <audio controls src={audioSummaryUrl} className="w-full" preload="none" />
+        </Card>
+      )}
 
       {/* Results */}
       {transcript && sentiment && (
