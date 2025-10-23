@@ -51,6 +51,7 @@ const CheckIn = () => {
   const [audioSummaryText, setAudioSummaryText] = useState<string | null>(null);
   const [generatingAudioForCheckIn, setGeneratingAudioForCheckIn] = useState<string | null>(null);
   const [checkInAudios, setCheckInAudios] = useState<Record<string, { url: string; text: string }>>({});
+  const [isBackfilling, setIsBackfilling] = useState(false);
   const inactivityTimerRef = useRef<number | null>(null);
   const [sessions, setSessions] = useState<CheckInSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<CheckInSession | null>(null);
@@ -310,6 +311,41 @@ const CheckIn = () => {
       });
     } finally {
       setGeneratingAudioForCheckIn(null);
+    }
+  };
+
+  const handleBackfillAudioSummaries = async () => {
+    try {
+      setIsBackfilling(true);
+      
+      toast({
+        title: "Processing...",
+        description: "Generating audio summaries for check-ins without audio.",
+      });
+
+      const { data, error } = await supabase.functions.invoke('backfill-audio-summaries', {
+        body: {}
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Backfill complete",
+        description: `Processed ${data?.processed || 0} check-ins successfully.`,
+      });
+
+      // Reload check-ins to show updated data
+      await loadCheckIns();
+
+    } catch (error) {
+      console.error('Error backfilling audio summaries:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to backfill audio summaries",
+        variant: "destructive",
+      });
+    } finally {
+      setIsBackfilling(false);
     }
   };
 
@@ -587,6 +623,21 @@ const CheckIn = () => {
         >
           <Home className="w-4 h-4" />
           <span>Home</span>
+        </Button>
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleBackfillAudioSummaries}
+          disabled={isBackfilling}
+          className="flex items-center gap-2"
+        >
+          {isBackfilling ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <PlayCircle className="w-4 h-4" />
+          )}
+          <span>{isBackfilling ? "Processing..." : "Generate All Audio"}</span>
         </Button>
       </div>
       
