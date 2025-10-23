@@ -35,6 +35,7 @@ interface CheckInSession {
     concerns?: string[];
   };
   status: SessionStatus;
+  audioSummaryText?: string;
 }
 
 const CheckIn = () => {
@@ -113,7 +114,7 @@ const CheckIn = () => {
         }));
       }
 
-      // Add sample data at the end
+      // Add sample data at the end with audio summary text
       const sampleSessions: CheckInSession[] = [
         {
           id: 'sample-1',
@@ -130,7 +131,8 @@ const CheckIn = () => {
             highlights: ['Went for a morning walk', 'Weather was nice'],
             concerns: ['Back pain persists']
           },
-          status: 'completed'
+          status: 'completed',
+          audioSummaryText: "Daily Health Summary. Highlights: Went for a morning walk. Weather was nice. Concerns: Back pain persists. Mental wellbeing is bright, physical health is steady, and overall wellness is steady."
         },
         {
           id: 'sample-2',
@@ -147,7 +149,8 @@ const CheckIn = () => {
             highlights: [],
             concerns: ['Poor sleep quality', 'Knee pain', 'Anxiety about appointment']
           },
-          status: 'completed'
+          status: 'completed',
+          audioSummaryText: "Daily Health Summary. Concerns: Poor sleep quality. Knee pain. Anxiety about appointment. Mental wellbeing is steady, physical health is dim, and overall wellness is dim. Please call your parents, they need your help."
         },
         {
           id: 'sample-3',
@@ -164,7 +167,8 @@ const CheckIn = () => {
             highlights: ['Family visit', 'High energy', 'Minimal pain'],
             concerns: []
           },
-          status: 'completed'
+          status: 'completed',
+          audioSummaryText: "Daily Health Summary. Highlights: Family visit. High energy. Minimal pain. Mental wellbeing is radiant, physical health is bright, and overall wellness is bright."
         }
       ];
 
@@ -256,17 +260,44 @@ const CheckIn = () => {
 
   const handleGenerateCheckInAudio = async (checkInId: string) => {
     try {
-      // Check if this is a sample check-in
+      setGeneratingAudioForCheckIn(checkInId);
+
+      // Handle sample data differently
       if (checkInId.startsWith('sample-')) {
+        const session = sessions.find(s => s.id === checkInId);
+        if (!session?.audioSummaryText) {
+          toast({
+            title: "Error",
+            description: "No summary text available for this sample",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Generate audio from the pre-written summary text
+        const { data, error } = await supabase.functions.invoke('text-to-speech-eleven', {
+          body: { text: session.audioSummaryText }
+        });
+
+        if (error) throw error;
+
+        const audioContent = data?.audioContent;
+        if (!audioContent) {
+          throw new Error('No audio content received');
+        }
+
+        const src = `data:audio/mpeg;base64,${audioContent}`;
+        setCheckInAudios(prev => ({
+          ...prev,
+          [checkInId]: { url: src, text: session.audioSummaryText! }
+        }));
+
         toast({
-          title: "Not available",
-          description: "Audio summaries can only be generated for actual check-ins, not sample data",
-          variant: "destructive",
+          title: "Audio ready",
+          description: "Play the audio summary below.",
         });
         return;
       }
-
-      setGeneratingAudioForCheckIn(checkInId);
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
