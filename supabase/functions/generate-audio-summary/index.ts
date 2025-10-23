@@ -67,6 +67,25 @@ serve(async (req) => {
       console.log(`Using most recent check-in`)
     }
 
+    // If an audio summary is already stored, return a signed URL
+    if (todayCheckIn?.audio_summary_url) {
+      const path = String(todayCheckIn.audio_summary_url)
+      const { data: signed, error: signErr } = await supabase.storage
+        .from('audio-summaries')
+        .createSignedUrl(path, 60 * 60 * 24 * 30)
+      if (signErr) {
+        console.error('Error creating signed URL:', signErr)
+      }
+      return new Response(
+        JSON.stringify({
+          audioUrl: signed?.signedUrl || null,
+          summaryText: todayCheckIn.audio_summary_text || null,
+          checkInsCount: checkIns.length,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Generate summary text
     const summaryParts: string[] = []
 
@@ -158,15 +177,42 @@ serve(async (req) => {
 
     console.log('Audio generation successful')
 
+    // Store audio in Storage and save reference on the check-in
+    const filePath = `${seniorUserId}/${todayCheckIn.id}.mp3`
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('audio-summaries')
+      .upload(filePath, arrayBuffer, { contentType: 'audio/mpeg', upsert: true })
+    if (uploadError) {
+      console.error('Storage upload error:', uploadError)
+    }
+
+    // Update the check-in with audio metadata
+    const { error: updateError } = await supabase
+      .from('check_ins')
+      .update({
+        audio_summary_url: uploadData?.path || filePath,
+        audio_summary_text: summaryText,
+        audio_summary_generated_at: new Date().toISOString(),
+      })
+      .eq('id', todayCheckIn.id)
+    if (updateError) {
+      console.error('Failed to update check-in with audio info:', updateError)
+    }
+
+    // Create a signed URL for client playback
+    const { data: signed } = await supabase.storage
+      .from('audio-summaries')
+      .createSignedUrl(uploadData?.path || filePath, 60 * 60 * 24 * 30)
+
     return new Response(
       JSON.stringify({ 
+        audioUrl: signed?.signedUrl || null,
+        // Keep base64 for immediate playback as a fallback
         audioContent: base64Audio,
         summaryText,
-        checkInsCount: checkIns.length
+        checkInsCount: checkIns.length,
       }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
     console.error('Error in generate-audio-summary:', error)

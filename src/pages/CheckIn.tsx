@@ -208,14 +208,32 @@ const CheckIn = () => {
         return;
       }
 
+      // Ensure there is at least one real check-in (not sample data)
+      const hasRealCheckIn = sessions.some(s => !s.id.startsWith('sample-'));
+      if (!hasRealCheckIn) {
+        toast({
+          title: "No check-ins yet",
+          description: "Record a check-in first to generate an audio summary.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('generate-audio-summary', {
         body: { seniorUserId: user.id }
       });
 
       if (error) throw error;
-      if (!data?.audioContent) throw new Error('No audio content received');
 
-      const src = `data:audio/mpeg;base64,${data.audioContent}`;
+      let src: string | null = null;
+      if (data?.audioUrl) {
+        src = data.audioUrl as string;
+      } else if (data?.audioContent) {
+        src = `data:audio/mpeg;base64,${data.audioContent}`;
+      } else {
+        throw new Error('No audio content received');
+      }
+
       setAudioSummaryUrl(src);
       setAudioSummaryText(data.summaryText || '');
 
@@ -264,12 +282,19 @@ const CheckIn = () => {
       });
 
       if (error) throw error;
-      if (!data?.audioContent) throw new Error('No audio content received');
 
-      const src = `data:audio/mpeg;base64,${data.audioContent}`;
+      let src: string | null = null;
+      if (data?.audioUrl) {
+        src = data.audioUrl as string;
+      } else if (data?.audioContent) {
+        src = `data:audio/mpeg;base64,${data.audioContent}`;
+      } else {
+        throw new Error('No audio content received');
+      }
+
       setCheckInAudios(prev => ({
         ...prev,
-        [checkInId]: { url: src, text: data.summaryText || '' }
+        [checkInId]: { url: src!, text: data.summaryText || '' }
       }));
 
       toast({
