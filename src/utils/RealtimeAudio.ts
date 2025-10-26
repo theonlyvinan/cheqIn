@@ -97,6 +97,22 @@ export class RealtimeChat {
       this.pc.ontrack = e => {
         console.log('Received audio track');
         this.audioEl.srcObject = e.streams[0];
+        try {
+          if (!document.body.contains(this.audioEl)) {
+            this.audioEl.setAttribute('playsinline', 'true');
+            this.audioEl.muted = false;
+            this.audioEl.style.display = 'none';
+            document.body.appendChild(this.audioEl);
+          }
+          const playPromise = this.audioEl.play();
+          if (playPromise && typeof (playPromise as any).then === 'function') {
+            (playPromise as Promise<void>).catch(err => {
+              console.warn('Autoplay blocked, will resume on next user gesture:', err);
+            });
+          }
+        } catch (err) {
+          console.error('Error attaching/playing remote audio element:', err);
+        }
       };
 
       // Add local audio track
@@ -117,39 +133,53 @@ export class RealtimeChat {
       
       this.dc.addEventListener("open", () => {
         console.log('Data channel opened');
-        // Send a user message first, then trigger response
+        // First, ensure session is configured for audio + text and server VAD
         setTimeout(() => {
           if (this.dc && this.dc.readyState === 'open') {
-            console.log('Sending initial user message');
-            // Send user message
+            console.log('Sending session.update for audio config');
             this.dc.send(JSON.stringify({
-              type: 'conversation.item.create',
-              item: {
-                type: 'message',
-                role: 'user',
-                content: [
-                  {
-                    type: 'input_text',
-                    text: 'Hello'
-                  }
-                ]
+              type: 'session.update',
+              session: {
+                modalities: ['audio', 'text'],
+                output_audio_format: 'pcm16',
+                input_audio_transcription: { model: 'whisper-1' },
+                turn_detection: {
+                  type: 'server_vad',
+                  threshold: 0.5,
+                  prefix_padding_ms: 300,
+                  silence_duration_ms: 1000
+                }
               }
             }));
-            
-            // Then trigger Mira's response
+
+            // Send a user message, then ask for a response (audio + text)
             setTimeout(() => {
               if (this.dc && this.dc.readyState === 'open') {
-                console.log('Triggering Mira response with audio');
+                console.log('Sending initial user message');
                 this.dc.send(JSON.stringify({
-                  type: 'response.create',
-                  response: {
-                    modalities: ['audio', 'text']
+                  type: 'conversation.item.create',
+                  item: {
+                    type: 'message',
+                    role: 'user',
+                    content: [
+                      { type: 'input_text', text: 'Hello' }
+                    ]
                   }
                 }));
+
+                setTimeout(() => {
+                  if (this.dc && this.dc.readyState === 'open') {
+                    console.log('Triggering Mira response with audio');
+                    this.dc.send(JSON.stringify({
+                      type: 'response.create',
+                      response: { modalities: ['audio', 'text'] }
+                    }));
+                  }
+                }, 200);
               }
             }, 200);
           }
-        }, 500);
+        }, 300);
       });
       
       this.dc.addEventListener("message", (e) => {

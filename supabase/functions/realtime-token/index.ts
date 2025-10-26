@@ -80,7 +80,7 @@ REMEMBER: SHORT RESPONSES ONLY. 1-2 SENTENCES MAX.`;
         voice: "sage", // Warm, caring female voice
         instructions: systemPrompt,
         modalities: ["audio", "text"],
-        temperature: 0.8,
+        
         turn_detection: {
           type: "server_vad",
           threshold: 0.5,
