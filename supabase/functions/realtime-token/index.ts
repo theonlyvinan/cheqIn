@@ -77,12 +77,12 @@ REMEMBER: SHORT RESPONSES ONLY. 1-2 SENTENCES MAX.`;
       },
       body: JSON.stringify({
         model: "gpt-4o-realtime-preview-2024-12-17",
-        voice: "sage", // Warm, caring female voice
+        voice: "alloy", // Voice
         instructions: systemPrompt,
         modalities: ["audio", "text"],
         
         input_audio_transcription: {
-          model: "whisper-1"
+          model: "gpt-4o-mini-transcribe"
         },
         turn_detection: {
           type: "server_vad",

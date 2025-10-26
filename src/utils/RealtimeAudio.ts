@@ -142,6 +142,9 @@ export class RealtimeChat {
         try {
           const event = JSON.parse(e.data);
           console.log("Received event:", event.type);
+          if (event?.type === 'error' || event?.type === 'response.error' || (typeof event?.type === 'string' && event.type.endsWith('.failed'))) {
+            console.error('Realtime error detail:', event);
+          }
 
           if (event.type === 'session.created') {
             // Configure session and trigger greeting AFTER session is ready
