@@ -158,7 +158,7 @@ export class RealtimeChat {
                   content: [ { type: 'input_text', text: 'Hello! How are you feeling today?' } ]
                 }
               }));
-              this.dc.send(JSON.stringify({ type: 'response.create' }));
+              this.dc.send(JSON.stringify({ type: 'response.create', response: { modalities: ['audio','text'] } }));
               this.hasBootstrapped = true;
             }
           }
@@ -247,7 +247,7 @@ export class RealtimeChat {
     };
 
     this.dc.send(JSON.stringify(event));
-    this.dc.send(JSON.stringify({type: 'response.create'}));
+    this.dc.send(JSON.stringify({type: 'response.create', response: { modalities: ['audio','text'] }}));
   }
 
   disconnect() {
