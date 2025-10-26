@@ -445,10 +445,12 @@ const CheckIn = () => {
         break;
         
       case 'error':
-        console.error('Realtime error:', event.error);
+      case 'response.error':
+        console.error('Realtime error event:', event);
+        const details = event?.error?.message || event?.error?.type || JSON.stringify(event);
         toast({
-          title: "Connection Error",
-          description: event.error.message || "Something went wrong",
+          title: "Realtime Error",
+          description: details,
           variant: "destructive",
         });
         break;
