@@ -12,13 +12,13 @@ serve(async (req) => {
   }
 
   try {
-    const { seniorUserId, checkInId } = await req.json()
+    const { seniorUserId, checkInId, checkInData } = await req.json()
 
     if (!seniorUserId) {
       throw new Error('Senior user ID is required')
     }
 
-    console.log('Generating audio summary for senior:', seniorUserId, checkInId ? `checkIn: ${checkInId}` : '')
+    console.log('Generating audio summary for senior:', seniorUserId, checkInId ? `checkIn: ${checkInId}` : '', checkInData ? 'with provided data' : '')
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -27,7 +27,12 @@ serve(async (req) => {
     let todayCheckIn: any
     let checkIns: any[]
 
-    if (checkInId) {
+    if (checkInData) {
+      // Use provided check-in data (for sample data)
+      todayCheckIn = checkInData
+      checkIns = [checkInData]
+      console.log('Using provided check-in data')
+    } else if (checkInId) {
       // Validate UUID format
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
       if (!uuidRegex.test(checkInId)) {
