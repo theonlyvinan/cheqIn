@@ -28,6 +28,12 @@ serve(async (req) => {
     let checkIns: any[]
 
     if (checkInId) {
+      // Validate UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      if (!uuidRegex.test(checkInId)) {
+        throw new Error('Invalid check-in ID format')
+      }
+
       // Generate summary for a specific check-in
       const { data: singleCheckIn, error: checkInError } = await supabase
         .from('check_ins')

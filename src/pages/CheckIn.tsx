@@ -237,6 +237,16 @@ const CheckIn = () => {
 
   const handleGenerateCheckInAudio = async (checkInId: string) => {
     try {
+      // Don't allow audio generation for sample check-ins
+      if (checkInId.startsWith('sample-')) {
+        toast({
+          title: "Sample Data",
+          description: "Audio generation is only available for your actual check-ins",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setGeneratingAudioForCheckIn(checkInId);
 
       const { data: { user } } = await supabase.auth.getUser();
