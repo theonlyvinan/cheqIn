@@ -65,15 +65,10 @@ export class RealtimeChat {
   private dc: RTCDataChannel | null = null;
   private audioEl: HTMLAudioElement;
   private recorder: AudioRecorder | null = null;
-  private hasBootstrapped = false;
 
   constructor(private onMessage: (message: any) => void) {
     this.audioEl = document.createElement("audio");
     this.audioEl.autoplay = true;
-    this.audioEl.setAttribute('playsinline', 'true');
-    this.audioEl.muted = false;
-    this.audioEl.style.display = 'none';
-    try { document.body.appendChild(this.audioEl); } catch (e) { console.warn('Could not attach audio element to DOM:', e); }
   }
 
   async init() {
@@ -96,26 +91,12 @@ export class RealtimeChat {
       console.log('Got ephemeral token');
 
       // Create peer connection
-      this.pc = new RTCPeerConnection({
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:global.stun.twilio.com:3478?transport=udp' }
-        ]
-      });
-
-      // Ensure we can both send and receive audio
-      this.pc.addTransceiver('audio', { direction: 'sendrecv' });
-
-      // Helpful ICE diagnostics
-      this.pc.oniceconnectionstatechange = () => {
-        console.log('ICE state:', this.pc?.iceConnectionState);
-      };
+      this.pc = new RTCPeerConnection();
 
       // Set up remote audio
       this.pc.ontrack = e => {
         console.log('Received audio track');
         this.audioEl.srcObject = e.streams[0];
-        this.audioEl.play().catch(err => console.warn('Autoplay may be blocked, waiting for user gesture:', err));
       };
 
       // Add local audio track
@@ -136,31 +117,21 @@ export class RealtimeChat {
       
       this.dc.addEventListener("open", () => {
         console.log('Data channel opened');
+        // Send initial greeting to trigger Mira to start the conversation
+        setTimeout(() => {
+          if (this.dc && this.dc.readyState === 'open') {
+            console.log('Sending initial greeting');
+            this.dc.send(JSON.stringify({
+              type: 'response.create'
+            }));
+          }
+        }, 500);
       });
       
       this.dc.addEventListener("message", (e) => {
         try {
           const event = JSON.parse(e.data);
           console.log("Received event:", event.type);
-          if (event?.type === 'error' || event?.type === 'response.error' || (typeof event?.type === 'string' && event.type.endsWith('.failed'))) {
-            console.error('Realtime error detail:', event);
-          }
-
-          if (event.type === 'session.created') {
-            // Configure session and trigger greeting AFTER session is ready
-            if (this.dc && this.dc.readyState === 'open' && !this.hasBootstrapped) {
-
-              // Ensure audio modality is enabled, then trigger first response
-              console.log('Bootstrapping: enabling audio modality via session.update');
-              this.dc.send(JSON.stringify({
-                type: 'session.update',
-                session: { modalities: ['audio', 'text'] }
-              }));
-              this.dc.send(JSON.stringify({ type: 'response.create' }));
-              this.hasBootstrapped = true;
-            }
-          }
-
           this.onMessage(event);
         } catch (error) {
           console.error('Error parsing message:', error);
@@ -254,19 +225,5 @@ export class RealtimeChat {
     this.dc?.close();
     this.pc?.close();
     this.audioEl.srcObject = null;
-  }
-
-  requestPlay() {
-    try {
-      this.audioEl.muted = false;
-      const playPromise = this.audioEl.play();
-      if (playPromise && typeof (playPromise as any).then === 'function') {
-        (playPromise as Promise<void>).catch((e) => {
-          console.warn('Playback request failed:', e);
-        });
-      }
-    } catch (e) {
-      console.warn('Playback request error:', e);
-    }
   }
 }

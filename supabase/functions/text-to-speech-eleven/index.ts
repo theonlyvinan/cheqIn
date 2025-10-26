@@ -48,20 +48,16 @@ serve(async (req) => {
     })
 
     if (!response.ok) {
-      const errText = await response.text()
-      console.error('ElevenLabs API error:', errText)
-      throw new Error('Failed to generate speech')
+      const error = await response.json()
+      console.error('ElevenLabs API error:', error)
+      throw new Error(error.detail?.message || 'Failed to generate speech')
     }
 
-    // Convert audio buffer to base64 safely (chunked to avoid stack overflow)
+    // Convert audio buffer to base64
     const arrayBuffer = await response.arrayBuffer()
-    const bytes = new Uint8Array(arrayBuffer)
-    let binary = ''
-    const chunkSize = 0x8000 // 32KB chunks to avoid call stack issues
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-      binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
-    }
-    const base64Audio = btoa(binary)
+    const base64Audio = btoa(
+      String.fromCharCode(...new Uint8Array(arrayBuffer))
+    )
 
     console.log('Speech generation successful')
 

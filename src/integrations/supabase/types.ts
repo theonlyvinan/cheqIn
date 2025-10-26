@@ -16,9 +16,6 @@ export type Database = {
     Tables: {
       check_ins: {
         Row: {
-          audio_summary_generated_at: string | null
-          audio_summary_text: string | null
-          audio_summary_url: string | null
           audio_url: string | null
           concerns: Json | null
           created_at: string | null
@@ -40,9 +37,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          audio_summary_generated_at?: string | null
-          audio_summary_text?: string | null
-          audio_summary_url?: string | null
           audio_url?: string | null
           concerns?: Json | null
           created_at?: string | null
@@ -64,9 +58,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          audio_summary_generated_at?: string | null
-          audio_summary_text?: string | null
-          audio_summary_url?: string | null
           audio_url?: string | null
           concerns?: Json | null
           created_at?: string | null

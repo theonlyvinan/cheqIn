@@ -35,7 +35,6 @@ interface CheckInSession {
     concerns?: string[];
   };
   status: SessionStatus;
-  audioSummaryText?: string;
 }
 
 const CheckIn = () => {
@@ -52,7 +51,6 @@ const CheckIn = () => {
   const [audioSummaryText, setAudioSummaryText] = useState<string | null>(null);
   const [generatingAudioForCheckIn, setGeneratingAudioForCheckIn] = useState<string | null>(null);
   const [checkInAudios, setCheckInAudios] = useState<Record<string, { url: string; text: string }>>({});
-  const [isBackfilling, setIsBackfilling] = useState(false);
   const inactivityTimerRef = useRef<number | null>(null);
   const [sessions, setSessions] = useState<CheckInSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<CheckInSession | null>(null);
@@ -114,7 +112,7 @@ const CheckIn = () => {
         }));
       }
 
-      // Add sample data at the end with audio summary text
+      // Add sample data at the end
       const sampleSessions: CheckInSession[] = [
         {
           id: 'sample-1',
@@ -131,8 +129,7 @@ const CheckIn = () => {
             highlights: ['Went for a morning walk', 'Weather was nice'],
             concerns: ['Back pain persists']
           },
-          status: 'completed',
-          audioSummaryText: "Daily Health Summary. Highlights: Went for a morning walk. Weather was nice. Concerns: Back pain persists. Mental wellbeing is bright, physical health is steady, and overall wellness is steady."
+          status: 'completed'
         },
         {
           id: 'sample-2',
@@ -149,8 +146,7 @@ const CheckIn = () => {
             highlights: [],
             concerns: ['Poor sleep quality', 'Knee pain', 'Anxiety about appointment']
           },
-          status: 'completed',
-          audioSummaryText: "Daily Health Summary. Concerns: Poor sleep quality. Knee pain. Anxiety about appointment. Mental wellbeing is steady, physical health is dim, and overall wellness is dim. Please call your parents, they need your help."
+          status: 'completed'
         },
         {
           id: 'sample-3',
@@ -167,8 +163,7 @@ const CheckIn = () => {
             highlights: ['Family visit', 'High energy', 'Minimal pain'],
             concerns: []
           },
-          status: 'completed',
-          audioSummaryText: "Daily Health Summary. Highlights: Family visit. High energy. Minimal pain. Mental wellbeing is radiant, physical health is bright, and overall wellness is bright."
+          status: 'completed'
         }
       ];
 
@@ -213,32 +208,14 @@ const CheckIn = () => {
         return;
       }
 
-      // Ensure there is at least one real check-in (not sample data)
-      const hasRealCheckIn = sessions.some(s => !s.id.startsWith('sample-'));
-      if (!hasRealCheckIn) {
-        toast({
-          title: "No check-ins yet",
-          description: "Record a check-in first to generate an audio summary.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       const { data, error } = await supabase.functions.invoke('generate-audio-summary', {
         body: { seniorUserId: user.id }
       });
 
       if (error) throw error;
+      if (!data?.audioContent) throw new Error('No audio content received');
 
-      let src: string | null = null;
-      if (data?.audioUrl) {
-        src = data.audioUrl as string;
-      } else if (data?.audioContent) {
-        src = `data:audio/mpeg;base64,${data.audioContent}`;
-      } else {
-        throw new Error('No audio content received');
-      }
-
+      const src = `data:audio/mpeg;base64,${data.audioContent}`;
       setAudioSummaryUrl(src);
       setAudioSummaryText(data.summaryText || '');
 
@@ -262,43 +239,6 @@ const CheckIn = () => {
     try {
       setGeneratingAudioForCheckIn(checkInId);
 
-      // Handle sample data differently
-      if (checkInId.startsWith('sample-')) {
-        const session = sessions.find(s => s.id === checkInId);
-        if (!session?.audioSummaryText) {
-          toast({
-            title: "Error",
-            description: "No summary text available for this sample",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        // Generate audio from the pre-written summary text
-        const { data, error } = await supabase.functions.invoke('text-to-speech-eleven', {
-          body: { text: session.audioSummaryText }
-        });
-
-        if (error) throw error;
-
-        const audioContent = data?.audioContent;
-        if (!audioContent) {
-          throw new Error('No audio content received');
-        }
-
-        const src = `data:audio/mpeg;base64,${audioContent}`;
-        setCheckInAudios(prev => ({
-          ...prev,
-          [checkInId]: { url: src, text: session.audioSummaryText! }
-        }));
-
-        toast({
-          title: "Audio ready",
-          description: "Play the audio summary below.",
-        });
-        return;
-      }
-
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
@@ -314,19 +254,12 @@ const CheckIn = () => {
       });
 
       if (error) throw error;
+      if (!data?.audioContent) throw new Error('No audio content received');
 
-      let src: string | null = null;
-      if (data?.audioUrl) {
-        src = data.audioUrl as string;
-      } else if (data?.audioContent) {
-        src = `data:audio/mpeg;base64,${data.audioContent}`;
-      } else {
-        throw new Error('No audio content received');
-      }
-
+      const src = `data:audio/mpeg;base64,${data.audioContent}`;
       setCheckInAudios(prev => ({
         ...prev,
-        [checkInId]: { url: src!, text: data.summaryText || '' }
+        [checkInId]: { url: src, text: data.summaryText || '' }
       }));
 
       toast({
@@ -342,41 +275,6 @@ const CheckIn = () => {
       });
     } finally {
       setGeneratingAudioForCheckIn(null);
-    }
-  };
-
-  const handleBackfillAudioSummaries = async () => {
-    try {
-      setIsBackfilling(true);
-      
-      toast({
-        title: "Processing...",
-        description: "Generating audio summaries for check-ins without audio.",
-      });
-
-      const { data, error } = await supabase.functions.invoke('backfill-audio-summaries', {
-        body: {}
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Backfill complete",
-        description: `Processed ${data?.processed || 0} check-ins successfully.`,
-      });
-
-      // Reload check-ins to show updated data
-      await loadCheckIns();
-
-    } catch (error) {
-      console.error('Error backfilling audio summaries:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to backfill audio summaries",
-        variant: "destructive",
-      });
-    } finally {
-      setIsBackfilling(false);
     }
   };
 
@@ -399,7 +297,7 @@ const CheckIn = () => {
         setIsConnected(true);
         toast({
           title: "Connected to Mira",
-          description: "Mira will greet you—no need to say Hello.",
+          description: "Natural conversation started. Just speak naturally!",
         });
         break;
         
@@ -445,12 +343,10 @@ const CheckIn = () => {
         break;
         
       case 'error':
-      case 'response.error':
-        console.error('Realtime error event:', event);
-        const details = event?.error?.message || event?.error?.type || JSON.stringify(event);
+        console.error('Realtime error:', event.error);
         toast({
-          title: "Realtime Error",
-          description: details,
+          title: "Connection Error",
+          description: event.error.message || "Something went wrong",
           variant: "destructive",
         });
         break;
@@ -473,7 +369,6 @@ const CheckIn = () => {
       
       chatRef.current = new RealtimeChat(handleRealtimeMessage);
       await chatRef.current.init();
-      chatRef.current.requestPlay?.();
       
     } catch (error) {
       console.error('Error starting conversation:', error);
@@ -658,20 +553,20 @@ const CheckIn = () => {
           <Home className="w-4 h-4" />
           <span>Home</span>
         </Button>
-        
+
         <Button
           variant="outline"
           size="sm"
-          onClick={handleBackfillAudioSummaries}
-          disabled={isBackfilling}
+          onClick={handleGenerateAudio}
+          disabled={isGeneratingSummary}
           className="flex items-center gap-2"
         >
-          {isBackfilling ? (
+          {isGeneratingSummary ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <PlayCircle className="w-4 h-4" />
           )}
-          <span>{isBackfilling ? "Processing..." : "Generate All Audio"}</span>
+          <span>Generate Audio Summary</span>
         </Button>
       </div>
       
