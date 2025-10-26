@@ -402,7 +402,7 @@ const CheckIn = () => {
           description: "Natural conversation started. Just speak naturally!",
         });
         break;
-        
+      
       case 'conversation.item.input_audio_transcription.completed':
         // User's speech transcribed
         const userText = event.transcript;
@@ -411,13 +411,22 @@ const CheckIn = () => {
         setConversationTranscript(prev => [...prev, `User: ${userText}`]);
         transcriptRef.current += `User: ${userText}\n`;
         break;
-        
+      
+      case 'conversation.item.input_audio_transcription.failed':
+        console.warn('Transcription failed:', event?.error || event);
+        toast({
+          title: "Didn't catch that",
+          description: typeof event?.error?.message === 'string' ? event.error.message : 'Please try speaking a bit closer to the mic',
+          variant: "destructive",
+        });
+        break;
+      
       case 'response.audio_transcript.delta':
         // AI speaking (partial transcript)
         setCurrentText(prev => prev + event.delta);
         setIsSpeaking(true);
         break;
-        
+      
       case 'response.audio_transcript.done':
         // AI finished speaking
         const aiText = event.transcript;
@@ -427,23 +436,23 @@ const CheckIn = () => {
         setCurrentText(aiText); // Keep showing the last thing Mira said
         maybeEndOnClosingPhrase(aiText);
         break;
-        
+      
       case 'response.audio.delta':
         // AI is generating audio
         setIsSpeaking(true);
         break;
-        
+      
       case 'response.audio.done':
         // AI finished generating audio
         setIsSpeaking(false);
         scheduleInactivityTimer();
         break;
-        
+      
       case 'response.done':
         // Let user manually end the conversation
         // (Mira will naturally conclude after covering all 7 areas)
         break;
-        
+      
       case 'error':
         console.error('Realtime error:', event.error);
         toast({
