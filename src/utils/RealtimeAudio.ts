@@ -117,23 +117,34 @@ export class RealtimeChat {
       
       this.dc.addEventListener("open", () => {
         console.log('Data channel opened');
-        // Configure session for audio then trigger initial greeting
+        // Send a user message first, then trigger response
         setTimeout(() => {
           if (this.dc && this.dc.readyState === 'open') {
-            console.log('Configuring session for audio');
+            console.log('Sending initial user message');
+            // Send user message
             this.dc.send(JSON.stringify({
-              type: 'session.update',
-              session: {
-                modalities: ['audio', 'text']
+              type: 'conversation.item.create',
+              item: {
+                type: 'message',
+                role: 'user',
+                content: [
+                  {
+                    type: 'input_text',
+                    text: 'Hello'
+                  }
+                ]
               }
             }));
             
-            // Wait a bit for session update to process
+            // Then trigger Mira's response
             setTimeout(() => {
               if (this.dc && this.dc.readyState === 'open') {
-                console.log('Triggering Mira initial greeting');
+                console.log('Triggering Mira response with audio');
                 this.dc.send(JSON.stringify({
-                  type: 'response.create'
+                  type: 'response.create',
+                  response: {
+                    modalities: ['audio', 'text']
+                  }
                 }));
               }
             }, 200);
