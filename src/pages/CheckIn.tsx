@@ -399,7 +399,7 @@ const CheckIn = () => {
         setIsConnected(true);
         toast({
           title: "Connected to Mira",
-          description: "Natural conversation started. Just speak naturally!",
+          description: "Say “Hello” to begin",
         });
         break;
         
