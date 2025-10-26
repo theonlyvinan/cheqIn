@@ -82,7 +82,7 @@ REMEMBER: SHORT RESPONSES ONLY. 1-2 SENTENCES MAX.`;
         modalities: ["audio", "text"],
         temperature: 0.8,
         input_audio_transcription: {
-          model: "gpt-4o-mini-transcribe"
+          model: "whisper-1"
         },
         turn_detection: {
           type: "server_vad",

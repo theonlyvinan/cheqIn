@@ -69,10 +69,6 @@ export class RealtimeChat {
   constructor(private onMessage: (message: any) => void) {
     this.audioEl = document.createElement("audio");
     this.audioEl.autoplay = true;
-    this.audioEl.setAttribute('playsinline', 'true');
-    this.audioEl.muted = false;
-    this.audioEl.style.display = 'none';
-    try { document.body.appendChild(this.audioEl); } catch (e) { console.warn('Could not attach audio element to DOM:', e); }
   }
 
   async init() {
@@ -121,40 +117,13 @@ export class RealtimeChat {
       
       this.dc.addEventListener("open", () => {
         console.log('Data channel opened');
-        // Trigger Mira to start the conversation with a greeting
+        // Send initial greeting to trigger Mira to start the conversation
         setTimeout(() => {
           if (this.dc && this.dc.readyState === 'open') {
-            console.log('Sending session.update and greeting');
-            // Ensure session config (in case server defaults differ)
+            console.log('Sending initial greeting');
             this.dc.send(JSON.stringify({
-              type: 'session.update',
-              session: {
-                modalities: ['audio', 'text'],
-                input_audio_transcription: { model: 'gpt-4o-mini-transcribe' },
-                turn_detection: {
-                  type: 'server_vad',
-                  threshold: 0.5,
-                  prefix_padding_ms: 300,
-                  silence_duration_ms: 1000,
-                },
-                temperature: 0.8,
-                max_response_output_tokens: 'inf'
-              }
+              type: 'response.create'
             }));
-
-            // Send a conversation item that prompts Mira to start
-            this.dc.send(JSON.stringify({
-              type: 'conversation.item.create',
-              item: {
-                type: 'message',
-                role: 'user',
-                content: [
-                  { type: 'input_text', text: 'Hello! How are you?' }
-                ]
-              }
-            }));
-            // Then request a response
-            this.dc.send(JSON.stringify({ type: 'response.create' }));
           }
         }, 500);
       });
