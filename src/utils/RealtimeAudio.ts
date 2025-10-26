@@ -123,37 +123,6 @@ export class RealtimeChat {
       
       this.dc.addEventListener("open", () => {
         console.log('Data channel opened');
-        setTimeout(() => {
-          if (this.dc && this.dc.readyState === 'open' && !this.hasBootstrapped) {
-            console.log('Bootstrapping session on open');
-            this.dc.send(JSON.stringify({
-              type: 'session.update',
-              session: {
-                modalities: ['audio', 'text'],
-                input_audio_transcription: { model: 'whisper-1' },
-                turn_detection: {
-                  type: 'server_vad',
-                  threshold: 0.5,
-                  prefix_padding_ms: 300,
-                  silence_duration_ms: 1000,
-                },
-                temperature: 0.8,
-                max_response_output_tokens: 'inf'
-              }
-            }));
-
-            this.dc.send(JSON.stringify({
-              type: 'conversation.item.create',
-              item: {
-                type: 'message',
-                role: 'user',
-                content: [ { type: 'input_text', text: 'Hello! How are you feeling today?' } ]
-              }
-            }));
-            this.dc.send(JSON.stringify({ type: 'response.create', response: { modalities: ['audio','text'] } }));
-            this.hasBootstrapped = true;
-          }
-        }, 300);
       });
       
       this.dc.addEventListener("message", (e) => {
@@ -168,7 +137,7 @@ export class RealtimeChat {
                 type: 'session.update',
                 session: {
                   modalities: ['audio', 'text'],
-                  input_audio_transcription: { model: 'whisper-1' },
+                  input_audio_transcription: { model: 'gpt-4o-mini-transcribe' },
                   turn_detection: {
                     type: 'server_vad',
                     threshold: 0.5,
