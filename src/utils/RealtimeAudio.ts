@@ -65,6 +65,7 @@ export class RealtimeChat {
   private dc: RTCDataChannel | null = null;
   private audioEl: HTMLAudioElement;
   private recorder: AudioRecorder | null = null;
+  private localStream: MediaStream | null = null;
 
   constructor(private onMessage: (message: any) => void) {
     this.audioEl = document.createElement("audio");
@@ -121,6 +122,7 @@ export class RealtimeChat {
       };
 
       // Add local audio track with specific constraints
+      // Add local audio track with specific constraints
       const ms = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           sampleRate: 24000,
@@ -130,8 +132,9 @@ export class RealtimeChat {
           autoGainControl: true
         } 
       });
+      this.localStream = ms;
       
-      console.log('Microphone stream acquired:', ms.getAudioTracks()[0].getSettings());
+      console.log('Microphone stream acquired:', ms.getAudioTracks()[0]?.getSettings?.());
       this.pc.addTrack(ms.getTracks()[0]);
       console.log('Added local audio track');
 
@@ -194,7 +197,10 @@ export class RealtimeChat {
                     console.log('Triggering Mira response with audio');
                     this.dc.send(JSON.stringify({
                       type: 'response.create',
-                      response: { modalities: ['audio', 'text'] }
+                      response: { 
+                        modalities: ['audio', 'text'],
+                        instructions: 'Greet the user warmly in one short sentence and ask how they are feeling today.'
+                      }
                     }));
                   }
                 }, 200);
@@ -300,9 +306,17 @@ export class RealtimeChat {
 
   disconnect() {
     console.log('Disconnecting realtime chat...');
-    this.recorder?.stop();
-    this.dc?.close();
-    this.pc?.close();
-    this.audioEl.srcObject = null;
+    try {
+      this.recorder?.stop();
+      if (this.dc && this.dc.readyState !== 'closed') this.dc.close();
+      if (this.pc && this.pc.connectionState !== 'closed') this.pc.close();
+      if (this.localStream) {
+        this.localStream.getTracks().forEach(track => track.stop());
+        this.localStream = null;
+      }
+      this.audioEl.srcObject = null;
+    } catch (e) {
+      console.warn('Error during disconnect:', e);
+    }
   }
 }
