@@ -96,7 +96,20 @@ export class RealtimeChat {
       console.log('Got ephemeral token');
 
       // Create peer connection
-      this.pc = new RTCPeerConnection();
+      this.pc = new RTCPeerConnection({
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:global.stun.twilio.com:3478?transport=udp' }
+        ]
+      });
+
+      // Ensure we can both send and receive audio
+      this.pc.addTransceiver('audio', { direction: 'sendrecv' });
+
+      // Helpful ICE diagnostics
+      this.pc.oniceconnectionstatechange = () => {
+        console.log('ICE state:', this.pc?.iceConnectionState);
+      };
 
       // Set up remote audio
       this.pc.ontrack = e => {
