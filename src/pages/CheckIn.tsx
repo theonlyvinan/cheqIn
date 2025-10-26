@@ -471,6 +471,7 @@ const CheckIn = () => {
       
       chatRef.current = new RealtimeChat(handleRealtimeMessage);
       await chatRef.current.init();
+      chatRef.current.requestPlay?.();
       
     } catch (error) {
       console.error('Error starting conversation:', error);
