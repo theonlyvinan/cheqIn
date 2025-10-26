@@ -115,7 +115,7 @@ export class RealtimeChat {
         }
       };
 
-      // Add local audio track
+      // Add local audio track with specific constraints
       const ms = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           sampleRate: 24000,
@@ -125,6 +125,8 @@ export class RealtimeChat {
           autoGainControl: true
         } 
       });
+      
+      console.log('Microphone stream acquired:', ms.getAudioTracks()[0].getSettings());
       this.pc.addTrack(ms.getTracks()[0]);
       console.log('Added local audio track');
 
@@ -141,6 +143,7 @@ export class RealtimeChat {
               type: 'session.update',
               session: {
                 modalities: ['audio', 'text'],
+                input_audio_format: 'pcm16',
                 output_audio_format: 'pcm16',
                 input_audio_transcription: { model: 'whisper-1' },
                 turn_detection: {
@@ -186,6 +189,11 @@ export class RealtimeChat {
         try {
           const event = JSON.parse(e.data);
           console.log("Received event:", event.type);
+          
+          // Log errors with detail
+          if (event.type === 'error' || event.type.includes('failed')) {
+            console.error('Realtime error detail:', event);
+          }
           
           // Log Mira's text responses
           if (event.type === 'response.audio_transcript.delta') {
