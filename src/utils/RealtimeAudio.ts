@@ -93,6 +93,8 @@ export class RealtimeChat {
 
       // Create peer connection
       this.pc = new RTCPeerConnection();
+      // Ensure bidirectional audio so we can receive Mira's audio track
+      this.pc.addTransceiver('audio', { direction: 'sendrecv' });
       
       // ICE connection state logs
       this.pc.oniceconnectionstatechange = () => {
@@ -230,14 +232,35 @@ export class RealtimeChat {
       // Create and set local description
       const offer = await this.pc.createOffer();
       await this.pc.setLocalDescription(offer);
-      console.log('Created offer');
+      console.log('Created offer, waiting for ICE gathering to complete...');
+
+      // Wait for ICE gathering to complete to include candidates in SDP
+      await new Promise<void>((resolve) => {
+        if (!this.pc) return resolve();
+        if (this.pc.iceGatheringState === 'complete') return resolve();
+        const checkState = () => {
+          if (!this.pc) return resolve();
+          if (this.pc.iceGatheringState === 'complete') {
+            this.pc.removeEventListener('icegatheringstatechange', checkState);
+            resolve();
+          }
+        };
+        this.pc.addEventListener('icegatheringstatechange', checkState);
+        setTimeout(() => {
+          try { this.pc?.removeEventListener('icegatheringstatechange', checkState); } catch {}
+          resolve();
+        }, 5000);
+      });
+
+      const localSdp = this.pc.localDescription?.sdp || offer.sdp;
+      console.log('ICE gathering done, sending SDP to OpenAI');
 
       // Connect to OpenAI's Realtime API
       const baseUrl = "https://api.openai.com/v1/realtime";
       const model = "gpt-4o-realtime-preview-2024-12-17";
       const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
         method: "POST",
-        body: offer.sdp,
+        body: localSdp,
         headers: {
           Authorization: `Bearer ${EPHEMERAL_KEY}`,
           "Content-Type": "application/sdp"
