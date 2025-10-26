@@ -92,9 +92,18 @@ export class RealtimeChat {
       console.log('Got ephemeral token');
 
       // Create peer connection
-      this.pc = new RTCPeerConnection();
+      // Create peer connection with a public STUN server for NAT traversal
+      this.pc = new RTCPeerConnection({
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+      });
       // Ensure bidirectional audio so we can receive Mira's audio track
       this.pc.addTransceiver('audio', { direction: 'sendrecv' });
+
+      // Extra connection diagnostics
+      this.pc.onicegatheringstatechange = () => console.log('ICE gathering state:', this.pc?.iceGatheringState);
+      this.pc.onconnectionstatechange = () => console.log('Peer connection state:', this.pc?.connectionState);
+      this.pc.onicecandidate = (e) => console.log('ICE candidate:', e.candidate ? 'gathered' : 'null (done)');
+
       
       // ICE connection state logs
       this.pc.oniceconnectionstatechange = () => {
