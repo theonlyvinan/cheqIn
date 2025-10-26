@@ -140,7 +140,7 @@ export class RealtimeChat {
       
       this.dc.addEventListener("open", () => {
         console.log('Data channel opened');
-        // First, ensure session is configured for audio + text and server VAD
+        // Send session config and wait for session.updated before proceeding
         setTimeout(() => {
           if (this.dc && this.dc.readyState === 'open') {
             console.log('Sending session.update for audio config');
@@ -157,8 +157,24 @@ export class RealtimeChat {
                 }
               }
             }));
-
-            // Send a user message, then ask for a response (audio + text)
+            // After this, we wait for session.updated event before sending greeting
+          }
+        }, 300);
+      });
+      
+      this.dc.addEventListener("message", (e) => {
+        try {
+          const event = JSON.parse(e.data);
+          console.log("Received event:", event.type);
+          
+          // Log errors with detail
+          if (event.type === 'error' || event.type.includes('failed')) {
+            console.error('Realtime error detail:', event);
+          }
+          
+          // Wait for session.updated before sending initial greeting
+          if (event.type === 'session.updated') {
+            console.log('Session configured, now sending initial message');
             setTimeout(() => {
               if (this.dc && this.dc.readyState === 'open') {
                 console.log('Sending initial user message');
@@ -183,19 +199,7 @@ export class RealtimeChat {
                   }
                 }, 200);
               }
-            }, 200);
-          }
-        }, 300);
-      });
-      
-      this.dc.addEventListener("message", (e) => {
-        try {
-          const event = JSON.parse(e.data);
-          console.log("Received event:", event.type);
-          
-          // Log errors with detail
-          if (event.type === 'error' || event.type.includes('failed')) {
-            console.error('Realtime error detail:', event);
+            }, 100);
           }
           
           // Log Mira's text responses
