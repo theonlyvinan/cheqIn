@@ -150,7 +150,12 @@ export class RealtimeChat {
             // Configure session and trigger greeting AFTER session is ready
             if (this.dc && this.dc.readyState === 'open' && !this.hasBootstrapped) {
 
-              // Trigger assistant greeting without injecting a user message
+              // Ensure audio modality is enabled, then trigger first response
+              console.log('Bootstrapping: enabling audio modality via session.update');
+              this.dc.send(JSON.stringify({
+                type: 'session.update',
+                session: { modalities: ['audio', 'text'] }
+              }));
               this.dc.send(JSON.stringify({ type: 'response.create' }));
               this.hasBootstrapped = true;
             }
