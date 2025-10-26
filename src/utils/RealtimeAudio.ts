@@ -150,15 +150,8 @@ export class RealtimeChat {
             // Configure session and trigger greeting AFTER session is ready
             if (this.dc && this.dc.readyState === 'open' && !this.hasBootstrapped) {
 
-              this.dc.send(JSON.stringify({
-                type: 'conversation.item.create',
-                item: {
-                  type: 'message',
-                  role: 'user',
-                  content: [ { type: 'input_text', text: 'Hello! How are you feeling today?' } ]
-                }
-              }));
-              this.dc.send(JSON.stringify({ type: 'response.create', response: { modalities: ['audio','text'] } }));
+              // Trigger assistant greeting without injecting a user message
+              this.dc.send(JSON.stringify({ type: 'response.create' }));
               this.hasBootstrapped = true;
             }
           }
@@ -247,7 +240,7 @@ export class RealtimeChat {
     };
 
     this.dc.send(JSON.stringify(event));
-    this.dc.send(JSON.stringify({type: 'response.create', response: { modalities: ['audio','text'] }}));
+    this.dc.send(JSON.stringify({type: 'response.create'}));
   }
 
   disconnect() {
