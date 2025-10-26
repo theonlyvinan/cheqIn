@@ -69,6 +69,10 @@ export class RealtimeChat {
   constructor(private onMessage: (message: any) => void) {
     this.audioEl = document.createElement("audio");
     this.audioEl.autoplay = true;
+    this.audioEl.setAttribute('playsinline', 'true');
+    this.audioEl.muted = false;
+    this.audioEl.style.display = 'none';
+    try { document.body.appendChild(this.audioEl); } catch (e) { console.warn('Could not attach audio element to DOM:', e); }
   }
 
   async init() {
@@ -97,6 +101,7 @@ export class RealtimeChat {
       this.pc.ontrack = e => {
         console.log('Received audio track');
         this.audioEl.srcObject = e.streams[0];
+        this.audioEl.play().catch(err => console.warn('Autoplay may be blocked, waiting for user gesture:', err));
       };
 
       // Add local audio track
