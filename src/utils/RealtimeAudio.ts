@@ -145,6 +145,16 @@ export class RealtimeChat {
         try {
           const event = JSON.parse(e.data);
           console.log("Received event:", event.type);
+          
+          // Log Mira's text responses
+          if (event.type === 'response.audio_transcript.delta') {
+            console.log("🗣️ Mira says:", event.delta);
+          } else if (event.type === 'response.audio_transcript.done') {
+            console.log("🗣️ Mira finished saying:", event.transcript);
+          } else if (event.type === 'conversation.item.created' && event.item?.role === 'assistant') {
+            console.log("🗣️ Mira's message:", event.item);
+          }
+          
           this.onMessage(event);
         } catch (error) {
           console.error('Error parsing message:', error);
