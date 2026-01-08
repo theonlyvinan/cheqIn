@@ -3,6 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, FileText } from "lucide-react";
 import logo from "@/assets/cheqin-logo.png";
+import vinanPhoto from "@/assets/vinan-adhikesavan.png";
+import srinivasPhoto from "@/assets/srinivas-kv.png";
 
 const teamMembers = [
   {
@@ -10,18 +12,18 @@ const teamMembers = [
     role: "Co-Founder & Developer",
     school: "Freshman, College Preparatory School",
     location: "Oakland, CA",
-    image: "/placeholder.svg", // Replace with actual image
+    image: vinanPhoto,
     bio: "Vinan is a passionate high school student with a deep interest in technology and its potential to improve lives. As a freshman at College Preparatory School, he brings fresh perspectives and innovative ideas to the team. His dedication to creating meaningful solutions for seniors stems from his close relationship with his grandparents and his desire to bridge the gap between technology and elderly care.",
-    resumeLink: "#", // Add actual resume link
+    resumeLink: "https://tinyurl.com/vinanadhikesavan",
   },
   {
     name: "Srinivas KV",
     role: "Co-Founder & Developer",
     school: "Junior, Moreau Catholic High School",
     location: "Hayward, CA",
-    image: "/placeholder.svg", // Replace with actual image
+    image: srinivasPhoto,
     bio: "Srinivas is a driven junior at Moreau Catholic High School with a strong foundation in computer science and a passion for building products that matter. His experience in software development combined with his empathy for elderly care challenges makes him an invaluable team member. He believes technology should be accessible to everyone, regardless of age.",
-    resumeLink: "#", // Add actual resume link
+    resumeLink: "https://tinyurl.com/srinivaskvinchimoor",
   },
 ];
 
