@@ -276,6 +276,12 @@ const Index = () => {
           <p className="text-sm text-muted-foreground/60">
             A wellness companion for brighter days
           </p>
+          <button 
+            onClick={() => navigate("/team")}
+            className="mt-4 text-accent hover:text-accent/80 underline underline-offset-4 transition-colors text-lg font-medium"
+          >
+            The Team
+          </button>
         </div>
       </footer>
     </div>
