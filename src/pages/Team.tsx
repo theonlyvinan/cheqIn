@@ -69,7 +69,7 @@ const Team = () => {
               <div className="p-8 space-y-6">
                 <div>
                   <h2 className="text-3xl font-bold text-center">{member.name}</h2>
-                  <p className="text-lg text-accent font-medium mt-1">{member.role}</p>
+                  
                   <p className="text-muted-foreground mt-2">{member.school}</p>
                   <p className="text-muted-foreground">{member.location}</p>
                 </div>
