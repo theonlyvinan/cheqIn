@@ -74,10 +74,7 @@ const Team = () => {
                   <p className="text-muted-foreground text-center">{member.location}</p>
                 </div>
                 
-                <div>
-                  <h3 className="text-xl font-semibold mb-3">About Me</h3>
-                  <p className="text-muted-foreground leading-relaxed">{member.bio}</p>
-                </div>
+                <p className="text-muted-foreground leading-relaxed">{member.bio}</p>
 
                 <Button variant="outline" className="gap-2" asChild>
                   <a href={member.resumeLink} target="_blank" rel="noopener noreferrer">
