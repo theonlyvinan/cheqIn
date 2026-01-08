@@ -13,7 +13,7 @@ const teamMembers = [
     school: "Freshman, College Preparatory School",
     location: "Oakland, CA",
     image: vinanPhoto,
-    bio: "I'm a freshman who transforms curiosity into experiments and science into personality. I run EEG studies on how teens think, build no code AI apps to solve oddly specific problems, hike absurd distances just to see if I can, and host a podcast where I explore all the questions nobody bothers to ask. I don't always know what I'm doing, but I love to learn new things.",
+    bio: "Vinan is a freshman who somehow turned curiosity into experiments and science into a personality trait. He runs EEG studies on teen brains, builds no-code AI apps for extremely specific problems, hikes distances that make adults nervous, and hosts a podcast tackling questions no one else even thinks about. He may not always know what he's doing, but he learns fast—and with enthusiasm.",
     resumeLink: "https://tinyurl.com/vinanadhikesavan",
   },
   {
@@ -68,8 +68,8 @@ const Team = () => {
               </div>
               <div className="p-8 space-y-6">
                 <div>
-                  <h2 className="text-3xl font-bold">{member.name}</h2>
-                  <p className="text-lg text-accent font-medium mt-1">{member.role}</p>
+                  <h2 className="text-3xl font-bold text-center">{member.name}</h2>
+                  
                   <p className="text-muted-foreground mt-2">{member.school}</p>
                   <p className="text-muted-foreground">{member.location}</p>
                 </div>
