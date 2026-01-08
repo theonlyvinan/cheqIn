@@ -70,8 +70,8 @@ const Team = () => {
                 <div>
                   <h2 className="text-3xl font-bold text-center">{member.name}</h2>
                   
-                  <p className="text-muted-foreground mt-2">{member.school}</p>
-                  <p className="text-muted-foreground">{member.location}</p>
+                  <p className="text-muted-foreground mt-2 text-center">{member.school}</p>
+                  <p className="text-muted-foreground text-center">{member.location}</p>
                 </div>
                 
                 <div>
