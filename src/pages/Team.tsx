@@ -13,7 +13,7 @@ const teamMembers = [
     school: "Freshman, College Preparatory School",
     location: "Oakland, CA",
     image: vinanPhoto,
-    bio: "Vinan is a passionate high school student with a deep interest in technology and its potential to improve lives. As a freshman at College Preparatory School, he brings fresh perspectives and innovative ideas to the team. His dedication to creating meaningful solutions for seniors stems from his close relationship with his grandparents and his desire to bridge the gap between technology and elderly care.",
+    bio: "I'm a freshman who transforms curiosity into experiments and science into personality. I run EEG studies on how teens think, build no code AI apps to solve oddly specific problems, hike absurd distances just to see if I can, and host a podcast where I explore all the questions nobody bothers to ask. I don't always know what I'm doing, but I love to learn new things.",
     resumeLink: "https://tinyurl.com/vinanadhikesavan",
   },
   {
