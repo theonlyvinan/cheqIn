@@ -212,8 +212,7 @@ export class RealtimeChat {
                     console.log('Triggering Mira response with audio');
                     this.dc.send(JSON.stringify({
                       type: 'response.create',
-                      response: { 
-                        modalities: ['audio', 'text'],
+                      response: {
                         instructions: 'Greet the user warmly in one short sentence and ask how they are feeling today.'
                       }
                     }));
@@ -268,9 +267,9 @@ export class RealtimeChat {
       const localSdp = this.pc.localDescription?.sdp || offer.sdp;
       console.log('ICE gathering done, sending SDP to OpenAI');
 
-      // Connect to OpenAI's Realtime API
-      const baseUrl = "https://api.openai.com/v1/realtime";
-      const model = "gpt-4o-realtime-preview-2024-12-17";
+      // Connect to OpenAI's Realtime API (GA calls endpoint)
+      const baseUrl = "https://api.openai.com/v1/realtime/calls";
+      const model = "gpt-realtime";
       const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
         method: "POST",
         body: localSdp,
@@ -281,7 +280,8 @@ export class RealtimeChat {
       });
 
       if (!sdpResponse.ok) {
-        throw new Error(`Failed to connect to OpenAI: ${sdpResponse.status}`);
+        const errText = await sdpResponse.text();
+        throw new Error(`Failed to connect to OpenAI: ${sdpResponse.status} ${errText}`);
       }
 
       const answer = {
