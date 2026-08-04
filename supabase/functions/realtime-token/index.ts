@@ -68,38 +68,44 @@ You MUST ask about ALL seven areas before ending. Keep track:
 
 REMEMBER: SHORT RESPONSES ONLY. 1-2 SENTENCES MAX.`;
 
-    // Request an ephemeral token from OpenAI
-    const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
+    // Request an ephemeral token from OpenAI (GA endpoint)
+    const response = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-realtime-preview-2024-12-17",
-        voice: "sage", // Warm, caring female voice
-        instructions: systemPrompt,
-        modalities: ["audio", "text"],
-        
-        turn_detection: {
-          type: "server_vad",
-          threshold: 0.5,
-          prefix_padding_ms: 300,
-          silence_duration_ms: 1000
-        }
+        session: {
+          type: "realtime",
+          model: "gpt-realtime",
+          instructions: systemPrompt,
+          audio: {
+            input: {
+              turn_detection: {
+                type: "server_vad",
+                threshold: 0.5,
+                prefix_padding_ms: 300,
+                silence_duration_ms: 1000,
+              },
+            },
+            output: { voice: "sage" },
+          },
+        },
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('OpenAI API error:', errorText);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
     console.log("Session created successfully");
 
-    return new Response(JSON.stringify(data), {
+    // Normalize to the shape the client expects
+    return new Response(JSON.stringify({ ...data, client_secret: { value: data.value } }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
