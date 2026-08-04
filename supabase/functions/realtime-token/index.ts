@@ -82,6 +82,7 @@ REMEMBER: SHORT RESPONSES ONLY. 1-2 SENTENCES MAX.`;
           instructions: systemPrompt,
           audio: {
             input: {
+              transcription: { model: "whisper-1" },
               turn_detection: {
                 type: "server_vad",
                 threshold: 0.5,
