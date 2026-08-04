@@ -304,9 +304,13 @@ const CheckIn = () => {
     }
   };
 
-  const handleRealtimeMessage = (event: any) => {
-    console.log('Received event:', event.type);
-    
+  const handleRealtimeMessage = (rawEvent: any) => {
+    console.log('Received event:', rawEvent.type);
+
+    // GA realtime renamed audio events (response.output_audio*), normalize to legacy names
+    const normalizedType = String(rawEvent.type || '').replace('output_audio', 'audio');
+    const event = { ...rawEvent, type: normalizedType };
+
     switch (event.type) {
       case 'session.created':
         console.log('Session created');
