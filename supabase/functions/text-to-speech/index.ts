@@ -20,7 +20,7 @@ serve(async (req) => {
 
     console.log('Converting text to speech...');
 
-    const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/9BWtsMINqrJLrRacOk9x', {
+    const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL', {
       method: 'POST',
       headers: {
         'xi-api-key': Deno.env.get('ELEVEN_LABS_API_KEY')!,
