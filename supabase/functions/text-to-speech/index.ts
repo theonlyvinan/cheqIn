@@ -20,7 +20,7 @@ serve(async (req) => {
 
     console.log('Converting text to speech...');
 
-    const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/9BWtsMINqrJLrRacOk9x', {
+    const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL', {
       method: 'POST',
       headers: {
         'xi-api-key': Deno.env.get('ELEVEN_LABS_API_KEY')!,
@@ -28,7 +28,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         text,
-        model_id: 'eleven_turbo_v2_5',
+        model_id: 'eleven_multilingual_v2',
         voice_settings: {
           stability: 0.5,
           similarity_boost: 0.75,
