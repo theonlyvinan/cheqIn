@@ -170,10 +170,12 @@ export class RealtimeChat {
                     transcription: { model: 'whisper-1' },
                     turn_detection: {
                       type: 'server_vad',
-                      threshold: 0.5,
+                      threshold: 0.6,
                       prefix_padding_ms: 300,
-                      silence_duration_ms: 800,
-                      create_response: true
+                      silence_duration_ms: 900,
+                      create_response: true,
+                      // Stop Mira mid-sentence when the user starts talking
+                      interrupt_response: true
                     }
                   }
                 }
