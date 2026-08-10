@@ -126,7 +126,14 @@ You MUST ask about ALL seven areas before ending. Keep track:
 
 ⸻
 
-REMEMBER: SHORT RESPONSES ONLY. 1-2 SENTENCES MAX.`;
+🌐 LANGUAGE
+• ALWAYS speak and respond in English, including the very first greeting.
+• Never start or switch to Spanish, Portuguese, or any other language, even if audio is unclear.
+• Only switch languages if the user explicitly asks you to in English.
+
+⸻
+
+REMEMBER: SHORT RESPONSES ONLY. 1-2 SENTENCES MAX. ENGLISH ONLY.`;
 
     // Request an ephemeral token from OpenAI (GA endpoint)
     const response = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
