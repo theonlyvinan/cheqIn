@@ -20,7 +20,8 @@ serve(async (req) => {
 
     // Load the signed-in user's real profile + medications for personalization
     let userName = "";
-    let medsLine = "Gently ask if they took their medications today.";
+    let medsLine = "Gently ask if they took their medications today. Do NOT name any specific medication.";
+    let healthLine = "";
     try {
       const authHeader = req.headers.get("Authorization") ?? "";
       const supabase = createClient(
@@ -32,7 +33,11 @@ serve(async (req) => {
       const user = userData?.user;
       if (user) {
         const [{ data: profile }, { data: meds }] = await Promise.all([
-          supabase.from("profiles").select("full_name").eq("user_id", user.id).maybeSingle(),
+          supabase
+            .from("profiles")
+            .select("full_name, physical_health_issues, mental_health_issues")
+            .eq("user_id", user.id)
+            .maybeSingle(),
           supabase
             .from("medications")
             .select("name, dosage, time_of_day")
@@ -49,10 +54,19 @@ serve(async (req) => {
           medsLine =
             "They have no medications on file. Ask generally: \"Did you take any medications today?\" Do NOT name any specific medication.";
         }
+
+        const conditions = [
+          profile?.physical_health_issues && `Physical: ${profile.physical_health_issues}`,
+          profile?.mental_health_issues && `Mental/emotional: ${profile.mental_health_issues}`,
+        ].filter(Boolean);
+        if (conditions.length > 0) {
+          healthLine = `\n\n🩺 THEIR KNOWN HEALTH CONTEXT (use gently; never diagnose, never invent conditions):\n${conditions.join("\n")}`;
+        }
       }
     } catch (e) {
       console.error("Failed to load user context:", e);
     }
+
 
     console.log('Requesting ephemeral token from OpenAI...');
 
