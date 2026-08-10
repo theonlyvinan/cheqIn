@@ -196,37 +196,33 @@ export class RealtimeChat {
             console.error('Realtime error detail:', event);
           }
           
-          // Wait for session.updated before sending initial greeting
-          if (event.type === 'session.updated') {
-            console.log('Session configured, now sending initial message');
+          // Track in-flight responses so we never start two at once
+          if (event.type === 'response.created') {
+            this.activeResponseId = event.response?.id ?? 'active';
+          } else if (
+            event.type === 'response.done' ||
+            event.type === 'response.cancelled' ||
+            event.type === 'response.canceled'
+          ) {
+            this.activeResponseId = null;
+          }
+
+          // Wait for session.updated before sending the initial greeting (once only)
+          if (event.type === 'session.updated' && !this.greetingSent) {
+            this.greetingSent = true;
+            console.log('Session configured, triggering greeting');
             setTimeout(() => {
-              if (this.dc && this.dc.readyState === 'open') {
-                console.log('Sending initial user message');
+              if (this.dc && this.dc.readyState === 'open' && !this.activeResponseId) {
                 this.dc.send(JSON.stringify({
-                  type: 'conversation.item.create',
-                  item: {
-                    type: 'message',
-                    role: 'user',
-                    content: [
-                      { type: 'input_text', text: 'Hello' }
-                    ]
+                  type: 'response.create',
+                  response: {
+                    instructions: 'Greet the user warmly in one short sentence and ask how they are feeling today.'
                   }
                 }));
-
-                setTimeout(() => {
-                  if (this.dc && this.dc.readyState === 'open') {
-                    console.log('Triggering Mira response with audio');
-                    this.dc.send(JSON.stringify({
-                      type: 'response.create',
-                      response: {
-                        instructions: 'Greet the user warmly in one short sentence and ask how they are feeling today.'
-                      }
-                    }));
-                  }
-                }, 200);
               }
-            }, 100);
+            }, 150);
           }
+
           
           // Log Mira's text responses
           if (event.type === 'response.audio_transcript.delta') {
