@@ -166,7 +166,7 @@ export class RealtimeChat {
                 type: 'realtime',
                 audio: {
                   input: {
-                    transcription: { model: 'whisper-1' },
+                    transcription: { model: 'whisper-1', language: 'en' },
                     turn_detection: {
                       type: 'server_vad',
                       threshold: 0.5,
@@ -203,7 +203,7 @@ export class RealtimeChat {
                 this.dc.send(JSON.stringify({
                   type: 'response.create',
                   response: {
-                    instructions: 'Give only the opening greeting and ask exactly one short question about how the user feels today. Then stop and wait for the user to answer.'
+                    instructions: 'Speak English only. Give only the opening greeting and ask exactly one short question about how the user feels today. Then stop and wait for the user to answer.'
                   }
                 }));
               }
