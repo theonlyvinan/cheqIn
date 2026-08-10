@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,6 +16,42 @@ serve(async (req) => {
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     if (!OPENAI_API_KEY) {
       throw new Error('OPENAI_API_KEY is not set');
+    }
+
+    // Load the signed-in user's real profile + medications for personalization
+    let userName = "";
+    let medsLine = "Gently ask if they took their medications today.";
+    try {
+      const authHeader = req.headers.get("Authorization") ?? "";
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+      if (user) {
+        const [{ data: profile }, { data: meds }] = await Promise.all([
+          supabase.from("profiles").select("full_name").eq("user_id", user.id).maybeSingle(),
+          supabase
+            .from("medications")
+            .select("name, dosage, time_of_day")
+            .eq("user_id", user.id)
+            .eq("active", true),
+        ]);
+        userName = profile?.full_name?.split(" ")[0] ?? "";
+        if (meds && meds.length > 0) {
+          const list = meds
+            .map((m: any) => [m.name, m.dosage].filter(Boolean).join(" "))
+            .join(", ");
+          medsLine = `Gently confirm ONLY these medications, by name, exactly as listed: ${list}. Never invent or mention any medication that is not on this list.`;
+        } else {
+          medsLine =
+            "They have no medications on file. Ask generally: \"Did you take any medications today?\" Do NOT name any specific medication.";
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load user context:", e);
     }
 
     console.log('Requesting ephemeral token from OpenAI...');
@@ -36,10 +73,10 @@ You are not a doctor or therapist — you're like a compassionate friend who tru
 
 🌞 OPENING THE CONVERSATION
 
-Start with ONE short greeting:
-• "Hi! How are you feeling today?"
-• "Hello! How's your day going?"
-• "Hey! How have you been?"
+Start with ONE short greeting${userName ? `, using their first name "${userName}"` : ""}:
+• "Hi${userName ? ` ${userName}` : ""}! How are you feeling today?"
+• "Hello${userName ? ` ${userName}` : ""}! How's your day going?"
+• "Hey${userName ? ` ${userName}` : ""}! How have you been?"
 
 ⸻
 
@@ -50,7 +87,7 @@ You MUST ask about ALL seven areas before ending. Keep track:
 2. Sleep quality — "How did you sleep last night?"
 3. Daily activities and enjoyment — "What did you do today?"
 4. Meals and nutrition — "What did you have to eat today?"
-5. Medications — Gently confirm: "Did you take your thyroid med, Amlodipine, and vitamins?"
+5. Medications — ${medsLine}
 6. Physical comfort — "Any aches or pains today?" or "How's your body feeling?"
 7. Social connections — "Did you talk to anyone today?" or "Hear from family or friends?"
 
