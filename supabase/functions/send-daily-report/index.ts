@@ -14,21 +14,61 @@ serve(async (req) => {
   try {
     const { seniorUserId, familyMemberEmail } = await req.json()
 
-    if (!seniorUserId) {
+    if (!seniorUserId || typeof seniorUserId !== 'string') {
       throw new Error('Senior user ID is required')
     }
-
-    console.log('Sending daily report for senior:', seniorUserId)
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
+    // --- Authentication & authorization ---
+    const authHeader = req.headers.get('Authorization')
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+    if (!token) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const isServiceCall = token === supabaseKey
+
+    if (!isServiceCall) {
+      const { data: userData, error: userError } = await supabase.auth.getUser(token)
+      const callerId = userData?.user?.id
+      if (userError || !callerId) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      if (callerId !== seniorUserId) {
+        const { data: link } = await supabase
+          .from('family_members')
+          .select('id')
+          .eq('senior_user_id', seniorUserId)
+          .eq('family_user_id', callerId)
+          .maybeSingle()
+
+        if (!link) {
+          return new Response(JSON.stringify({ error: 'Forbidden' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        }
+      }
+    }
+
+    console.log('Sending daily report for senior:', seniorUserId)
+
     // Generate audio summary
     const { data: summaryData, error: summaryError } = await supabase.functions.invoke(
       'generate-audio-summary',
       {
-        body: { seniorUserId }
+        body: { seniorUserId },
+        headers: { Authorization: `Bearer ${supabaseKey}` },
       }
     )
 
@@ -39,29 +79,37 @@ serve(async (req) => {
 
     console.log('Audio summary generated successfully')
 
-    // Get family members to notify
-    let recipients: string[] = []
-    
-    if (familyMemberEmail) {
-      recipients = [familyMemberEmail]
-    } else {
-      const { data: familyMembers, error: familyError } = await supabase
-        .from('family_members')
-        .select('email, report_settings(enabled)')
-        .eq('senior_user_id', seniorUserId)
-        .not('email', 'is', null)
+    // Get family members registered for this senior. Recipients are ALWAYS
+    // resolved server-side; a client-supplied email may only narrow this list.
+    const { data: familyMembers, error: familyError } = await supabase
+      .from('family_members')
+      .select('email, report_settings(enabled)')
+      .eq('senior_user_id', seniorUserId)
+      .not('email', 'is', null)
 
-      if (familyError) {
-        console.error('Error fetching family members:', familyError)
-        throw familyError
-      }
-
-      // Filter for members with reports enabled (or no settings = default enabled)
-      recipients = familyMembers
-        .filter(fm => !fm.report_settings || fm.report_settings.length === 0 || fm.report_settings[0]?.enabled)
-        .map(fm => fm.email)
-        .filter(Boolean)
+    if (familyError) {
+      console.error('Error fetching family members:', familyError)
+      throw familyError
     }
+
+    // Filter for members with reports enabled (or no settings = default enabled)
+    let recipients: string[] = (familyMembers ?? [])
+      .filter(fm => !fm.report_settings || fm.report_settings.length === 0 || fm.report_settings[0]?.enabled)
+      .map(fm => fm.email)
+      .filter(Boolean)
+
+    if (familyMemberEmail) {
+      const requested = String(familyMemberEmail).toLowerCase()
+      const allowed = recipients.filter(e => e.toLowerCase() === requested)
+      if (allowed.length === 0) {
+        return new Response(JSON.stringify({ error: 'Recipient is not a registered family member for this senior' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      recipients = allowed
+    }
+
 
     if (recipients.length === 0) {
       // Fallback: send to senior user's own email so they can verify delivery
