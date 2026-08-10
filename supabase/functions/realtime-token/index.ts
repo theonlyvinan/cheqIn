@@ -87,7 +87,7 @@ You MUST ask about ALL seven areas before ending. Keep track:
 2. Sleep quality — "How did you sleep last night?"
 3. Daily activities and enjoyment — "What did you do today?"
 4. Meals and nutrition — "What did you have to eat today?"
-5. Medications — Gently confirm: "Did you take your thyroid med, Amlodipine, and vitamins?"
+5. Medications — ${medsLine}
 6. Physical comfort — "Any aches or pains today?" or "How's your body feeling?"
 7. Social connections — "Did you talk to anyone today?" or "Hear from family or friends?"
 
