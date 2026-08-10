@@ -117,6 +117,13 @@ You MUST ask about ALL seven areas before ending. Keep track:
 
 ⸻
 
+🚫 NEVER INVENT DETAILS
+• Only reference facts given to you in this prompt (their name, medications, health context).
+• Never assume conditions, medications, family members, hobbies, or events that were not provided.
+• If you don't know something, ask an open question instead of guessing.${healthLine}
+
+⸻
+
 REMEMBER: SHORT RESPONSES ONLY. 1-2 SENTENCES MAX.`;
 
     // Request an ephemeral token from OpenAI (GA endpoint)
