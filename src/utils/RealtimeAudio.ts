@@ -66,6 +66,9 @@ export class RealtimeChat {
   private audioEl: HTMLAudioElement;
   private recorder: AudioRecorder | null = null;
   private localStream: MediaStream | null = null;
+  private greetingSent = false;
+  private activeResponseId: string | null = null;
+
 
   constructor(private onMessage: (message: any) => void) {
     this.audioEl = document.createElement("audio");
@@ -167,10 +170,12 @@ export class RealtimeChat {
                     transcription: { model: 'whisper-1' },
                     turn_detection: {
                       type: 'server_vad',
-                      threshold: 0.5,
+                      threshold: 0.6,
                       prefix_padding_ms: 300,
-                      silence_duration_ms: 800,
-                      create_response: true
+                      silence_duration_ms: 900,
+                      create_response: true,
+                      // Stop Mira mid-sentence when the user starts talking
+                      interrupt_response: true
                     }
                   }
                 }
@@ -191,38 +196,45 @@ export class RealtimeChat {
             console.error('Realtime error detail:', event);
           }
           
-          // Wait for session.updated before sending initial greeting
-          if (event.type === 'session.updated') {
-            console.log('Session configured, now sending initial message');
+          // Track in-flight responses so we never start two at once
+          if (event.type === 'response.created') {
+            this.activeResponseId = event.response?.id ?? 'active';
+          } else if (
+            event.type === 'response.done' ||
+            event.type === 'response.cancelled' ||
+            event.type === 'response.canceled'
+          ) {
+            this.activeResponseId = null;
+          }
+
+          // Wait for session.updated before sending the initial greeting (once only)
+          if (event.type === 'session.updated' && !this.greetingSent) {
+            this.greetingSent = true;
+            console.log('Session configured, triggering greeting');
             setTimeout(() => {
-              if (this.dc && this.dc.readyState === 'open') {
-                console.log('Sending initial user message');
+              if (this.dc && this.dc.readyState === 'open' && !this.activeResponseId) {
                 this.dc.send(JSON.stringify({
-                  type: 'conversation.item.create',
-                  item: {
-                    type: 'message',
-                    role: 'user',
-                    content: [
-                      { type: 'input_text', text: 'Hello' }
-                    ]
+                  type: 'response.create',
+                  response: {
+                    instructions: 'Greet the user warmly in one short sentence and ask how they are feeling today.'
                   }
                 }));
-
-                setTimeout(() => {
-                  if (this.dc && this.dc.readyState === 'open') {
-                    console.log('Triggering Mira response with audio');
-                    this.dc.send(JSON.stringify({
-                      type: 'response.create',
-                      response: {
-                        instructions: 'Greet the user warmly in one short sentence and ask how they are feeling today.'
-                      }
-                    }));
-                  }
-                }, 200);
               }
-            }, 100);
+            }, 150);
           }
-          
+
+          // User started talking: cancel any answer still being spoken
+          if (event.type === 'input_audio_buffer.speech_started' && this.activeResponseId) {
+            console.log('User interrupted — cancelling Mira response');
+            try {
+              this.dc?.send(JSON.stringify({ type: 'response.cancel' }));
+            } catch (err) {
+              console.warn('Failed to cancel response:', err);
+            }
+            this.activeResponseId = null;
+          }
+
+
           // Log Mira's text responses
           if (event.type === 'response.audio_transcript.delta') {
             console.log("🗣️ Mira says:", event.delta);
@@ -338,7 +350,10 @@ export class RealtimeChat {
     };
 
     this.dc.send(JSON.stringify(event));
-    this.dc.send(JSON.stringify({type: 'response.create'}));
+    // Only request a reply if one isn't already being generated
+    if (!this.activeResponseId) {
+      this.dc.send(JSON.stringify({ type: 'response.create' }));
+    }
   }
 
   disconnect() {
