@@ -22,3 +22,8 @@ verify_jwt = true
 
 [functions.backfill-highlights]
 verify_jwt = true
+[functions.generate-audio-summary]
+verify_jwt = true
+
+[functions.send-daily-report]
+verify_jwt = true
