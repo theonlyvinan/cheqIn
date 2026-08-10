@@ -66,6 +66,9 @@ export class RealtimeChat {
   private audioEl: HTMLAudioElement;
   private recorder: AudioRecorder | null = null;
   private localStream: MediaStream | null = null;
+  private greetingSent = false;
+  private activeResponseId: string | null = null;
+
 
   constructor(private onMessage: (message: any) => void) {
     this.audioEl = document.createElement("audio");
