@@ -350,7 +350,10 @@ export class RealtimeChat {
     };
 
     this.dc.send(JSON.stringify(event));
-    this.dc.send(JSON.stringify({type: 'response.create'}));
+    // Only request a reply if one isn't already being generated
+    if (!this.activeResponseId) {
+      this.dc.send(JSON.stringify({ type: 'response.create' }));
+    }
   }
 
   disconnect() {
