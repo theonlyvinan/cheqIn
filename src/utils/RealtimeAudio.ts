@@ -223,7 +223,18 @@ export class RealtimeChat {
             }, 150);
           }
 
-          
+          // User started talking: cancel any answer still being spoken
+          if (event.type === 'input_audio_buffer.speech_started' && this.activeResponseId) {
+            console.log('User interrupted — cancelling Mira response');
+            try {
+              this.dc?.send(JSON.stringify({ type: 'response.cancel' }));
+            } catch (err) {
+              console.warn('Failed to cancel response:', err);
+            }
+            this.activeResponseId = null;
+          }
+
+
           // Log Mira's text responses
           if (event.type === 'response.audio_transcript.delta') {
             console.log("🗣️ Mira says:", event.delta);
