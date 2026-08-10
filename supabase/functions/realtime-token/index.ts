@@ -18,6 +18,42 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not set');
     }
 
+    // Load the signed-in user's real profile + medications for personalization
+    let userName = "";
+    let medsLine = "Gently ask if they took their medications today.";
+    try {
+      const authHeader = req.headers.get("Authorization") ?? "";
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+      if (user) {
+        const [{ data: profile }, { data: meds }] = await Promise.all([
+          supabase.from("profiles").select("full_name").eq("user_id", user.id).maybeSingle(),
+          supabase
+            .from("medications")
+            .select("name, dosage, time_of_day")
+            .eq("user_id", user.id)
+            .eq("active", true),
+        ]);
+        userName = profile?.full_name?.split(" ")[0] ?? "";
+        if (meds && meds.length > 0) {
+          const list = meds
+            .map((m: any) => [m.name, m.dosage].filter(Boolean).join(" "))
+            .join(", ");
+          medsLine = `Gently confirm ONLY these medications, by name, exactly as listed: ${list}. Never invent or mention any medication that is not on this list.`;
+        } else {
+          medsLine =
+            "They have no medications on file. Ask generally: \"Did you take any medications today?\" Do NOT name any specific medication.";
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load user context:", e);
+    }
+
     console.log('Requesting ephemeral token from OpenAI...');
 
     // System prompt with context for health check-in
