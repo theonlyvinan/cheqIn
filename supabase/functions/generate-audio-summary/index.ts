@@ -14,15 +14,56 @@ serve(async (req) => {
   try {
     const { seniorUserId, checkInId, checkInData } = await req.json()
 
-    if (!seniorUserId) {
+    if (!seniorUserId || typeof seniorUserId !== 'string') {
       throw new Error('Senior user ID is required')
     }
-
-    console.log('Generating audio summary for senior:', seniorUserId, checkInId ? `checkIn: ${checkInId}` : '', checkInData ? 'with provided data' : '')
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
+
+    // --- Authentication & authorization ---
+    const authHeader = req.headers.get('Authorization')
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+    if (!token) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Internal service-to-service calls (e.g. send-daily-report) use the service role key
+    const isServiceCall = token === supabaseKey
+
+    if (!isServiceCall) {
+      const { data: userData, error: userError } = await supabase.auth.getUser(token)
+      const callerId = userData?.user?.id
+      if (userError || !callerId) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      if (callerId !== seniorUserId) {
+        const { data: link } = await supabase
+          .from('family_members')
+          .select('id')
+          .eq('senior_user_id', seniorUserId)
+          .eq('family_user_id', callerId)
+          .maybeSingle()
+
+        if (!link) {
+          return new Response(JSON.stringify({ error: 'Forbidden' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        }
+      }
+    }
+
+    console.log('Generating audio summary for senior:', seniorUserId, checkInId ? `checkIn: ${checkInId}` : '', checkInData ? 'with provided data' : '')
+
 
     let todayCheckIn: any
     let checkIns: any[]
