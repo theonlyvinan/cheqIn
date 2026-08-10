@@ -67,7 +67,6 @@ export class RealtimeChat {
   private recorder: AudioRecorder | null = null;
   private localStream: MediaStream | null = null;
   private greetingSent = false;
-  private activeResponseId: string | null = null;
 
 
   constructor(private onMessage: (message: any) => void) {
@@ -170,11 +169,10 @@ export class RealtimeChat {
                     transcription: { model: 'whisper-1' },
                     turn_detection: {
                       type: 'server_vad',
-                      threshold: 0.6,
+                      threshold: 0.5,
                       prefix_padding_ms: 300,
-                      silence_duration_ms: 900,
+                      silence_duration_ms: 1200,
                       create_response: true,
-                      // Stop Mira mid-sentence when the user starts talking
                       interrupt_response: true
                     }
                   }
@@ -196,42 +194,20 @@ export class RealtimeChat {
             console.error('Realtime error detail:', event);
           }
           
-          // Track in-flight responses so we never start two at once
-          if (event.type === 'response.created') {
-            this.activeResponseId = event.response?.id ?? 'active';
-          } else if (
-            event.type === 'response.done' ||
-            event.type === 'response.cancelled' ||
-            event.type === 'response.canceled'
-          ) {
-            this.activeResponseId = null;
-          }
-
           // Wait for session.updated before sending the initial greeting (once only)
           if (event.type === 'session.updated' && !this.greetingSent) {
             this.greetingSent = true;
             console.log('Session configured, triggering greeting');
             setTimeout(() => {
-              if (this.dc && this.dc.readyState === 'open' && !this.activeResponseId) {
+              if (this.dc && this.dc.readyState === 'open') {
                 this.dc.send(JSON.stringify({
                   type: 'response.create',
                   response: {
-                    instructions: 'Greet the user warmly in one short sentence and ask how they are feeling today.'
+                    instructions: 'Give only the opening greeting and ask exactly one short question about how the user feels today. Then stop and wait for the user to answer.'
                   }
                 }));
               }
             }, 150);
-          }
-
-          // User started talking: cancel any answer still being spoken
-          if (event.type === 'input_audio_buffer.speech_started' && this.activeResponseId) {
-            console.log('User interrupted — cancelling Mira response');
-            try {
-              this.dc?.send(JSON.stringify({ type: 'response.cancel' }));
-            } catch (err) {
-              console.warn('Failed to cancel response:', err);
-            }
-            this.activeResponseId = null;
           }
 
 
@@ -350,10 +326,7 @@ export class RealtimeChat {
     };
 
     this.dc.send(JSON.stringify(event));
-    // Only request a reply if one isn't already being generated
-    if (!this.activeResponseId) {
-      this.dc.send(JSON.stringify({ type: 'response.create' }));
-    }
+    this.dc.send(JSON.stringify({ type: 'response.create' }));
   }
 
   disconnect() {
