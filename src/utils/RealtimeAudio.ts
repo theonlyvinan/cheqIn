@@ -203,7 +203,7 @@ export class RealtimeChat {
                 this.dc.send(JSON.stringify({
                   type: 'response.create',
                   response: {
-                    instructions: 'Speak English only. Give only the opening greeting and ask exactly one short question about how the user feels today. Then stop and wait for the user to answer.'
+                    instructions: 'Respond in ENGLISH ONLY. Say exactly this and nothing else, in English: a short friendly greeting followed by "How are you feeling today?". Do not use French, Spanish, Portuguese or any other language. Then stop and wait for the user to answer.'
                   }
                 }));
               }
