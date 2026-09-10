@@ -283,50 +283,16 @@ const Auth = () => {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
-      
-      toast({
-        title: "Welcome back!",
-        description: "You've successfully signed in.",
-      });
-      navigate(nextPath);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}${nextPath}`,
-        }
-      });
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+      if (!user) throw new Error("Please sign in with Google first.");
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("Failed to create user");
-
-      const userId = authData.user.id;
+      const userId = user.id;
 
       // Create profile
       const { error: profileError } = await supabase
@@ -397,79 +363,45 @@ const Auth = () => {
     }
   };
 
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   if (isLogin) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full p-8 space-y-6">
           <div className="text-center space-y-4">
             <img src={logo} alt="Cheq-In" className="w-24 h-auto mx-auto" />
-            <h1 className="text-3xl font-bold">Welcome Back</h1>
-            <p className="text-muted-foreground">Sign in to continue your wellness journey</p>
-          </div>
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-              />
-            </div>
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Please wait..." : "Sign In"}
-            </Button>
-          </form>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">or</span>
-            </div>
+            <h1 className="text-3xl font-bold">Welcome to Cheq-In</h1>
+            <p className="text-muted-foreground">
+              Sign in with your Google account to continue your wellness journey
+            </p>
           </div>
 
           <Button
             type="button"
-            variant="outline"
+            size="lg"
             className="w-full"
             disabled={loading}
             onClick={handleGoogleSignIn}
           >
-            <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+            <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
               <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.7v3h3.9c2.3-2.1 3.5-5.2 3.5-8.9z"/>
               <path fill="#34A853" d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0 0 12 24z"/>
               <path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 0 1 0-4.6V6.7H1.4a12 12 0 0 0 0 10.8l4-3.1z"/>
               <path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.5 1.8l3.4-3.4C17.9 1.2 15.2 0 12 0A12 12 0 0 0 1.4 6.7l4 3.1C6.3 6.9 8.9 4.8 12 4.8z"/>
             </svg>
-            Continue with Google
+            {loading ? "Please wait..." : "Continue with Google"}
           </Button>
 
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(false)}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Don't have an account? Sign up
-            </button>
-          </div>
+          <p className="text-center text-xs text-muted-foreground">
+            New here? Signing in with Google creates your account.
+          </p>
         </Card>
       </div>
     );
@@ -481,7 +413,7 @@ const Auth = () => {
         <Card className="p-8 space-y-8">
           <div className="text-center space-y-4">
             <img src={logo} alt="Cheq-In" className="w-24 h-auto mx-auto" />
-            <h1 className="text-3xl font-bold">Create Your Account</h1>
+            <h1 className="text-3xl font-bold">Complete Your Profile</h1>
             <p className="text-muted-foreground">Tell us about yourself</p>
           </div>
 
@@ -502,27 +434,9 @@ const Auth = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" value={email} disabled readOnly />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Password *</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
               </div>
             </div>
 
@@ -783,19 +697,9 @@ const Auth = () => {
             </div>
 
             <Button type="submit" className="w-full" size="lg" disabled={loading}>
-              {loading ? "Creating Account..." : "Create Account"}
+              {loading ? "Saving..." : "Finish Setup"}
             </Button>
           </form>
-
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(true)}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Already have an account? Sign in
-            </button>
-          </div>
         </Card>
       </div>
     </div>
