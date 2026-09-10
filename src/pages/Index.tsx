@@ -6,9 +6,24 @@ import dailyCheckin from "@/assets/daily-checkin.png";
 import medicineReminder from "@/assets/medicine-reminder.png";
 import emotionalWellbeing from "@/assets/emotional-wellbeing.png";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const navigate = useNavigate();
+
+  // After a social sign-in round-trip, continue to where the user was headed.
+  useEffect(() => {
+    const target = sessionStorage.getItem("post_auth_redirect");
+    if (!target) return;
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        sessionStorage.removeItem("post_auth_redirect");
+        navigate(target, { replace: true });
+      }
+    });
+  }, [navigate]);
+
   return (
     <div className="min-h-screen bg-background page-container">
       {/* Hero Section */}

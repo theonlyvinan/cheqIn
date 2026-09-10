@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { lovable } from "@/integrations/lovable/index";
 import { Camera, Plus, X, Loader2, Trash2, Edit2, Check } from "lucide-react";
 import logo from "@/assets/cheqin-logo.png";
 import {
@@ -47,6 +48,52 @@ const Auth = () => {
   const [cameraDialogOpen, setCameraDialogOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const rawNext = searchParams.get("next") ?? "";
+  const nextPath =
+    rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/checkin";
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  // Google is the only sign-in method: once signed in, either finish the
+  // one-time profile setup or continue into the app.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      const user = data.session?.user;
+      if (!active) return;
+      if (!user) {
+        setIsLogin(true);
+        setCheckingSession(false);
+        return;
+      }
+
+      setEmail(user.email ?? "");
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!active) return;
+
+      if (profile) {
+        navigate(nextPath, { replace: true });
+        return;
+      }
+
+      setFullName(
+        (user.user_metadata?.full_name as string) ??
+          (user.user_metadata?.name as string) ??
+          "",
+      );
+      setIsLogin(false);
+      setCheckingSession(false);
+    })();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -247,26 +294,30 @@ const Auth = () => {
     setFamilyMembers(updated);
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGoogleSignIn = async () => {
     setLoading(true);
-
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      sessionStorage.setItem("post_auth_redirect", nextPath);
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
       });
-      if (error) throw error;
-      
-      toast({
-        title: "Welcome back!",
-        description: "You've successfully signed in.",
-      });
-      navigate("/checkin");
+
+      if (result.error) {
+        toast({
+          title: "Google sign-in failed",
+          description: result.error.message ?? "Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (result.redirected) return;
+
+      navigate(nextPath);
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Google sign-in failed",
+        description: error?.message ?? "Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -279,18 +330,11 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-        }
-      });
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+      if (!user) throw new Error("Please sign in with Google first.");
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("Failed to create user");
-
-      const userId = authData.user.id;
+      const userId = user.id;
 
       // Create profile
       const { error: profileError } = await supabase
@@ -349,7 +393,7 @@ const Auth = () => {
         description: "Your account has been created successfully.",
       });
 
-      navigate("/checkin");
+      navigate(nextPath);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -361,54 +405,45 @@ const Auth = () => {
     }
   };
 
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   if (isLogin) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full p-8 space-y-6">
           <div className="text-center space-y-4">
             <img src={logo} alt="Cheq-In" className="w-24 h-auto mx-auto" />
-            <h1 className="text-3xl font-bold">Welcome Back</h1>
-            <p className="text-muted-foreground">Sign in to continue your wellness journey</p>
+            <h1 className="text-3xl font-bold">Welcome to Cheq-In</h1>
+            <p className="text-muted-foreground">
+              Sign in with your Google account to continue your wellness journey
+            </p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
+          <Button
+            type="button"
+            size="lg"
+            className="w-full"
+            disabled={loading}
+            onClick={handleGoogleSignIn}
+          >
+            <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.7v3h3.9c2.3-2.1 3.5-5.2 3.5-8.9z"/>
+              <path fill="#34A853" d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0 0 12 24z"/>
+              <path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 0 1 0-4.6V6.7H1.4a12 12 0 0 0 0 10.8l4-3.1z"/>
+              <path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.5 1.8l3.4-3.4C17.9 1.2 15.2 0 12 0A12 12 0 0 0 1.4 6.7l4 3.1C6.3 6.9 8.9 4.8 12 4.8z"/>
+            </svg>
+            {loading ? "Please wait..." : "Continue with Google"}
+          </Button>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-              />
-            </div>
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Please wait..." : "Sign In"}
-            </Button>
-          </form>
-
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(false)}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Don't have an account? Sign up
-            </button>
-          </div>
+          <p className="text-center text-xs text-muted-foreground">
+            New here? Signing in with Google creates your account.
+          </p>
         </Card>
       </div>
     );
@@ -420,7 +455,7 @@ const Auth = () => {
         <Card className="p-8 space-y-8">
           <div className="text-center space-y-4">
             <img src={logo} alt="Cheq-In" className="w-24 h-auto mx-auto" />
-            <h1 className="text-3xl font-bold">Create Your Account</h1>
+            <h1 className="text-3xl font-bold">Complete Your Profile</h1>
             <p className="text-muted-foreground">Tell us about yourself</p>
           </div>
 
@@ -441,27 +476,9 @@ const Auth = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" value={email} disabled readOnly />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Password *</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
               </div>
             </div>
 
@@ -722,19 +739,9 @@ const Auth = () => {
             </div>
 
             <Button type="submit" className="w-full" size="lg" disabled={loading}>
-              {loading ? "Creating Account..." : "Create Account"}
+              {loading ? "Saving..." : "Finish Setup"}
             </Button>
           </form>
-
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(true)}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Already have an account? Sign in
-            </button>
-          </div>
         </Card>
       </div>
     </div>
