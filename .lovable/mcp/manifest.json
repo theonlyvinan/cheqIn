@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "sdk_version": "2.0.4",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://ineajuhvkfdpvtzattfe.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "cheqin",
+      "version": "0.1.0",
+      "title": "cheqin"
+    },
+    "tools": [
+      {
+        "name": "get_profile",
+        "title": "Get profile",
+        "description": "Get the signed-in user's profile: name and the physical and mental health context they recorded.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_check_ins",
+        "title": "List check-ins",
+        "description": "List the signed-in user's recent wellness check-ins with mood, sentiment and health scores.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10,
+              "description": "How many check-ins to return."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_check_in",
+        "title": "Get check-in detail",
+        "description": "Get one of the signed-in user's check-ins in full, including the conversation transcript and summary.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "check_in_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The id of the check-in to fetch."
+            }
+          },
+          "required": [
+            "check_in_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_medications",
+        "title": "List medications",
+        "description": "List the signed-in user's medications with dosage, frequency and schedule.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "include_inactive": {
+              "type": "boolean",
+              "default": false,
+              "description": "Include medications that are no longer active."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "log_medication",
+        "title": "Log a medication dose",
+        "description": "Record whether the signed-in user took one of their medications. The medication must belong to them.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "medication_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The id of the medication, from list_medications."
+            },
+            "was_taken": {
+              "type": "boolean",
+              "description": "True if the dose was taken, false if it was missed."
+            },
+            "notes": {
+              "type": "string",
+              "maxLength": 500,
+              "description": "Optional note about this dose."
+            }
+          },
+          "required": [
+            "medication_id",
+            "was_taken"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
