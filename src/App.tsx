@@ -8,6 +8,7 @@ import CheckIn from "./pages/CheckIn";
 import Auth from "./pages/Auth";
 import Team from "./pages/Team";
 import NotFound from "./pages/NotFound";
+import OAuthConsent from "./pages/OAuthConsent";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/checkin" element={<CheckIn />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/team" element={<Team />} />
+          <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
