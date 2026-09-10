@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,48 @@ const Auth = () => {
   const rawNext = searchParams.get("next") ?? "";
   const nextPath =
     rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/checkin";
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  // Google is the only sign-in method: once signed in, either finish the
+  // one-time profile setup or continue into the app.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      const user = data.session?.user;
+      if (!active) return;
+      if (!user) {
+        setIsLogin(true);
+        setCheckingSession(false);
+        return;
+      }
+
+      setEmail(user.email ?? "");
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!active) return;
+
+      if (profile) {
+        navigate(nextPath, { replace: true });
+        return;
+      }
+
+      setFullName(
+        (user.user_metadata?.full_name as string) ??
+          (user.user_metadata?.name as string) ??
+          "",
+      );
+      setIsLogin(false);
+      setCheckingSession(false);
+    })();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
