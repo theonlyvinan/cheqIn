@@ -252,6 +252,37 @@ const Auth = () => {
     setFamilyMembers(updated);
   };
 
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    try {
+      sessionStorage.setItem("post_auth_redirect", nextPath);
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+
+      if (result.error) {
+        toast({
+          title: "Google sign-in failed",
+          description: result.error.message ?? "Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (result.redirected) return;
+
+      navigate(nextPath);
+    } catch (error: any) {
+      toast({
+        title: "Google sign-in failed",
+        description: error?.message ?? "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
