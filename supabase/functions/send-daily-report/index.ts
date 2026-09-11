@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { seniorUserId, familyMemberEmail } = await req.json()
+    const { seniorUserId, familyMemberEmail, checkInId } = await req.json()
 
     if (!seniorUserId || typeof seniorUserId !== 'string') {
       throw new Error('Senior user ID is required')
@@ -67,7 +67,7 @@ serve(async (req) => {
     const { data: summaryData, error: summaryError } = await supabase.functions.invoke(
       'generate-audio-summary',
       {
-        body: { seniorUserId },
+        body: checkInId ? { seniorUserId, checkInId } : { seniorUserId },
         headers: { Authorization: `Bearer ${supabaseKey}` },
       }
     )
@@ -141,13 +141,13 @@ serve(async (req) => {
         body: JSON.stringify({
           from: 'CheqIn Health <onboarding@resend.dev>',
           to: [email],
-          subject: 'Daily Health Summary',
+          subject: checkInId ? 'New Check-In Summary' : 'Daily Health Summary',
           html: `
-            <h2>Daily Health Summary</h2>
-            <p>Here's today's health update:</p>
+            <h2>${checkInId ? 'New Check-In Summary' : 'Daily Health Summary'}</h2>
+            <p>Here's the latest health update:</p>
             <p>${summaryData.summaryText}</p>
             <p>Listen to the audio summary attached to this email.</p>
-            <p><em>Based on ${summaryData.checkInsCount} check-ins from the last 5 days.</em></p>
+            ${summaryData.checkInsCount ? `<p><em>Based on ${summaryData.checkInsCount} recent check-ins.</em></p>` : ''}
           `,
           attachments: [
             {
