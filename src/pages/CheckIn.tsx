@@ -500,6 +500,24 @@ const CheckIn = () => {
         title: "Check-in complete! ✓",
         description: "Your check-in has been saved successfully.",
       });
+
+      // Email the audio summary to the caretaker (falls back to the user's own
+      // email when no family member email is on file). Non-blocking.
+      const newCheckInId = insertData?.[0]?.id;
+      supabase.functions
+        .invoke('send-daily-report', {
+          body: { seniorUserId: user.id, ...(newCheckInId ? { checkInId: newCheckInId } : {}) },
+        })
+        .then(({ error: reportError }) => {
+          if (reportError) {
+            console.error('Error sending summary email:', reportError);
+            return;
+          }
+          toast({
+            title: "Summary emailed",
+            description: "The audio summary was sent to your caretaker.",
+          });
+        });
       
       transcriptRef.current = "";
       setConversationTranscript([]);
