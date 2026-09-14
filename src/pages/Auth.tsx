@@ -53,6 +53,8 @@ const Auth = () => {
   const nextPath =
     rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/checkin";
   const [checkingSession, setCheckingSession] = useState(true);
+  const setupMode = searchParams.get("setup") === "1";
+  const [existingProfileId, setExistingProfileId] = useState<string | null>(null);
 
   // Google is the only sign-in method: once signed in, either finish the
   // one-time profile setup or continue into the app.
@@ -71,21 +73,64 @@ const Auth = () => {
       setEmail(user.email ?? "");
       const { data: profile } = await supabase
         .from("profiles")
-        .select("id")
+        .select("id, full_name, physical_health_issues, mental_health_issues")
         .eq("user_id", user.id)
         .maybeSingle();
       if (!active) return;
 
-      if (profile) {
+      if (profile && !setupMode) {
         navigate(nextPath, { replace: true });
         return;
       }
 
-      setFullName(
-        (user.user_metadata?.full_name as string) ??
-          (user.user_metadata?.name as string) ??
-          "",
-      );
+      if (profile) {
+        // Editing existing setup: prefill everything we already have.
+        setExistingProfileId(profile.id);
+        setFullName(profile.full_name ?? "");
+        setPhysicalIssues(profile.physical_health_issues ?? "");
+        setMentalIssues(profile.mental_health_issues ?? "");
+
+        const [{ data: meds }, { data: family }] = await Promise.all([
+          supabase
+            .from("medications")
+            .select("id, name, dosage, frequency, time_of_day, instructions")
+            .eq("user_id", user.id)
+            .eq("active", true),
+          supabase
+            .from("family_members")
+            .select("name, relationship, email, phone")
+            .eq("senior_user_id", user.id),
+        ]);
+        if (!active) return;
+
+        setMedications(
+          (meds ?? []).map((m) => ({
+            id: m.id,
+            name: m.name,
+            dosage: m.dosage ?? "",
+            frequency: m.frequency ?? "",
+            timeOfDay: m.time_of_day ?? [],
+            instructions: m.instructions ?? "",
+          })),
+        );
+        if (family && family.length > 0) {
+          setFamilyMembers(
+            family.map((f) => ({
+              name: f.name ?? "",
+              relationship: f.relationship ?? "",
+              email: f.email ?? "",
+              phone: f.phone ?? "",
+            })),
+          );
+        }
+      } else {
+        setFullName(
+          (user.user_metadata?.full_name as string) ??
+            (user.user_metadata?.name as string) ??
+            "",
+        );
+      }
+
       setIsLogin(false);
       setCheckingSession(false);
     })();
@@ -336,19 +381,25 @@ const Auth = () => {
 
       const userId = user.id;
 
-      // Create profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          user_id: userId,
-          full_name: fullName,
-          physical_health_issues: physicalIssues || null,
-          mental_health_issues: mentalIssues || null,
-        });
+      const isEditing = Boolean(existingProfileId);
+
+      // Create or update profile
+      const profileValues = {
+        full_name: fullName,
+        physical_health_issues: physicalIssues || null,
+        mental_health_issues: mentalIssues || null,
+      };
+
+      const { error: profileError } = isEditing
+        ? await supabase.from('profiles').update(profileValues).eq('user_id', userId)
+        : await supabase.from('profiles').insert({ user_id: userId, ...profileValues });
 
       if (profileError) throw profileError;
 
-      // Save medications
+      // Save medications (replace the existing set when editing)
+      if (isEditing) {
+        await supabase.from('medications').delete().eq('user_id', userId);
+      }
       if (medications.length > 0) {
         const medData = medications.map(med => ({
           user_id: userId,
@@ -372,6 +423,10 @@ const Auth = () => {
         fm => fm.name.trim() && (fm.email.trim() || fm.phone.trim())
       );
 
+      if (isEditing) {
+        await supabase.from('family_members').delete().eq('senior_user_id', userId);
+      }
+
       if (validFamilyMembers.length > 0) {
         const familyData = validFamilyMembers.map(fm => ({
           senior_user_id: userId,
@@ -389,8 +444,10 @@ const Auth = () => {
       }
 
       toast({
-        title: "Welcome to Cheq-In!",
-        description: "Your account has been created successfully.",
+        title: isEditing ? "Details updated" : "Welcome to Cheq-In!",
+        description: isEditing
+          ? "Your information has been saved."
+          : "Your account has been created successfully.",
       });
 
       navigate(nextPath);

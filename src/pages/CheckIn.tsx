@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Smile, AlertCircle, Clock, ChevronRight, Heart, Activity, Phone, PhoneOff, Home, PlayCircle, Headphones } from "lucide-react";
+import { Loader2, Smile, AlertCircle, Clock, ChevronRight, Heart, Activity, Phone, PhoneOff, Home, PlayCircle, Headphones, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -112,63 +112,7 @@ const CheckIn = () => {
         }));
       }
 
-      // Add sample data at the end
-      const sampleSessions: CheckInSession[] = [
-        {
-          id: 'sample-1',
-          timestamp: new Date(Date.now() - 3600000 * 24).toISOString(),
-          transcript: "Today I'm feeling pretty good. I went for a walk this morning, and the weather was nice. I'm still dealing with some back pain, but it's manageable. I took my medication as scheduled.",
-          sentiment: {
-            label: 'very_positive',
-            score: 0.85,
-            mood_rating: 8,
-            mental_health_score: 4,
-            physical_health_score: 3,
-            overall_score: 3.5,
-            emotions: { joy: 0.7, contentment: 0.8 },
-            highlights: ['Went for a morning walk', 'Weather was nice'],
-            concerns: ['Back pain persists']
-          },
-          status: 'completed'
-        },
-        {
-          id: 'sample-2',
-          timestamp: new Date(Date.now() - 3600000 * 48).toISOString(),
-          transcript: "I had a rough night with limited sleep. My knees were bothering me, which made it hard to get comfortable. I'm feeling a bit tired and anxious about my doctor's appointment tomorrow.",
-          sentiment: {
-            label: 'concerned',
-            score: 0.45,
-            mood_rating: 5,
-            mental_health_score: 3,
-            physical_health_score: 2,
-            overall_score: 2.5,
-            emotions: { anxiety: 0.6, fatigue: 0.7 },
-            highlights: [],
-            concerns: ['Poor sleep quality', 'Knee pain', 'Anxiety about appointment']
-          },
-          status: 'completed'
-        },
-        {
-          id: 'sample-3',
-          timestamp: new Date(Date.now() - 3600000 * 72).toISOString(),
-          transcript: "Had a wonderful day! My grandkids visited, and we had a great time together. I felt energetic and happy. No major pain issues today, which is a blessing.",
-          sentiment: {
-            label: 'very_positive',
-            score: 0.92,
-            mood_rating: 9,
-            mental_health_score: 5,
-            physical_health_score: 4,
-            overall_score: 4.5,
-            emotions: { joy: 0.9, love: 0.85, contentment: 0.95 },
-            highlights: ['Family visit', 'High energy', 'Minimal pain'],
-            concerns: []
-          },
-          status: 'completed'
-        }
-      ];
-
-      // Combine actual data (first) with sample data (after)
-      setSessions([...formattedSessions, ...sampleSessions]);
+      setSessions(formattedSessions);
     } catch (error) {
       console.error('Error loading check-ins:', error);
     }
@@ -249,25 +193,8 @@ const CheckIn = () => {
         return;
       }
 
-      // Find the check-in data (could be from database or sample)
-      const checkIn = sessions.find(s => s.id === checkInId);
-      
-      // For sample check-ins, pass the data directly
-      const requestBody = checkInId.startsWith('sample-') && checkIn
-        ? {
-            seniorUserId: user.id,
-            checkInData: {
-              highlights: checkIn.sentiment.highlights || [],
-              concerns: checkIn.sentiment.concerns || [],
-              mental_health_score: checkIn.sentiment.mental_health_score || 3,
-              physical_health_score: checkIn.sentiment.physical_health_score || 3,
-              overall_score: checkIn.sentiment.overall_score || 3,
-            }
-          }
-        : { seniorUserId: user.id, checkInId };
-
       const { data, error } = await supabase.functions.invoke('generate-audio-summary', {
-        body: requestBody
+        body: { seniorUserId: user.id, checkInId }
       });
 
       if (error) throw error;
@@ -593,20 +520,32 @@ const CheckIn = () => {
           <span>Home</span>
         </Button>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleGenerateAudio}
-          disabled={isGeneratingSummary}
-          className="flex items-center gap-2"
-        >
-          {isGeneratingSummary ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <PlayCircle className="w-4 h-4" />
-          )}
-          <span>Generate Audio Summary</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleGenerateAudio}
+            disabled={isGeneratingSummary}
+            className="flex items-center gap-2"
+          >
+            {isGeneratingSummary ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <PlayCircle className="w-4 h-4" />
+            )}
+            <span>Generate Audio Summary</span>
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/auth?setup=1&next=/checkin")}
+            className="flex items-center gap-2 hover:bg-primary/10 transition-colors"
+          >
+            <Settings className="w-4 h-4" />
+            <span>Setup</span>
+          </Button>
+        </div>
       </div>
       
       {/* Header */}
