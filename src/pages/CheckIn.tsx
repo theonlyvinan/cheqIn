@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Smile, AlertCircle, Clock, ChevronRight, Heart, Activity, Phone, PhoneOff, Home, PlayCircle, Headphones } from "lucide-react";
+import { Loader2, Smile, AlertCircle, Clock, ChevronRight, Heart, Activity, Phone, PhoneOff, Home, PlayCircle, Headphones, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
