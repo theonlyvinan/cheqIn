@@ -381,19 +381,25 @@ const Auth = () => {
 
       const userId = user.id;
 
-      // Create profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          user_id: userId,
-          full_name: fullName,
-          physical_health_issues: physicalIssues || null,
-          mental_health_issues: mentalIssues || null,
-        });
+      const isEditing = Boolean(existingProfileId);
+
+      // Create or update profile
+      const profileValues = {
+        full_name: fullName,
+        physical_health_issues: physicalIssues || null,
+        mental_health_issues: mentalIssues || null,
+      };
+
+      const { error: profileError } = isEditing
+        ? await supabase.from('profiles').update(profileValues).eq('user_id', userId)
+        : await supabase.from('profiles').insert({ user_id: userId, ...profileValues });
 
       if (profileError) throw profileError;
 
-      // Save medications
+      // Save medications (replace the existing set when editing)
+      if (isEditing) {
+        await supabase.from('medications').delete().eq('user_id', userId);
+      }
       if (medications.length > 0) {
         const medData = medications.map(med => ({
           user_id: userId,
@@ -417,6 +423,10 @@ const Auth = () => {
         fm => fm.name.trim() && (fm.email.trim() || fm.phone.trim())
       );
 
+      if (isEditing) {
+        await supabase.from('family_members').delete().eq('senior_user_id', userId);
+      }
+
       if (validFamilyMembers.length > 0) {
         const familyData = validFamilyMembers.map(fm => ({
           senior_user_id: userId,
@@ -434,8 +444,10 @@ const Auth = () => {
       }
 
       toast({
-        title: "Welcome to Cheq-In!",
-        description: "Your account has been created successfully.",
+        title: isEditing ? "Details updated" : "Welcome to Cheq-In!",
+        description: isEditing
+          ? "Your information has been saved."
+          : "Your account has been created successfully.",
       });
 
       navigate(nextPath);
