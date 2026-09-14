@@ -193,25 +193,8 @@ const CheckIn = () => {
         return;
       }
 
-      // Find the check-in data (could be from database or sample)
-      const checkIn = sessions.find(s => s.id === checkInId);
-      
-      // For sample check-ins, pass the data directly
-      const requestBody = checkInId.startsWith('sample-') && checkIn
-        ? {
-            seniorUserId: user.id,
-            checkInData: {
-              highlights: checkIn.sentiment.highlights || [],
-              concerns: checkIn.sentiment.concerns || [],
-              mental_health_score: checkIn.sentiment.mental_health_score || 3,
-              physical_health_score: checkIn.sentiment.physical_health_score || 3,
-              overall_score: checkIn.sentiment.overall_score || 3,
-            }
-          }
-        : { seniorUserId: user.id, checkInId };
-
       const { data, error } = await supabase.functions.invoke('generate-audio-summary', {
-        body: requestBody
+        body: { seniorUserId: user.id, checkInId }
       });
 
       if (error) throw error;
