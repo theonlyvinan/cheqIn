@@ -520,20 +520,32 @@ const CheckIn = () => {
           <span>Home</span>
         </Button>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleGenerateAudio}
-          disabled={isGeneratingSummary}
-          className="flex items-center gap-2"
-        >
-          {isGeneratingSummary ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <PlayCircle className="w-4 h-4" />
-          )}
-          <span>Generate Audio Summary</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleGenerateAudio}
+            disabled={isGeneratingSummary}
+            className="flex items-center gap-2"
+          >
+            {isGeneratingSummary ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <PlayCircle className="w-4 h-4" />
+            )}
+            <span>Generate Audio Summary</span>
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/auth?setup=1&next=/checkin")}
+            className="flex items-center gap-2 hover:bg-primary/10 transition-colors"
+          >
+            <Settings className="w-4 h-4" />
+            <span>Setup</span>
+          </Button>
+        </div>
       </div>
       
       {/* Header */}
