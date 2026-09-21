@@ -123,49 +123,37 @@ serve(async (req) => {
 
     console.log(`Sending report to ${recipients.length} recipients`)
 
-    // Send email with Resend
-    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
-    if (!RESEND_API_KEY) {
-      throw new Error('RESEND_API_KEY is not configured')
-    }
-
-    const audioBuffer = Uint8Array.from(atob(summaryData.audioContent), c => c.charCodeAt(0))
+    // Send emails through the project's built-in email system
+    const { data: seniorProfile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('user_id', seniorUserId)
+      .maybeSingle()
 
     for (const email of recipients) {
-      const emailResponse = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${RESEND_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: 'CheqIn Health <onboarding@resend.dev>',
-          to: [email],
-          subject: checkInId ? 'New Check-In Summary' : 'Daily Health Summary',
-          html: `
-            <h2>${checkInId ? 'New Check-In Summary' : 'Daily Health Summary'}</h2>
-            <p>Here's the latest health update:</p>
-            <p>${summaryData.summaryText}</p>
-            <p>Listen to the audio summary attached to this email.</p>
-            ${summaryData.checkInsCount ? `<p><em>Based on ${summaryData.checkInsCount} recent check-ins.</em></p>` : ''}
-          `,
-          attachments: [
-            {
-              filename: 'health-summary.mp3',
-              content: summaryData.audioContent,
-              content_type: 'audio/mpeg'
+      const { data: sendData, error: sendError } = await supabase.functions.invoke(
+        'send-transactional-email',
+        {
+          body: {
+            templateName: 'check-in-summary',
+            recipientEmail: email,
+            templateData: {
+              seniorName: seniorProfile?.full_name || 'your loved one',
+              summaryText: summaryData.summaryText,
+              checkInsCount: summaryData.checkInsCount,
+              isDaily: !checkInId,
             },
-          ],
-        }),
-      })
+          },
+          headers: { Authorization: `Bearer ${supabaseKey}` },
+        }
+      )
 
-      if (!emailResponse.ok) {
-        const error = await emailResponse.text()
-        console.error('Resend API error:', error)
+      if (sendError) {
+        console.error('Email send error:', sendError)
         throw new Error('Failed to send email')
       }
 
-      console.log(`Email sent successfully to ${email}`)
+      console.log(`Email queued for delivery`, sendData)
     }
 
     return new Response(
