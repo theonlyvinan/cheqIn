@@ -167,12 +167,12 @@ serve(async (req) => {
               audioUrl,
             },
           },
-          headers: { Authorization: `Bearer ${supabaseKey}` },
+          headers: { Authorization: `Bearer ${token}` },
         }
       )
 
       if (sendError) {
-        console.error('Email send error:', sendError)
+        console.error('Email send error:', sendError, await (sendError as any)?.context?.text?.().catch(() => ''))
         throw new Error('Failed to send email')
       }
 
