@@ -79,6 +79,28 @@ serve(async (req) => {
 
     console.log('Audio summary generated successfully')
 
+    // Store the recording privately and create a time-limited listen link
+    let audioUrl: string | undefined
+    try {
+      if (summaryData?.audioContent) {
+        const bin = atob(summaryData.audioContent)
+        const bytes = new Uint8Array(bin.length)
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+        const path = `${seniorUserId}/${checkInId ?? 'daily'}-${Date.now()}.mp3`
+        const { error: upErr } = await supabase.storage
+          .from('audio-summaries')
+          .upload(path, bytes, { contentType: 'audio/mpeg', upsert: true })
+        if (upErr) throw upErr
+        const { data: signed, error: signErr } = await supabase.storage
+          .from('audio-summaries')
+          .createSignedUrl(path, 60 * 60 * 24 * 7)
+        if (signErr) throw signErr
+        audioUrl = signed?.signedUrl
+      }
+    } catch (e) {
+      console.error('Failed to store audio recording:', e)
+    }
+
     // Get family members registered for this senior. Recipients are ALWAYS
     // resolved server-side; a client-supplied email may only narrow this list.
     const { data: familyMembers, error: familyError } = await supabase
@@ -142,6 +164,7 @@ serve(async (req) => {
               summaryText: summaryData.summaryText,
               checkInsCount: summaryData.checkInsCount,
               isDaily: !checkInId,
+              audioUrl,
             },
           },
           headers: { Authorization: `Bearer ${supabaseKey}` },
