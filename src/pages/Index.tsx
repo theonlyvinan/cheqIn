@@ -4,7 +4,7 @@ import { Heart, MessageCircle, Pill, TrendingUp } from "lucide-react";
 import logo from "@/assets/cheqin-logo.png";
 import dailyCheckin from "@/assets/daily-checkin.png";
 import medicineReminder from "@/assets/medicine-reminder.png";
-import emotionalWellbeing from "@/assets/emotional-wellbeing.png";
+import emotionalWellbeing from "@/assets/emotional-wellbeing-praveena.png";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
