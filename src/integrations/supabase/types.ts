@@ -14,6 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_log: {
+        Row: {
+          action: string
+          check_in_id: string | null
+          created_at: string
+          id: string
+          senior_user_id: string
+          viewer_user_id: string
+        }
+        Insert: {
+          action: string
+          check_in_id?: string | null
+          created_at?: string
+          id?: string
+          senior_user_id: string
+          viewer_user_id: string
+        }
+        Update: {
+          action?: string
+          check_in_id?: string | null
+          created_at?: string
+          id?: string
+          senior_user_id?: string
+          viewer_user_id?: string
+        }
+        Relationships: []
+      }
+      caregiver_assignments: {
+        Row: {
+          caregiver_user_id: string
+          created_at: string
+          id: string
+          org_id: string
+          senior_user_id: string
+        }
+        Insert: {
+          caregiver_user_id: string
+          created_at?: string
+          id?: string
+          org_id: string
+          senior_user_id: string
+        }
+        Update: {
+          caregiver_user_id?: string
+          created_at?: string
+          id?: string
+          org_id?: string
+          senior_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caregiver_assignments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       check_ins: {
         Row: {
           audio_summary_generated_at: string | null
@@ -202,6 +261,147 @@ export type Database = {
         }
         Relationships: []
       }
+      organization_invites: {
+        Row: {
+          created_at: string
+          created_by: string
+          email: string
+          expires_at: string
+          id: string
+          org_id: string
+          role: string
+          status: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          email: string
+          expires_at?: string
+          id?: string
+          org_id: string
+          role: string
+          status?: string
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          org_id?: string
+          role?: string
+          status?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_invites_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_members: {
+        Row: {
+          created_at: string
+          id: string
+          org_id: string
+          role: Database["public"]["Enums"]["org_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          org_id: string
+          role: Database["public"]["Enums"]["org_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          org_id?: string
+          role?: Database["public"]["Enums"]["org_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_seniors: {
+        Row: {
+          consent_status: string
+          consented_at: string | null
+          created_at: string
+          id: string
+          org_id: string
+          senior_user_id: string
+        }
+        Insert: {
+          consent_status?: string
+          consented_at?: string | null
+          created_at?: string
+          id?: string
+          org_id: string
+          senior_user_id: string
+        }
+        Update: {
+          consent_status?: string
+          consented_at?: string | null
+          created_at?: string
+          id?: string
+          org_id?: string
+          senior_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_seniors_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          address: string | null
+          created_at: string
+          created_by: string
+          id: string
+          invite_code: string
+          name: string
+          phone: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          invite_code?: string
+          name: string
+          phone?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          invite_code?: string
+          name?: string
+          phone?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -278,10 +478,37 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      accept_organization_invite: { Args: { _token: string }; Returns: string }
+      can_view_org_profile: {
+        Args: { _target: string; _viewer: string }
+        Returns: boolean
+      }
+      can_view_senior: {
+        Args: { _senior: string; _viewer: string }
+        Returns: boolean
+      }
+      create_organization: {
+        Args: { _address: string; _name: string; _phone: string }
+        Returns: string
+      }
+      is_org_manager: {
+        Args: { _org: string; _user: string }
+        Returns: boolean
+      }
+      is_org_member: { Args: { _org: string; _user: string }; Returns: boolean }
+      join_organization_by_code: { Args: { _code: string }; Returns: string }
+      my_pending_invites: {
+        Args: never
+        Returns: {
+          org_name: string
+          role: string
+          token: string
+        }[]
+      }
+      set_my_center_consent: { Args: { _approve: boolean }; Returns: undefined }
     }
     Enums: {
-      [_ in never]: never
+      org_role: "org_manager" | "org_caregiver"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -408,6 +635,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      org_role: ["org_manager", "org_caregiver"],
+    },
   },
 } as const
