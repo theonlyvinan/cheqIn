@@ -53,7 +53,25 @@ serve(async (req) => {
           .eq('family_user_id', callerId)
           .maybeSingle()
 
-        if (!link) {
+        let allowed = !!link
+        if (!allowed) {
+          // Rehab center staff with the senior's approved consent
+          const { data: canView } = await supabase.rpc('can_view_senior', {
+            _viewer: callerId,
+            _senior: seniorUserId,
+          })
+          allowed = canView === true
+          if (allowed) {
+            await supabase.from('access_log').insert({
+              viewer_user_id: callerId,
+              senior_user_id: seniorUserId,
+              action: 'listen_recording',
+              check_in_id: checkInId ?? null,
+            })
+          }
+        }
+
+        if (!allowed) {
           return new Response(JSON.stringify({ error: 'Forbidden' }), {
             status: 403,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
