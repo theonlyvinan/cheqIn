@@ -6,6 +6,14 @@
 - **Seniors** join with a code or accept an email invite, and must approve sharing (check-ins, scores, recordings). They can revoke anytime from Setup.
 - **Center dashboard** (`/center`): alerts first (low mood/health scores, concerning notes, no check-in in 48h), then the full roster with latest status. Clicking a senior opens their trend chart, check-in history, transcripts and the audio summary player.
 
+## How regular users and centers are told apart
+- Everyone signs in the same way with Google. By default every account is a **regular user** (senior or family member), exactly as today.
+- An account becomes a **center account** only when the person picks "I run a rehab / senior center" on a new first-time screen and creates a center (name, address, phone). They become its manager.
+- Caregivers become center staff only by accepting a manager's email invite.
+- The top-right menu shows a "Center dashboard" link only for managers and caregivers; regular users never see it.
+- The same person can be both (e.g. a manager who also does their own check-ins).
+- Center access is checked on the server for every request, so nobody can make themselves a manager by changing the app.
+
 ## Flow
 ```text
 Manager creates center -> code + email invites
