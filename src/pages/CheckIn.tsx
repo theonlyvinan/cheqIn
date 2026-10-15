@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Smile, AlertCircle, Clock, ChevronRight, Heart, Activity, Phone, PhoneOff, Home, PlayCircle, Headphones, Settings } from "lucide-react";
+import { Loader2, Smile, AlertCircle, Clock, ChevronRight, Heart, Activity, Phone, PhoneOff, Home, PlayCircle, Headphones, Settings, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -534,6 +534,16 @@ const CheckIn = () => {
               <PlayCircle className="w-4 h-4" />
             )}
             <span>Generate Audio Summary</span>
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/center")}
+            className="flex items-center gap-2 hover:bg-primary/10 transition-colors"
+          >
+            <Building2 className="w-4 h-4" />
+            <span>Care center</span>
           </Button>
 
           <Button
